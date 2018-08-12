@@ -1,0 +1,7 @@
+[package]
+name = "highway"
+version = "0.1.0"
+authors = ["Nick Babcock <nbabcock19@hotmail.com>"]
+
+[dependencies]
+byteorder = "1"
