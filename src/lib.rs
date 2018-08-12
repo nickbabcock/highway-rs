@@ -129,7 +129,7 @@ impl PortableHash {
             slice = &slice[32..];
         }
 
-        if (slice.len() > 0) {
+        if (!slice.is_empty()) {
             PortableHash::update_remainder(&slice, state);
         }
     }
@@ -139,7 +139,7 @@ impl PortableHash {
             let half0: u32 = lanes[i] as u32;
             let half1: u32 = (lanes[i] >> 32) as u32;
             lanes[i] = u64::from((half0 << count) | (half0 >> (32 - count)));
-            lanes[i] |= u64::from(((half1 << count) | (half1 >> (32 - count)))) << 32;
+            lanes[i] |= u64::from((half1 << count) | (half1 >> (32 - count))) << 32;
         }
     }
 
@@ -154,21 +154,18 @@ impl PortableHash {
         }
 
         PortableHash::rotate_32_by(size, &mut state.v1);
-        for i in 0..remainder.len() - bytes.len() {
-            packet[i] = bytes[i];
-        }
+        let diff_len = remainder.len() - bytes.len();
+        packet[..diff_len].clone_from_slice(&bytes[..diff_len]);
         if (size & 16 != 0) {
             for i in 0..4 {
                 packet[28 + i] = remainder[i + size_mod4 - 4];
             }
-        } else {
-            if (size_mod4 != 0) {
-                packet[16 + 0] = remainder[0];
-                packet[16 + 1] = remainder[size_mod4 >> 1];
-                packet[16 + 2] = remainder[size_mod4 - 1];
-            }
+        } else if (size_mod4 != 0) {
+            packet[16] = remainder[0];
+            packet[16 + 1] = remainder[size_mod4 >> 1];
+            packet[16 + 2] = remainder[size_mod4 - 1];
         }
-        PortableHash::update_packet(&mut packet, state);
+        PortableHash::update_packet(&packet, state);
     }
 }
 
