@@ -3,8 +3,8 @@
 extern crate byteorder;
 
 use byteorder::{ByteOrder, LE};
-use std::ops::Index;
 use std::num::Wrapping;
+use std::ops::Index;
 
 pub struct Key([u64; 4]);
 
@@ -66,7 +66,10 @@ impl PortableHash {
             PortableHash::permute_and_update(state);
         }
 
-        state.v0[0].wrapping_add(state.v1[0]).wrapping_add(state.mul0[0]).wrapping_add(state.mul1[0])
+        state.v0[0]
+            .wrapping_add(state.v1[0])
+            .wrapping_add(state.mul0[0])
+            .wrapping_add(state.mul1[0])
     }
 
     fn permute(v: &[u64; 4]) -> [u64; 4] {
@@ -98,19 +101,23 @@ impl PortableHash {
     }
 
     fn zipper_merge_and_add(v1: u64, v0: u64, lane: &mut [u64; 4], add1: usize, add0: usize) {
-        lane[add0] = lane[add0].wrapping_add((((v0 & 0xff000000) | (v1 & 0xff00000000)) >> 24)
-            | (((v0 & 0xff0000000000) | (v1 & 0xff000000000000)) >> 16)
-            | (v0 & 0xff0000)
-            | ((v0 & 0xff00) << 32)
-            | ((v1 & 0xff00000000000000) >> 8)
-            | (v0 << 56));
-        lane[add1] = lane[add1].wrapping_add((((v1 & 0xff000000) | (v0 & 0xff00000000)) >> 24)
-            | (v1 & 0xff0000)
-            | ((v1 & 0xff0000000000) >> 16)
-            | ((v1 & 0xff00) << 24)
-            | ((v0 & 0xff000000000000) >> 8)
-            | ((v1 & 0xff) << 48)
-            | (v0 & 0xff00000000000000));
+        lane[add0] = lane[add0].wrapping_add(
+            (((v0 & 0xff000000) | (v1 & 0xff00000000)) >> 24)
+                | (((v0 & 0xff0000000000) | (v1 & 0xff000000000000)) >> 16)
+                | (v0 & 0xff0000)
+                | ((v0 & 0xff00) << 32)
+                | ((v1 & 0xff00000000000000) >> 8)
+                | (v0 << 56),
+        );
+        lane[add1] = lane[add1].wrapping_add(
+            (((v1 & 0xff000000) | (v0 & 0xff00000000)) >> 24)
+                | (v1 & 0xff0000)
+                | ((v1 & 0xff0000000000) >> 16)
+                | ((v1 & 0xff00) << 24)
+                | ((v0 & 0xff000000000000) >> 8)
+                | ((v1 & 0xff) << 48)
+                | (v0 & 0xff00000000000000),
+        );
     }
 
     fn update_packet(packet: &[u8], state: &mut PortableState) {
@@ -174,10 +181,10 @@ impl PortableHash {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn it_works() {
-        let key = Key([1, 2, 3, 4]); 
+        let key = Key([1, 2, 3, 4]);
         let b: Vec<u8> = (0..33).map(|x| 128 + x as u8).collect();
         let hash = PortableHash::hash64(&b[..], &key);
         assert_eq!(0x53c516cce478cad7, hash);
