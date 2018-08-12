@@ -154,7 +154,8 @@ impl PortableHash {
 
     fn update_remainder(bytes: &[u8], state: &mut PortableState) {
         let size_mod4 = bytes.len() & 3;
-        let remainder = &bytes[bytes.len() & !3..];
+		let remainder_jump = bytes.len() & !3;
+        let remainder = &bytes[remainder_jump..];
         let size = bytes.len() as u64;
         let mut packet: [u8; 32] = Default::default();
 
@@ -163,11 +164,10 @@ impl PortableHash {
         }
 
         PortableHash::rotate_32_by(size, &mut state.v1);
-        let diff_len = remainder.len() - bytes.len();
-        packet[..diff_len].clone_from_slice(&bytes[..diff_len]);
+        packet[..remainder_jump].clone_from_slice(&bytes[..remainder_jump]);
         if (size & 16 != 0) {
             for i in 0..4 {
-                packet[28 + i] = remainder[i + size_mod4 - 4];
+                packet[28 + i] = bytes[remainder_jump + i + size_mod4 - 4];
             }
         } else if (size_mod4 != 0) {
             packet[16] = remainder[0];
@@ -183,10 +183,52 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_works() {
-        let key = Key([1, 2, 3, 4]);
+    fn portable_hash_simple() {
+        let key = Key([1, 2, 3, 4]); 
         let b: Vec<u8> = (0..33).map(|x| 128 + x as u8).collect();
         let hash = PortableHash::hash64(&b[..], &key);
         assert_eq!(0x53c516cce478cad7, hash);
     }
+
+    #[test]
+    fn portable_hash_simple2() {
+        let key = Key([1, 2, 3, 4]); 
+        let hash = PortableHash::hash64(&[ (-1 as i8) as u8 ], &key);
+        assert_eq!(0x7858f24d2d79b2b2, hash);
+    }
+
+    #[test]
+    fn portable_hash_all() {
+    let expected64 = [
+      0x907A56DE22C26E53, 0x7EAB43AAC7CDDD78, 0xB8D0569AB0B53D62,
+      0x5C6BEFAB8A463D80, 0xF205A46893007EDA, 0x2B8A1668E4A94541,
+      0xBD4CCC325BEFCA6F, 0x4D02AE1738F59482, 0xE1205108E55F3171,
+      0x32D2644EC77A1584, 0xF6E10ACDB103A90B, 0xC3BBF4615B415C15,
+      0x243CC2040063FA9C, 0xA89A58CE65E641FF, 0x24B031A348455A23,
+      0x40793F86A449F33B, 0xCFAB3489F97EB832, 0x19FE67D2C8C5C0E2,
+      0x04DD90A69C565CC2, 0x75D9518E2371C504, 0x38AD9B1141D3DD16,
+      0x0264432CCD8A70E0, 0xA9DB5A6288683390, 0xD7B05492003F028C,
+      0x205F615AEA59E51E, 0xEEE0C89621052884, 0x1BFC1A93A7284F4F,
+      0x512175B5B70DA91D, 0xF71F8976A0A2C639, 0xAE093FEF1F84E3E7,
+      0x22CA92B01161860F, 0x9FC7007CCF035A68, 0xA0C964D9ECD580FC,
+      0x2C90F73CA03181FC, 0x185CF84E5691EB9E, 0x4FC1F5EF2752AA9B,
+      0xF5B7391A5E0A33EB, 0xB9B84B83B4E96C9C, 0x5E42FE712A5CD9B4,
+      0xA150F2F90C3F97DC, 0x7FA522D75E2D637D, 0x181AD0CC0DFFD32B,
+      0x3889ED981E854028, 0xFB4297E8C586EE2D, 0x6D064A45BB28059C,
+      0x90563609B3EC860C, 0x7AA4FCE94097C666, 0x1326BAC06B911E08,
+      0xB926168D2B154F34, 0x9919848945B1948D, 0xA2A98FC534825EBE,
+      0xE9809095213EF0B6, 0x582E5483707BC0E9, 0x086E9414A88A6AF5,
+      0xEE86B98D20F6743D, 0xF89B7FF609B1C0A7, 0x4C7D9CC19E22C3E8,
+      0x9A97005024562A6F, 0x5DD41CF423E6EBEF, 0xDF13609C0468E227,
+      0x6E0DA4F64188155A, 0xB755BA4B50D7D4A1, 0x887A3484647479BD,
+      0xAB8EEBE9BF2139A0, 0x75542C5D4CD2A6FF
+    ];
+
+ 	let data: Vec<u8> = (0..65).map(|x| x as u8).collect();
+	let key = Key([0x0706050403020100, 0x0F0E0D0C0B0A0908, 0x1716151413121110, 0x1F1E1D1C1B1A1918]);
+
+	for i in 0..64 {
+		assert_eq!(expected64[i], PortableHash::hash64(&data[..i], &key));
+		}
+}
 }
