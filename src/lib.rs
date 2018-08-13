@@ -3,8 +3,160 @@
 extern crate byteorder;
 
 use byteorder::{ByteOrder, LE};
-use std::num::Wrapping;
 use std::ops::Index;
+use std::ops::{
+    AddAssign, BitAndAssign, BitOrAssign, BitXor, BitXorAssign, ShlAssign, ShrAssign, SubAssign,
+};
+
+#[cfg(target_arch = "x86")]
+use std::arch::x86::*;
+#[cfg(target_arch = "x86_64")]
+use std::arch::x86_64::*;
+
+#[derive(Clone)]
+struct V2x64U(__m128i);
+
+impl Copy for V2x64U {}
+
+macro_rules! _mm_shuffle {
+    ($z:expr, $y:expr, $x:expr, $w:expr) => {
+        ($z << 6) | ($y << 4) | ($x << 2) | $w
+    };
+}
+
+impl V2x64U {
+    fn new(hi: u64, low: u64) -> Self {
+        V2x64U(unsafe { _mm_set_epi64x(hi as i64, low as i64) })
+    }
+
+    fn rotate_by_32(&self) -> Self {
+        V2x64U(unsafe { _mm_shuffle_epi32(self.0, _mm_shuffle!(2, 3, 0, 1)) })
+    }
+
+    fn shuffle(&self, mask: &V2x64U) -> Self {
+        V2x64U::from(unsafe { _mm_shuffle_epi8(self.0, mask.0) })
+    }
+}
+
+impl From<__m128i> for V2x64U {
+    fn from(v: __m128i) -> Self {
+        V2x64U(v)
+    }
+}
+
+impl From<[u64; 2]> for V2x64U {
+    fn from(v: [u64; 2]) -> Self {
+        let result = V2x64U(unsafe { _mm_loadu_si128((&v[0] as *const u64) as *const __m128i) });
+        std::mem::forget(v);
+        result
+    }
+}
+
+impl AddAssign for V2x64U {
+    fn add_assign(&mut self, other: Self) {
+        self.0 = unsafe { _mm_add_epi64(self.0, other.0) }
+    }
+}
+
+impl SubAssign for V2x64U {
+    fn sub_assign(&mut self, other: Self) {
+        self.0 = unsafe { _mm_sub_epi64(self.0, other.0) }
+    }
+}
+
+impl BitAndAssign for V2x64U {
+    fn bitand_assign(&mut self, other: Self) {
+        self.0 = unsafe { _mm_and_si128(self.0, other.0) }
+    }
+}
+
+impl BitOrAssign for V2x64U {
+    fn bitor_assign(&mut self, other: Self) {
+        self.0 = unsafe { _mm_or_si128(self.0, other.0) }
+    }
+}
+
+impl BitXorAssign for V2x64U {
+    fn bitxor_assign(&mut self, other: Self) {
+        self.0 = unsafe { _mm_xor_si128(self.0, other.0) }
+    }
+}
+
+impl BitXor for V2x64U {
+    type Output = Self;
+
+    fn bitxor(self, other: Self) -> Self {
+        let mut new = V2x64U(self.0);
+        new ^= other;
+        new
+    }
+}
+
+impl ShlAssign<__m128i> for V2x64U {
+    fn shl_assign(&mut self, count: __m128i) {
+        self.0 = unsafe { _mm_sll_epi64(self.0, count) }
+    }
+}
+
+impl ShrAssign<__m128i> for V2x64U {
+    fn shr_assign(&mut self, count: __m128i) {
+        self.0 = unsafe { _mm_srl_epi64(self.0, count) }
+    }
+}
+
+pub struct SseHash {
+    key: Key,
+    v0L: V2x64U,
+    v0H: V2x64U,
+    v1L: V2x64U,
+    v1H: V2x64U,
+    mul0L: V2x64U,
+    mul0H: V2x64U,
+    mul1L: V2x64U,
+    mul1H: V2x64U,
+}
+
+impl SseHash {
+    fn reset(&mut self) {
+        let init0L = V2x64U::new(0xa4093822299f31d0, 0xdbe6d5d5fe4cce2f);
+        let init0H = V2x64U::new(0x243f6a8885a308d3, 0x13198a2e03707344);
+        let init1L = V2x64U::new(0xc0acf169b5f18a8c, 0x3bd39e10cb0ef593);
+        let init1H = V2x64U::new(0x452821e638d01377, 0xbe5466cf34e90c6c);
+        let keyL = V2x64U::from([self.key[0], self.key[1]]);
+        let keyH = V2x64U::from([self.key[2], self.key[3]]);
+        self.v0L = keyL ^ init0L;
+        self.v0H = keyH ^ init0H;
+        self.v1L = keyL.rotate_by_32() ^ init1L;
+        self.v1H = keyH.rotate_by_32() ^ init1H;
+        self.mul0L = init0L;
+        self.mul0H = init0H;
+        self.mul1L = init1L;
+        self.mul1H = init1H;
+    }
+
+    fn zipper_merge(v: &V2x64U) -> V2x64U {
+        v.shuffle(&V2x64U::new(0x070806090D0A040B, 0x000F010E05020C03))
+    }
+
+    fn update(&mut self, packetH: V2x64U, packetL: V2x64U) {
+        unsafe {
+            self.v1L += packetL;
+            self.v1H += packetH;
+            self.v1L += self.mul0L;
+            self.v1H += self.mul0H;
+            self.mul0L ^= V2x64U(_mm_mul_epu32(self.v1L.0, self.v0L.rotate_by_32().0));
+            self.mul0H ^= V2x64U(_mm_mul_epu32(self.v1H.0, _mm_srli_epi16(self.v0H.0, 32)));
+            self.v0L += self.mul1L;
+            self.v0H += self.mul1H;
+            self.mul1L ^= V2x64U(_mm_mul_epu32(self.v0L.0, self.v1L.rotate_by_32().0));
+            self.mul1H ^= V2x64U(_mm_mul_epu32(self.v0H.0, _mm_srli_epi16(self.v1H.0, 32)));
+            self.v0L += SseHash::zipper_merge(&self.v1L);
+            self.v0H += SseHash::zipper_merge(&self.v1H);
+            self.v1L += SseHash::zipper_merge(&self.v0L);
+            self.v1H += SseHash::zipper_merge(&self.v0H);
+        }
+    }
+}
 
 #[derive(Default, Clone)]
 pub struct Key([u64; 4]);
