@@ -5,3 +5,10 @@ authors = ["Nick Babcock <nbabcock19@hotmail.com>"]
 
 [dependencies]
 byteorder = "1"
+
+[dev-dependencies]
+criterion = "0.2"
+
+[[bench]]
+name = "highway"
+harness = false

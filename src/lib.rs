@@ -330,7 +330,7 @@ fn unordered_load3(from: &[u8]) -> u64 {
 }
 
 #[derive(Default, Clone)]
-pub struct Key([u64; 4]);
+pub struct Key(pub [u64; 4]);
 
 impl Index<usize> for Key {
     type Output = u64;
