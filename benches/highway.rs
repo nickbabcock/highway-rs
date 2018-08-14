@@ -23,7 +23,7 @@ fn hashing(c: &mut Criterion) {
             let key = Key([0, 0, 0, 0]);
             b.iter(|| SseHash::hash64(&data, &key))
         })
-        .throughput(|s| Throughput::Bytes(*s as u32)),
+            .throughput(|s| Throughput::Bytes(*s as u32)),
     );
 }
 

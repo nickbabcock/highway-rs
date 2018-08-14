@@ -52,6 +52,10 @@ impl V2x64U {
     fn shuffle(&self, mask: &V2x64U) -> Self {
         V2x64U::from(unsafe { _mm_shuffle_epi8(self.0, mask.0) })
     }
+
+    fn and_not(&self, neg_mask: &V2x64U) -> Self {
+        V2x64U::from(unsafe { _mm_andnot_si128(neg_mask.0, self.0) })
+    }
 }
 
 impl From<__m128i> for V2x64U {
@@ -173,6 +177,18 @@ impl SseHash {
         hash.finalize64()
     }
 
+    pub fn hash128(data: &[u8], key: &Key) -> u128 {
+        let mut hash = PortableHash::new(key);
+        hash.process_all(data);
+        hash.finalize128()
+    }
+
+    pub fn hash256(data: &[u8], key: &Key) -> (u128, u128) {
+        let mut hash = PortableHash::new(key);
+        hash.process_all(data);
+        hash.finalize256()
+    }
+
     fn reset(&mut self) {
         let init0L = V2x64U::new(0xa4093822299f31d0, 0xdbe6d5d5fe4cce2f);
         let init0H = V2x64U::new(0x243f6a8885a308d3, 0x13198a2e03707344);
@@ -234,6 +250,51 @@ impl SseHash {
         let mut result: u64 = 0;
         unsafe { _mm_storel_epi64((&mut result as *mut u64) as *mut __m128i, hash.0) };
         result
+    }
+
+    fn finalize128(&mut self) -> u128 {
+        for i in 0..4 {
+            self.permute_and_update();
+        }
+
+        let sum0 = self.v0L + self.mul0L;
+        let sum1 = self.v1L + self.mul1L;
+        let hash = sum0 + sum1;
+        let mut result: u128 = 0;
+        unsafe { _mm_storel_epi64((&mut result as *mut u128) as *mut __m128i, hash.0) };
+        result
+    }
+
+    fn finalize256(&mut self) -> (u128, u128) {
+        for i in 0..4 {
+            self.permute_and_update();
+        }
+
+        let sum0L = self.v0L + self.mul0L;
+        let sum1L = self.v1L + self.mul1L;
+        let sum0H = self.v0H + self.mul0H;
+        let sum1H = self.v1H + self.mul1H;
+        let hashL = SseHash::modular_reduction(&sum1L, &sum0L);
+        let hashH = SseHash::modular_reduction(&sum1H, &sum0H);
+        let mut resultL: u128 = 0;
+        let mut resultH: u128 = 0;
+        unsafe { _mm_storel_epi64((&mut resultL as *mut u128) as *mut __m128i, hashL.0) };
+        unsafe { _mm_storel_epi64((&mut resultH as *mut u128) as *mut __m128i, hashH.0) };
+        (resultL, resultH)
+    }
+
+    fn modular_reduction(x: &V2x64U, init: &V2x64U) -> V2x64U {
+        let zero = V2x64U::default();
+        let sign_bit128 =
+            V2x64U::from(unsafe { _mm_insert_epi32(zero.0, 0x80000000u32 as i32, 3) });
+        let top_bits2 = V2x64U::from(unsafe { _mm_srli_epi64(x.0, 62) });
+        let shifted1_unmasked = *x + *x;
+        let top_bits1 = V2x64U::from(unsafe { _mm_srli_epi64(x.0, 63) });
+        let shifted2 = shifted1_unmasked + shifted1_unmasked;
+        let new_low_bits2 = V2x64U::from(unsafe { _mm_slli_si128(top_bits2.0, 8) });
+        let shifted1 = shifted1_unmasked.and_not(&sign_bit128);
+        let new_low_bits1 = V2x64U::from(unsafe { _mm_slli_si128(top_bits1.0, 8) });
+        *init ^ shifted2 ^ new_low_bits2 ^ shifted1 ^ new_low_bits1
     }
 
     fn process_all(&mut self, data: &[u8]) {
@@ -1007,6 +1068,16 @@ mod tests {
             assert_eq!(
                 PortableHash::hash64(&data[..i], &key),
                 SseHash::hash64(&data[..i], &key)
+            );
+
+            assert_eq!(
+                PortableHash::hash128(&data[..i], &key),
+                SseHash::hash128(&data[..i], &key)
+            );
+
+            assert_eq!(
+                PortableHash::hash256(&data[..i], &key),
+                SseHash::hash256(&data[..i], &key)
             );
         }
     }
