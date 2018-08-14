@@ -3,6 +3,7 @@
 extern crate byteorder;
 
 use byteorder::{ByteOrder, LE};
+use std::fmt;
 use std::ops::Index;
 use std::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, ShlAssign,
@@ -20,6 +21,14 @@ struct V2x64U(__m128i);
 impl Default for V2x64U {
     fn default() -> Self {
         V2x64U(unsafe { _mm_setzero_si128() })
+    }
+}
+
+impl fmt::Debug for V2x64U {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let mut arr: [u64; 2] = [0, 0];
+        unsafe { _mm_storeu_si128((&mut arr[0] as *mut u64) as *mut __m128i, self.0) };
+        write!(f, "V2x64U: {:?}", arr)
     }
 }
 
@@ -169,8 +178,12 @@ impl SseHash {
         let init0H = V2x64U::new(0x243f6a8885a308d3, 0x13198a2e03707344);
         let init1L = V2x64U::new(0xc0acf169b5f18a8c, 0x3bd39e10cb0ef593);
         let init1H = V2x64U::new(0x452821e638d01377, 0xbe5466cf34e90c6c);
-        let keyL = V2x64U::from([self.key[0], self.key[1]]);
-        let keyH = V2x64U::from([self.key[2], self.key[3]]);
+        let keyL = V2x64U::from(unsafe {
+            _mm_loadu_si128((&self.key[0] as *const u64) as *const __m128i)
+        });
+        let keyH = V2x64U::from(unsafe {
+            _mm_loadu_si128((&self.key[2] as *const u64) as *const __m128i)
+        });
         self.v0L = keyL ^ init0L;
         self.v0H = keyH ^ init0H;
         self.v1L = keyL.rotate_by_32() ^ init1L;
@@ -192,11 +205,11 @@ impl SseHash {
             self.v1L += self.mul0L;
             self.v1H += self.mul0H;
             self.mul0L ^= V2x64U(_mm_mul_epu32(self.v1L.0, self.v0L.rotate_by_32().0));
-            self.mul0H ^= V2x64U(_mm_mul_epu32(self.v1H.0, _mm_srli_epi16(self.v0H.0, 32)));
+            self.mul0H ^= V2x64U(_mm_mul_epu32(self.v1H.0, _mm_srli_epi64(self.v0H.0, 32)));
             self.v0L += self.mul1L;
             self.v0H += self.mul1H;
             self.mul1L ^= V2x64U(_mm_mul_epu32(self.v0L.0, self.v1L.rotate_by_32().0));
-            self.mul1H ^= V2x64U(_mm_mul_epu32(self.v0H.0, _mm_srli_epi16(self.v1H.0, 32)));
+            self.mul1H ^= V2x64U(_mm_mul_epu32(self.v0H.0, _mm_srli_epi64(self.v1H.0, 32)));
             self.v0L += SseHash::zipper_merge(&self.v1L);
             self.v0H += SseHash::zipper_merge(&self.v1H);
             self.v1L += SseHash::zipper_merge(&self.v0L);
@@ -224,10 +237,15 @@ impl SseHash {
     }
 
     fn process_all(&mut self, data: &[u8]) {
+        self.reset();
         let mut slice = &data[..];
         while slice.len() >= 32 {
-            let packetL = V2x64U::new(LE::read_u64(&slice[0..8]), LE::read_u64(&slice[8..16]));
-            let packetH = V2x64U::new(LE::read_u64(&slice[16..24]), LE::read_u64(&slice[24..32]));
+            let packetL = V2x64U::from(unsafe {
+                _mm_loadu_si128((&slice[0] as *const u8) as *const __m128i)
+            });
+            let packetH = V2x64U::from(unsafe {
+                _mm_loadu_si128((&slice[16] as *const u8) as *const __m128i)
+            });
             self.update(packetH, packetL);
             slice = &slice[32..];
         }
@@ -264,14 +282,22 @@ impl SseHash {
         self.rotate_32_by(bytes.len() as i64);
         let size_mod32 = bytes.len();
         let size_mod4 = size_mod32 & 3;
-        let remainder = &bytes[size_mod32 & !3..];
 
         if size_mod32 & 16 != 0 {
+            let packetL = V2x64U::from(unsafe {
+                _mm_loadu_si128((&bytes[0] as *const u8) as *const __m128i)
+            });
+            let packetT = SseHash::load_multiple_of_four(&bytes[16..], size_mod32 as u64);
+            let remainder = &bytes[(size_mod32 & !3) + size_mod4 - 4..];
+            let last4 = LE::read_i32(remainder);
+            let packetH = V2x64U::from(unsafe { _mm_insert_epi32(packetT.0, last4, 3) });
+            self.update(packetH, packetL);
         } else {
+            let remainder = &bytes[size_mod32 & !3..];
             let packetL = SseHash::load_multiple_of_four(bytes, size_mod32 as u64);
             let last4 = unordered_load3(remainder);
             let packetH = V2x64U::from(unsafe { _mm_cvtsi64_si128(last4 as i64) });
-            self.update(packetL, packetH);
+            self.update(packetH, packetL);
         }
     }
 
@@ -298,7 +324,9 @@ fn unordered_load3(from: &[u8]) -> u64 {
 
     let size_mod4 = from.len();
 
-    u64::from(from[0]) + u64::from(from[size_mod4 >> 1]) + u64::from(from[size_mod4 - 1])
+    u64::from(from[0])
+        + (u64::from(from[size_mod4 >> 1]) << 8)
+        + (u64::from(from[size_mod4 - 1]) << 16)
 }
 
 #[derive(Default, Clone)]
@@ -957,15 +985,29 @@ mod tests {
             0x1F1E1D1C1B1A1918,
         ]);
 
-        let mut one = false;
         for i in 0..64 {
             assert_eq!(expected64[i], PortableHash::hash64(&data[..i], &key));
             assert_eq!(expected128[i], PortableHash::hash128(&data[..i], &key));
             assert_eq!(expected256[i], PortableHash::hash256(&data[..i], &key));
-
-            one |= PortableHash::hash64(&data[..i], &key) == SseHash::hash64(&data[..i], &key)
         }
+    }
 
-        assert!(one);
+    #[test]
+    fn sseHashEqPortable() {
+        let data: Vec<u8> = (0..65).map(|x| x as u8).collect();
+        let key = Key([
+            0x0706050403020100,
+            0x0F0E0D0C0B0A0908,
+            0x1716151413121110,
+            0x1F1E1D1C1B1A1918,
+        ]);
+
+        for i in 0..64 {
+            println!("{}", i);
+            assert_eq!(
+                PortableHash::hash64(&data[..i], &key),
+                SseHash::hash64(&data[..i], &key)
+            );
+        }
     }
 }
