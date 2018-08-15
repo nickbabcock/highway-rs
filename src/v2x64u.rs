@@ -28,11 +28,6 @@ impl fmt::Debug for V2x64U {
 
 impl Copy for V2x64U {}
 
-macro_rules! _mm_shuffle {
-    ($z:expr, $y:expr, $x:expr, $w:expr) => {
-        ($z << 6) | ($y << 4) | ($x << 2) | $w
-    };
-}
 
 impl V2x64U {
     pub fn new(hi: u64, low: u64) -> Self {

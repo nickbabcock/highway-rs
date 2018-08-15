@@ -3,7 +3,7 @@ extern crate criterion;
 extern crate highway;
 
 use criterion::{Criterion, ParameterizedBenchmark, Throughput};
-use highway::{Key, PortableHash, SseHash};
+use highway::{Key, PortableHash, SseHash, AvxHash};
 
 fn hashing(c: &mut Criterion) {
     let parameters = vec![1, 4, 16, 64, 256, 1024, 4096, 16384, 65536];
@@ -23,7 +23,11 @@ fn hashing(c: &mut Criterion) {
             let key = Key([0, 0, 0, 0]);
             b.iter(|| SseHash::hash64(&data, &key))
         })
-            .throughput(|s| Throughput::Bytes(*s as u32)),
+        .with_function("avx", |b, param| {
+            let data = vec![0u8; *param];
+            let key = Key([0, 0, 0, 0]);
+            b.iter(|| AvxHash::hash64(&data, &key))
+        }).throughput(|s| Throughput::Bytes(*s as u32))
     );
 }
 
