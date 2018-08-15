@@ -28,7 +28,6 @@ impl fmt::Debug for V2x64U {
 
 impl Copy for V2x64U {}
 
-
 impl V2x64U {
     pub fn new(hi: u64, low: u64) -> Self {
         V2x64U(unsafe { _mm_set_epi64x(hi as i64, low as i64) })

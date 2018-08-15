@@ -45,15 +45,13 @@ impl V4x64U {
         V4x64U::from(unsafe { _mm256_shuffle_epi8(self.0, mask.0) })
     }
 
-	pub fn mul_low32(&self, x: &V4x64U) -> Self {
-		V4x64U::from(unsafe { _mm256_mul_epu32(self.0, x.0) })
-	}
-
-/*
-    pub fn and_not(&self, neg_mask: &V4x64U) -> Self {
-        V4x64U::from(unsafe { _mm_andnot_si128(neg_mask.0, self.0) })
+    pub fn mul_low32(&self, x: &V4x64U) -> Self {
+        V4x64U::from(unsafe { _mm256_mul_epu32(self.0, x.0) })
     }
-    */
+
+    pub fn and_not(&self, neg_mask: &V4x64U) -> Self {
+        V4x64U::from(unsafe { _mm256_andnot_si256(neg_mask.0, self.0) })
+    }
 }
 
 impl From<__m256i> for V4x64U {
