@@ -80,7 +80,7 @@ impl AvxHash {
         }
 
         let sum0 = V2x64U::from(unsafe { _mm256_castsi256_si128((self.v0 + self.mul0).0) });
-        let sum1 = V2x64U::from(unsafe { _mm256_castsi256_si128((self.v1 + self.mul1).0) });
+        let sum1 = V2x64U::from(unsafe { _mm256_extracti128_si256((self.v1 + self.mul1).0, 1) });
         let hash = sum0 + sum1;
         let mut result: u128 = 0;
         unsafe { _mm_storeu_si128((&mut result as *mut u128 as *mut __m128i), hash.0) };
@@ -95,10 +95,10 @@ impl AvxHash {
 
         let sum0 = self.v0 + self.mul0;
         let sum1 = self.v1 + self.mul1;
-        let hash = sum0 + sum1;
-        let mut result: (u128, u128) = (0, 0);
-        unsafe { _mm256_storeu_si256((&mut result as *mut (u128, u128) as *mut __m256i), hash.0) };
-        result
+        let hash = AvxHash::modular_reduction(&sum1, &sum0);
+        let mut result: [u128; 2] = [0, 0];
+        unsafe { _mm256_storeu_si256((&mut result[0] as *mut u128 as *mut __m256i), hash.0) };
+        (result[0], result[1])
     }
 
     fn reset(&mut self) {
@@ -209,9 +209,9 @@ impl AvxHash {
     }
 
     fn modular_reduction(x: &V4x64U, init: &V4x64U) -> V4x64U {
-        let zero = V4x64U::default();
+        let zero = *x ^ *x;
         let top_bits2 = V4x64U::from(unsafe { _mm256_srli_epi64(x.0, 62) });
-        let ones = V4x64U::new(1, 1, 1, 1);
+        let ones = V4x64U::from(unsafe { _mm256_cmpeq_epi64(x.0, x.0) });
         let shifted1_unmasked = *x + *x;
         let top_bits1 = V4x64U::from(unsafe { _mm256_srli_epi64(x.0, 63) });
         let upper_8bytes = V4x64U::from(unsafe { _mm256_slli_si256(ones.0, 8) });
