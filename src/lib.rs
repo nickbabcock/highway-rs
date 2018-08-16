@@ -218,7 +218,7 @@ impl AvxHash {
         let shifted2 = shifted1_unmasked + shifted1_unmasked;
         let upper_bit_of_128 = V4x64U::from(unsafe { _mm256_slli_epi64(upper_8bytes.0, 63) });
         let new_low_bits2 = V4x64U::from(unsafe { _mm256_unpacklo_epi64(zero.0, top_bits2.0) });
-        let shifted1 = upper_bit_of_128.and_not(&shifted1_unmasked);
+        let shifted1 = shifted1_unmasked.and_not(&upper_bit_of_128);
         let new_low_bits1 = V4x64U::from(unsafe { _mm256_unpacklo_epi64(zero.0, top_bits1.0) });
 
         *init ^ shifted2 ^ new_low_bits2 ^ shifted1 ^ new_low_bits1
@@ -1179,11 +1179,10 @@ mod tests {
                 AvxHash::hash128(&data[..i], &key)
             );
 
-            /*
             assert_eq!(
                 PortableHash::hash256(&data[..i], &key),
-                SseHash::hash256(&data[..i], &key)
-            );*/
+                AvxHash::hash256(&data[..i], &key)
+            );
         }
     }
 }
