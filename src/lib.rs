@@ -253,13 +253,13 @@ impl SseHash {
     }
 
     pub fn hash128(data: &[u8], key: &Key) -> u128 {
-        let mut hash = PortableHash::new(key);
+        let mut hash = SseHash::new(key);
         hash.process_all(data);
         hash.finalize128()
     }
 
     pub fn hash256(data: &[u8], key: &Key) -> (u128, u128) {
-        let mut hash = PortableHash::new(key);
+        let mut hash = SseHash::new(key);
         hash.process_all(data);
         hash.finalize256()
     }
@@ -328,20 +328,20 @@ impl SseHash {
     }
 
     fn finalize128(&mut self) -> u128 {
-        for i in 0..4 {
+        for i in 0..6 {
             self.permute_and_update();
         }
 
         let sum0 = self.v0L + self.mul0L;
-        let sum1 = self.v1L + self.mul1L;
+        let sum1 = self.v1H + self.mul1H;
         let hash = sum0 + sum1;
         let mut result: u128 = 0;
-        unsafe { _mm_storel_epi64((&mut result as *mut u128) as *mut __m128i, hash.0) };
+        unsafe { _mm_storeu_si128((&mut result as *mut u128) as *mut __m128i, hash.0) };
         result
     }
 
     fn finalize256(&mut self) -> (u128, u128) {
-        for i in 0..4 {
+        for i in 0..10 {
             self.permute_and_update();
         }
 
@@ -353,8 +353,8 @@ impl SseHash {
         let hashH = SseHash::modular_reduction(&sum1H, &sum0H);
         let mut resultL: u128 = 0;
         let mut resultH: u128 = 0;
-        unsafe { _mm_storel_epi64((&mut resultL as *mut u128) as *mut __m128i, hashL.0) };
-        unsafe { _mm_storel_epi64((&mut resultH as *mut u128) as *mut __m128i, hashH.0) };
+        unsafe { _mm_storeu_si128((&mut resultL as *mut u128) as *mut __m128i, hashL.0) };
+        unsafe { _mm_storeu_si128((&mut resultH as *mut u128) as *mut __m128i, hashH.0) };
         (resultL, resultH)
     }
 
