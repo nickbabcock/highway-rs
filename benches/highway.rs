@@ -2,6 +2,8 @@
 extern crate criterion;
 extern crate highway;
 extern crate sha2;
+extern crate fnv;
+extern crate farmhash;
 
 use criterion::{Criterion, ParameterizedBenchmark, Throughput};
 use highway::{AvxHash, Key, PortableHash, SseHash};
@@ -37,6 +39,16 @@ fn hashing(c: &mut Criterion) {
                 hasher.write(&data);
                 hasher.finish()
             })
+        }).with_function("fnv", |b, param| {
+            let data = vec![0u8; *param];
+            b.iter(|| {
+                let mut hasher = fnv::FnvHasher::with_key(0);
+                hasher.write(&data);
+                hasher.finish()
+            })
+        }).with_function("farmhash", |b, param| {
+            let data = vec![0u8; *param];
+            b.iter(|| farmhash::hash64(&data))
         }).throughput(|s| Throughput::Bytes(*s as u32)),
     );
 
