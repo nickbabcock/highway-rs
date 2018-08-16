@@ -6,6 +6,8 @@ extern crate sha2;
 use criterion::{Criterion, ParameterizedBenchmark, Throughput};
 use highway::{AvxHash, Key, PortableHash, SseHash};
 use sha2::{Sha256, Digest};
+use std::collections::hash_map::DefaultHasher;
+use std::hash::Hasher;
 
 fn hashing(c: &mut Criterion) {
     let parameters = vec![1, 4, 16, 64, 256, 1024, 4096, 16384, 65536];
@@ -28,6 +30,13 @@ fn hashing(c: &mut Criterion) {
             let data = vec![0u8; *param];
             let key = Key([0, 0, 0, 0]);
             b.iter(|| AvxHash::hash64(&data, &key))
+        }).with_function("default", |b, param| {
+            let data = vec![0u8; *param];
+            b.iter(|| {
+                let mut hasher = DefaultHasher::new();
+                hasher.write(&data);
+                hasher.finish()
+            })
         }).throughput(|s| Throughput::Bytes(*s as u32)),
     );
 
