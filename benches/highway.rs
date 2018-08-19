@@ -32,7 +32,7 @@ fn hashing(c: &mut Criterion) {
             let data = vec![0u8; *param];
             let key = Key([0, 0, 0, 0]);
             b.iter(|| AvxHash::hash64(&data, &key))
-        }).with_function("default", |b, param| {
+        }).with_function("hashmap default", |b, param| {
             let data = vec![0u8; *param];
             b.iter(|| {
                 let mut hasher = DefaultHasher::new();
