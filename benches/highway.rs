@@ -1,13 +1,13 @@
 #[macro_use]
 extern crate criterion;
+extern crate farmhash;
+extern crate fnv;
 extern crate highway;
 extern crate sha2;
-extern crate fnv;
-extern crate farmhash;
 
 use criterion::{Criterion, ParameterizedBenchmark, Throughput};
 use highway::{AvxHash, Key, PortableHash, SseHash};
-use sha2::{Sha256, Digest};
+use sha2::{Digest, Sha256};
 use std::collections::hash_map::DefaultHasher;
 use std::hash::Hasher;
 

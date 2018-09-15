@@ -3,18 +3,18 @@ extern crate byteorder;
 
 #[macro_use]
 mod macros;
+mod avx;
+mod internal;
+mod key;
+mod portable;
+mod sse;
 mod v2x64u;
 mod v4x64u;
-mod avx;
-mod sse;
-mod portable;
-mod key;
-mod internal;
 
 pub use avx::AvxHash;
-pub use sse::SseHash;
 pub use key::Key;
 pub use portable::PortableHash;
+pub use sse::SseHash;
 
 #[cfg(test)]
 mod tests {

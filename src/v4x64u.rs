@@ -5,8 +5,7 @@ use std::arch::x86_64::*;
 
 use std::fmt;
 use std::ops::{
-    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign,
-    SubAssign,
+    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, SubAssign,
 };
 
 #[derive(Clone, Copy)]
