@@ -1,4 +1,4 @@
-#![allow(unused, non_snake_case)]
+#![allow(non_snake_case)]
 extern crate byteorder;
 
 use byteorder::{ByteOrder, LE};

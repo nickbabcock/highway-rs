@@ -52,7 +52,7 @@ impl AvxHash {
     }
 
     fn finalize64(&mut self) -> u64 {
-        for i in 0..4 {
+        for _i in 0..4 {
             let permuted = AvxHash::permute(&self.v0);
             self.update(permuted);
         }
@@ -67,7 +67,7 @@ impl AvxHash {
     }
 
     fn finalize128(&mut self) -> u128 {
-        for i in 0..6 {
+        for _i in 0..6 {
             let permuted = AvxHash::permute(&self.v0);
             self.update(permuted);
         }
@@ -81,7 +81,7 @@ impl AvxHash {
     }
 
     fn finalize256(&mut self) -> (u128, u128) {
-        for i in 0..10 {
+        for _i in 0..10 {
             let permuted = AvxHash::permute(&self.v0);
             self.update(permuted);
         }
