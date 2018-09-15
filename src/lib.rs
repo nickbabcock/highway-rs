@@ -1,14 +1,6 @@
 #![allow(non_snake_case)]
 extern crate byteorder;
 
-use byteorder::{ByteOrder, LE};
-use std::fmt;
-use std::ops::Index;
-use std::ops::{
-    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, ShlAssign,
-    ShrAssign, SubAssign,
-};
-
 #[macro_use]
 mod macros;
 mod v2x64u;
@@ -19,19 +11,10 @@ mod portable;
 mod key;
 mod internal;
 
-use v2x64u::V2x64U;
-use v4x64u::V4x64U;
-
-#[cfg(target_arch = "x86")]
-use std::arch::x86::*;
-#[cfg(target_arch = "x86_64")]
-use std::arch::x86_64::*;
-
 pub use avx::AvxHash;
 pub use sse::SseHash;
 pub use key::Key;
 pub use portable::PortableHash;
-use internal::unordered_load3;
 
 #[cfg(test)]
 mod tests {

@@ -1,11 +1,4 @@
 use byteorder::{ByteOrder, LE};
-use std::fmt;
-use std::ops::Index;
-use std::ops::{
-    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, ShlAssign,
-    ShrAssign, SubAssign,
-};
-
 use v2x64u::V2x64U;
 use v4x64u::V4x64U;
 use internal::unordered_load3;
@@ -62,7 +55,7 @@ impl AvxHash {
         let hash = sum0 + sum1;
         let mut result: u64 = 0;
         // Each lane is sufficiently mixed, so just truncate to 64 bits.
-        unsafe { _mm_storel_epi64((&mut result as *mut u64 as *mut __m128i), hash.0) };
+        unsafe { _mm_storel_epi64(&mut result as *mut u64 as *mut __m128i, hash.0) };
         result
     }
 
@@ -76,7 +69,7 @@ impl AvxHash {
         let sum1 = V2x64U::from(unsafe { _mm256_extracti128_si256((self.v1 + self.mul1).0, 1) });
         let hash = sum0 + sum1;
         let mut result: u128 = 0;
-        unsafe { _mm_storeu_si128((&mut result as *mut u128 as *mut __m128i), hash.0) };
+        unsafe { _mm_storeu_si128(&mut result as *mut u128 as *mut __m128i, hash.0) };
         result
     }
 
@@ -90,7 +83,7 @@ impl AvxHash {
         let sum1 = self.v1 + self.mul1;
         let hash = AvxHash::modular_reduction(&sum1, &sum0);
         let mut result: [u128; 2] = [0, 0];
-        unsafe { _mm256_storeu_si256((&mut result[0] as *mut u128 as *mut __m256i), hash.0) };
+        unsafe { _mm256_storeu_si256(&mut result[0] as *mut u128 as *mut __m256i, hash.0) };
         (result[0], result[1])
     }
 
@@ -129,7 +122,7 @@ impl AvxHash {
             slice = &slice[32..];
         }
 
-        if (!slice.is_empty()) {
+        if !slice.is_empty() {
             self.update_remainder(&slice);
         }
     }

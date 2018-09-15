@@ -1,20 +1,5 @@
 use byteorder::{ByteOrder, LE};
-use std::fmt;
-use std::ops::Index;
-use std::ops::{
-    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, ShlAssign,
-    ShrAssign, SubAssign,
-};
-
-use v2x64u::V2x64U;
-use v4x64u::V4x64U;
-use internal::unordered_load3;
 use key::Key;
-
-#[cfg(target_arch = "x86")]
-use std::arch::x86::*;
-#[cfg(target_arch = "x86_64")]
-use std::arch::x86_64::*;
 
 #[derive(Default)]
 pub struct PortableHash {
@@ -194,7 +179,7 @@ impl PortableHash {
             slice = &slice[32..];
         }
 
-        if (!slice.is_empty()) {
+        if !slice.is_empty() {
             self.update_remainder(&slice);
         }
     }
@@ -221,11 +206,11 @@ impl PortableHash {
 
         PortableHash::rotate_32_by(size, &mut self.v1);
         packet[..remainder_jump].clone_from_slice(&bytes[..remainder_jump]);
-        if (size & 16 != 0) {
+        if size & 16 != 0 {
             for i in 0..4 {
                 packet[28 + i] = bytes[remainder_jump + i + size_mod4 - 4];
             }
-        } else if (size_mod4 != 0) {
+        } else if size_mod4 != 0 {
             packet[16] = remainder[0];
             packet[16 + 1] = remainder[size_mod4 >> 1];
             packet[16 + 2] = remainder[size_mod4 - 1];

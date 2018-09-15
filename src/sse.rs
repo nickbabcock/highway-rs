@@ -1,13 +1,5 @@
 use byteorder::{ByteOrder, LE};
-use std::fmt;
-use std::ops::Index;
-use std::ops::{
-    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, ShlAssign,
-    ShrAssign, SubAssign,
-};
-
 use v2x64u::V2x64U;
-use v4x64u::V4x64U;
 use internal::unordered_load3;
 use key::Key;
 
@@ -177,7 +169,7 @@ impl SseHash {
             slice = &slice[32..];
         }
 
-        if (!slice.is_empty()) {
+        if !slice.is_empty() {
             self.update_remainder(&slice);
         }
     }
@@ -185,7 +177,7 @@ impl SseHash {
     fn load_multiple_of_four(bytes: &[u8], size: u64) -> V2x64U {
         let mut data = &bytes[..];
         let mut mask4 = V2x64U::from(unsafe { _mm_cvtsi64_si128(0xFFFFFFFF) });
-        let mut ret = if (size & 8 != 0) {
+        let mut ret = if size & 8 != 0 {
             mask4 = V2x64U::from(unsafe { _mm_slli_si128(mask4.0, 8) });
             data = &bytes[8..];
             V2x64U::from(unsafe { _mm_loadl_epi64((&bytes[0] as *const u8) as *const __m128i) })
@@ -193,7 +185,7 @@ impl SseHash {
             V2x64U::new(0, 0)
         };
 
-        if (size & 4 != 0) {
+        if size & 4 != 0 {
             let word2 = unsafe { _mm_cvtsi32_si128(LE::read_i32(data)) };
             let broadcast = V2x64U::from(unsafe { _mm_shuffle_epi32(word2, 0) });
             ret |= broadcast & mask4;
