@@ -1,13 +1,13 @@
 language: rust
-rust: 
-  - '1.29.0'
-  - stable
-  - beta
-  - nightly
-
 matrix:
-  allow_failures:
-   - rust: nightly
+  include:
+    - rust: 1.12.0
+    - rust: stable
+    - rust: beta
+    - rust: nightly
+    - env: CROSS_TARGET=mips64-unknown-linux-gnuabi64
+      rust: stable
+      services: docker
+      sudo: required
 
-script:
-  - cargo test
+script: ci/script.sh
