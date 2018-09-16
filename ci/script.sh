@@ -14,6 +14,8 @@ else
   export TARGET_PARAM=""
 fi
 
+export RUSTFLAGS="-C target-cpu=native"
+
 "$CARGO_CMD" build --verbose $TARGET_PARAM
 "$CARGO_CMD" doc --verbose $TARGET_PARAM
 "$CARGO_CMD" test --verbose $TARGET_PARAM
