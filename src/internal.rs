@@ -1,3 +1,4 @@
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub fn unordered_load3(from: &[u8]) -> u64 {
     if from.is_empty() {
         return 0;
