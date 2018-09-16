@@ -3,6 +3,7 @@ use internal::unordered_load3;
 use key::Key;
 use v2x64u::V2x64U;
 use v4x64u::V4x64U;
+use traits::HighwayHash;
 
 #[cfg(target_arch = "x86")]
 use std::arch::x86::*;
@@ -16,6 +17,26 @@ pub struct AvxHash {
     v1: V4x64U,
     mul0: V4x64U,
     mul1: V4x64U,
+}
+
+impl HighwayHash for AvxHash {
+    fn hash64(data: &[u8], key: &Key) -> u64 {
+        let mut hash = Self::new(key);
+        hash.process_all(data);
+        hash.finalize64()
+    }
+
+    fn hash128(data: &[u8], key: &Key) -> u128 {
+        let mut hash = Self::new(key);
+        hash.process_all(data);
+        hash.finalize128()
+    }
+
+    fn hash256(data: &[u8], key: &Key) -> (u128, u128) {
+        let mut hash = Self::new(key);
+        hash.process_all(data);
+        hash.finalize256()
+    }
 }
 
 impl AvxHash {

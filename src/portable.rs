@@ -1,5 +1,6 @@
 use byteorder::{ByteOrder, LE};
 use key::Key;
+use traits::HighwayHash;
 
 #[derive(Default)]
 pub struct PortableHash {
@@ -10,30 +11,32 @@ pub struct PortableHash {
     mul1: [u64; 4],
 }
 
+impl HighwayHash for PortableHash {
+    fn hash64(data: &[u8], key: &Key) -> u64 {
+        let mut hash = Self::new(key);
+        hash.process_all(data);
+        hash.finalize64()
+    }
+
+    fn hash128(data: &[u8], key: &Key) -> u128 {
+        let mut hash = Self::new(key);
+        hash.process_all(data);
+        hash.finalize128()
+    }
+
+    fn hash256(data: &[u8], key: &Key) -> (u128, u128) {
+        let mut hash = Self::new(key);
+        hash.process_all(data);
+        hash.finalize256()
+    }
+}
+
 impl PortableHash {
     pub fn new(key: &Key) -> Self {
         PortableHash {
             key: key.clone(),
             ..Default::default()
         }
-    }
-
-    pub fn hash64(data: &[u8], key: &Key) -> u64 {
-        let mut hash = PortableHash::new(key);
-        hash.process_all(data);
-        hash.finalize64()
-    }
-
-    pub fn hash128(data: &[u8], key: &Key) -> u128 {
-        let mut hash = PortableHash::new(key);
-        hash.process_all(data);
-        hash.finalize128()
-    }
-
-    pub fn hash256(data: &[u8], key: &Key) -> (u128, u128) {
-        let mut hash = PortableHash::new(key);
-        hash.process_all(data);
-        hash.finalize256()
     }
 
     fn reset(&mut self) {
