@@ -3,10 +3,6 @@ use internal::unordered_load3;
 use key::Key;
 use traits::HighwayHash;
 use v2x64u::V2x64U;
-
-#[cfg(target_arch = "x86")]
-use std::arch::x86::*;
-#[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
 #[derive(Default)]
@@ -23,49 +19,36 @@ pub struct SseHash {
 }
 
 impl HighwayHash for SseHash {
-    fn hash64(data: &[u8], key: &Key) -> u64 {
-        let mut hash = Self::new(key);
-        hash.process_all(data);
-        hash.finalize64()
+    fn hash64(mut self, data: &[u8]) -> u64 {
+        self.process_all(data);
+        self.finalize64()
     }
 
-    fn hash128(data: &[u8], key: &Key) -> u128 {
-        let mut hash = Self::new(key);
-        hash.process_all(data);
-        hash.finalize128()
+    fn hash128(mut self, data: &[u8]) -> u128 {
+        self.process_all(data);
+        self.finalize128()
     }
 
-    fn hash256(data: &[u8], key: &Key) -> (u128, u128) {
-        let mut hash = Self::new(key);
-        hash.process_all(data);
-        hash.finalize256()
+    fn hash256(mut self, data: &[u8]) -> (u128, u128) {
+        self.process_all(data);
+        self.finalize256()
     }
 }
 
 impl SseHash {
-    pub fn new(key: &Key) -> Self {
+    pub unsafe fn force_new(key: &Key) -> Self {
         SseHash {
             key: key.clone(),
             ..Default::default()
         }
     }
 
-    pub fn hash64(data: &[u8], key: &Key) -> u64 {
-        let mut hash = SseHash::new(key);
-        hash.process_all(data);
-        hash.finalize64()
-    }
-
-    pub fn hash128(data: &[u8], key: &Key) -> u128 {
-        let mut hash = SseHash::new(key);
-        hash.process_all(data);
-        hash.finalize128()
-    }
-
-    pub fn hash256(data: &[u8], key: &Key) -> (u128, u128) {
-        let mut hash = SseHash::new(key);
-        hash.process_all(data);
-        hash.finalize256()
+    pub fn new(key: &Key) -> Option<Self> {
+        if is_x86_feature_detected!("sse4.1") {
+            Some(unsafe { Self::force_new(key) })
+        } else {
+            None
+        }
     }
 
     fn reset(&mut self) {

@@ -12,22 +12,19 @@ pub struct PortableHash {
 }
 
 impl HighwayHash for PortableHash {
-    fn hash64(data: &[u8], key: &Key) -> u64 {
-        let mut hash = Self::new(key);
-        hash.process_all(data);
-        hash.finalize64()
+    fn hash64(mut self, data: &[u8]) -> u64 {
+        self.process_all(data);
+        self.finalize64()
     }
 
-    fn hash128(data: &[u8], key: &Key) -> u128 {
-        let mut hash = Self::new(key);
-        hash.process_all(data);
-        hash.finalize128()
+    fn hash128(mut self, data: &[u8]) -> u128 {
+        self.process_all(data);
+        self.finalize128()
     }
 
-    fn hash256(data: &[u8], key: &Key) -> (u128, u128) {
-        let mut hash = Self::new(key);
-        hash.process_all(data);
-        hash.finalize256()
+    fn hash256(mut self, data: &[u8]) -> (u128, u128) {
+        self.process_all(data);
+        self.finalize256()
     }
 }
 

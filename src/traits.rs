@@ -1,7 +1,5 @@
-use key::Key;
-
 pub trait HighwayHash {
-    fn hash64(data: &[u8], key: &Key) -> u64;
-    fn hash128(data: &[u8], key: &Key) -> u128;
-    fn hash256(data: &[u8], key: &Key) -> (u128, u128);
+    fn hash64(self, data: &[u8]) -> u64;
+    fn hash128(self, data: &[u8]) -> u128;
+    fn hash256(self, data: &[u8]) -> (u128, u128);
 }

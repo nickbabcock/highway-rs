@@ -1,24 +1,54 @@
 use key::Key;
 use portable::PortableHash;
 use traits::HighwayHash;
+use avx::AvxHash;
+use sse::SseHash;
 
-pub struct HighwayBuilder;
+pub enum HighwayBuilder {
+    Portable(PortableHash),
+    Sse(SseHash),
+    Avx(AvxHash)
+}
+
+impl HighwayHash for HighwayBuilder {
+    fn hash64(self, data: &[u8]) -> u64 {
+        match self {
+            HighwayBuilder::Portable(x) => x.hash64(data),
+            HighwayBuilder::Avx(x) => x.hash64(data),
+            HighwayBuilder::Sse(x) => x.hash64(data),
+        }
+    }
+
+    fn hash128(self, data: &[u8]) -> u128 {
+        match self {
+            HighwayBuilder::Portable(x) => x.hash128(data),
+            HighwayBuilder::Avx(x) => x.hash128(data),
+            HighwayBuilder::Sse(x) => x.hash128(data),
+        }
+    }
+
+    fn hash256(self, data: &[u8]) -> (u128, u128) {
+        match self {
+            HighwayBuilder::Portable(x) => x.hash256(data),
+            HighwayBuilder::Avx(x) => x.hash256(data),
+            HighwayBuilder::Sse(x) => x.hash256(data),
+        }
+    }
+}
 
 impl HighwayBuilder {
-    pub fn hash64(data: &[u8], key: &Key) -> u64 {
+    pub fn new(key: &Key) -> Self {
         #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
         {
-            if is_x86_feature_detected!("avx2") {
-                use avx::AvxHash;
-                return AvxHash::hash64(data, key);
+            if let Some(h) = AvxHash::new(key) {
+                return HighwayBuilder::Avx(h);
             }
 
-            if is_x86_feature_detected!("sse4.1") {
-                use sse::SseHash;
-                return SseHash::hash64(data, key);
+            if let Some(h) = SseHash::new(key) {
+                return HighwayBuilder::Sse(h);
             }
         }
 
-        PortableHash::hash64(data, key)
+        HighwayBuilder::Portable(PortableHash::new(key))
     }
 }

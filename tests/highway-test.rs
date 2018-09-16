@@ -1,19 +1,19 @@
 extern crate highway;
 
-use highway::{AvxHash, HighwayHash, Key, PortableHash, SseHash};
+use highway::{HighwayHash, Key, PortableHash};
 
 #[test]
 fn portable_hash_simple() {
     let key = Key([1, 2, 3, 4]);
     let b: Vec<u8> = (0..33).map(|x| 128 + x as u8).collect();
-    let hash = PortableHash::hash64(&b[..], &key);
+    let hash = PortableHash::new(&key).hash64(&b[..]);
     assert_eq!(0x53c516cce478cad7, hash);
 }
 
 #[test]
 fn portable_hash_simple2() {
     let key = Key([1, 2, 3, 4]);
-    let hash = PortableHash::hash64(&[(-1 as i8) as u8], &key);
+    let hash = PortableHash::new(&key).hash64(&[(-1 as i8) as u8]);
     assert_eq!(0x7858f24d2d79b2b2, hash);
 }
 
@@ -426,14 +426,17 @@ fn portable_hash_all() {
     ]);
 
     for i in 0..64 {
-        assert_eq!(expected64[i], PortableHash::hash64(&data[..i], &key));
-        assert_eq!(expected128[i], PortableHash::hash128(&data[..i], &key));
-        assert_eq!(expected256[i], PortableHash::hash256(&data[..i], &key));
+        assert_eq!(expected64[i], PortableHash::new(&key).hash64(&data[..i]));
+        assert_eq!(expected128[i], PortableHash::new(&key).hash128(&data[..i]));
+        assert_eq!(expected256[i], PortableHash::new(&key).hash256(&data[..i]));
     }
 }
 
+#[cfg(all(any(target_arch = "x86", target_arch = "x86_64"), target_feature = "sse4.1"))]
 #[test]
 fn sse_hash_eq_portable() {
+    use highway::SseHash;
+
     let data: Vec<u8> = (0..65).map(|x| x as u8).collect();
     let key = Key([
         0x0706050403020100,
@@ -445,24 +448,27 @@ fn sse_hash_eq_portable() {
     for i in 0..64 {
         println!("{}", i);
         assert_eq!(
-            PortableHash::hash64(&data[..i], &key),
-            SseHash::hash64(&data[..i], &key)
+            PortableHash::new(&key).hash64(&data[..i]),
+            SseHash::new(&key).expect("sse4.1").hash64(&data[..i])
         );
 
         assert_eq!(
-            PortableHash::hash128(&data[..i], &key),
-            SseHash::hash128(&data[..i], &key)
+            PortableHash::new(&key).hash128(&data[..i]),
+            SseHash::new(&key).expect("sse4.1").hash128(&data[..i])
         );
 
         assert_eq!(
-            PortableHash::hash256(&data[..i], &key),
-            SseHash::hash256(&data[..i], &key)
+            PortableHash::new(&key).hash256(&data[..i]),
+            SseHash::new(&key).expect("sse4.1").hash256(&data[..i])
         );
     }
 }
 
 #[test]
+#[cfg(all(any(target_arch = "x86", target_arch = "x86_64"), target_feature = "avx2"))]
 fn avx_hash_eq_portable() {
+    use highway::AvxHash;
+
     let data: Vec<u8> = (0..65).map(|x| x as u8).collect();
     let key = Key([
         0x0706050403020100,
@@ -474,18 +480,49 @@ fn avx_hash_eq_portable() {
     for i in 0..64 {
         println!("{}", i);
         assert_eq!(
-            PortableHash::hash64(&data[..i], &key),
-            AvxHash::hash64(&data[..i], &key)
+            PortableHash::new(&key).hash64(&data[..i]),
+            AvxHash::new(&key).expect("avx2").hash64(&data[..i])
         );
 
         assert_eq!(
-            PortableHash::hash128(&data[..i], &key),
-            AvxHash::hash128(&data[..i], &key)
+            PortableHash::new(&key).hash128(&data[..i]),
+            AvxHash::new(&key).expect("avx2").hash128(&data[..i])
         );
 
         assert_eq!(
-            PortableHash::hash256(&data[..i], &key),
-            AvxHash::hash256(&data[..i], &key)
+            PortableHash::new(&key).hash256(&data[..i]),
+            AvxHash::new(&key).expect("avx2").hash256(&data[..i])
+        );
+    }
+}
+
+#[test]
+fn builder_hash_eq_portable() {
+    use highway::HighwayBuilder;
+
+    let data: Vec<u8> = (0..65).map(|x| x as u8).collect();
+    let key = Key([
+        0x0706050403020100,
+        0x0F0E0D0C0B0A0908,
+        0x1716151413121110,
+        0x1F1E1D1C1B1A1918,
+    ]);
+
+    for i in 0..64 {
+        println!("{}", i);
+        assert_eq!(
+            PortableHash::new(&key).hash64(&data[..i]),
+            HighwayBuilder::new(&key).hash64(&data[..i])
+        );
+
+        assert_eq!(
+            PortableHash::new(&key).hash128(&data[..i]),
+            HighwayBuilder::new(&key).hash128(&data[..i])
+        );
+
+        assert_eq!(
+            PortableHash::new(&key).hash256(&data[..i]),
+            HighwayBuilder::new(&key).hash256(&data[..i])
         );
     }
 }

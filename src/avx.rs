@@ -4,10 +4,6 @@ use key::Key;
 use traits::HighwayHash;
 use v2x64u::V2x64U;
 use v4x64u::V4x64U;
-
-#[cfg(target_arch = "x86")]
-use std::arch::x86::*;
-#[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
 #[derive(Default)]
@@ -20,49 +16,36 @@ pub struct AvxHash {
 }
 
 impl HighwayHash for AvxHash {
-    fn hash64(data: &[u8], key: &Key) -> u64 {
-        let mut hash = Self::new(key);
-        hash.process_all(data);
-        hash.finalize64()
+    fn hash64(mut self, data: &[u8]) -> u64 {
+        self.process_all(data);
+        self.finalize64()
     }
 
-    fn hash128(data: &[u8], key: &Key) -> u128 {
-        let mut hash = Self::new(key);
-        hash.process_all(data);
-        hash.finalize128()
+    fn hash128(mut self, data: &[u8]) -> u128 {
+        self.process_all(data);
+        self.finalize128()
     }
 
-    fn hash256(data: &[u8], key: &Key) -> (u128, u128) {
-        let mut hash = Self::new(key);
-        hash.process_all(data);
-        hash.finalize256()
+    fn hash256(mut self, data: &[u8]) -> (u128, u128) {
+        self.process_all(data);
+        self.finalize256()
     }
 }
 
 impl AvxHash {
-    pub fn new(key: &Key) -> Self {
+    pub unsafe fn force_new(key: &Key) -> Self {
         AvxHash {
             key: key.clone(),
             ..Default::default()
         }
     }
 
-    pub fn hash64(data: &[u8], key: &Key) -> u64 {
-        let mut hash = AvxHash::new(key);
-        hash.process_all(data);
-        hash.finalize64()
-    }
-
-    pub fn hash128(data: &[u8], key: &Key) -> u128 {
-        let mut hash = AvxHash::new(key);
-        hash.process_all(data);
-        hash.finalize128()
-    }
-
-    pub fn hash256(data: &[u8], key: &Key) -> (u128, u128) {
-        let mut hash = AvxHash::new(key);
-        hash.process_all(data);
-        hash.finalize256()
+    pub fn new(key: &Key) -> Option<Self> {
+        if is_x86_feature_detected!("avx2") {
+            Some(unsafe { Self::force_new(key) })
+        } else {
+            None
+        }
     }
 
     fn finalize64(&mut self) -> u64 {
