@@ -1,10 +1,10 @@
 use byteorder::{ByteOrder, LE};
 use internal::unordered_load3;
 use key::Key;
+use std::arch::x86_64::*;
 use traits::HighwayHash;
 use v2x64u::V2x64U;
 use v4x64u::V4x64U;
-use std::arch::x86_64::*;
 
 #[derive(Default)]
 pub struct AvxHash {

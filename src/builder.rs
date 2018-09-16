@@ -1,13 +1,13 @@
+use avx::AvxHash;
 use key::Key;
 use portable::PortableHash;
-use traits::HighwayHash;
-use avx::AvxHash;
 use sse::SseHash;
+use traits::HighwayHash;
 
 pub enum HighwayBuilder {
     Portable(PortableHash),
     Sse(SseHash),
-    Avx(AvxHash)
+    Avx(AvxHash),
 }
 
 impl HighwayHash for HighwayBuilder {
