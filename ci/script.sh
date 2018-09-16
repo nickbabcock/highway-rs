@@ -9,8 +9,8 @@ if [ ! -z "$CROSS_TARGET" ]; then
   cargo install cross --force
   export CARGO_CMD="cross"
   export TARGET_PARAM="--target $CROSS_TARGET"
-  export RUSTFLAGS="-C target-cpu=native"
 else
+  export RUSTFLAGS="-C target-cpu=native"
   export CARGO_CMD="cargo"
   export TARGET_PARAM=""
 fi
@@ -18,7 +18,7 @@ fi
 "$CARGO_CMD" build --verbose $TARGET_PARAM
 "$CARGO_CMD" test --verbose $TARGET_PARAM
 
-if [ ! -z "$CROSS_TARGET" ]; then
+if [ -z "$CROSS_TARGET" ]; then
     "$CARGO_CMD" doc --verbose $TARGET_PARAM
     "$CARGO_CMD" bench --no-run --verbose $TARGET_PARAM
 fi
