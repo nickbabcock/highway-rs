@@ -17,18 +17,18 @@ Keep in mind, benchmarks will vary by machine. Newer machines typically handle A
 
 We'll first take a look at the throughput when calculating the 64bit hash of a varying payload with various implementations
 
-![64bit-highwayhassh.png](assets/64bit-highwayhassh.png)
+![64bit-highwayhash.png](assets/64bit-highwayhash.png)
 
 HighwayHash is not meant to be fast for extremely short payloads, as we can see that it falls short of fnv and Farmhash. HighwayHash has a series of rounds executed when the hash value is finally computed that permutes internal state, and the computation occurs at any payload size. This overhead is where the vast majority of time is spent at shorter payloads. At larger payload sizes we see HighwayHash as one of the top leaders. Some may find HighwayHash more desirable than Farmhash due to HighwayHash offering itself as a strong hash function and having a 256bit output.
 
 Now taking a look at calculating a 256 hash value, we see a similar story.
 
-![256bit-highwayhassh.png](assets/256bit-highwayhassh.png)
+![256bit-highwayhash.png](assets/256bit-highwayhash.png)
 
 HighwayHash is slow and comparable to other functions, but HighwayHash shines at larger payloads.
 
 What should be noted is that there is a performance difference between calculating the 64bit and 256bit HighwayHash due to the 256bit requiring more rounds of permutation. The graph below depicts these differences.
 
-![64bit-vs-256bit-highwayhassh.png](assets/64bit-vs-256bit-highwayhassh.png)
+![64bit-vs-256bit-highwayhash.png](assets/64bit-vs-256bit-highwayhash.png)
 
 Up until 1024 bytes, calculating the 64bit hash is twice as fast when using SIMD instructions; however by 16KiB both implementations reach the same steady state across all implementations.
