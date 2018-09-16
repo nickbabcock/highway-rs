@@ -6,7 +6,7 @@ extern crate highway;
 extern crate sha2;
 
 use criterion::{Criterion, ParameterizedBenchmark, Throughput};
-use highway::{AvxHash, Key, PortableHash, SseHash};
+use highway::{AvxHash, HighwayHash, Key, PortableHash, SseHash};
 use sha2::{Digest, Sha256};
 use std::collections::hash_map::DefaultHasher;
 use std::hash::Hasher;

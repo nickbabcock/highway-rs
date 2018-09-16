@@ -1,8 +1,8 @@
 use byteorder::{ByteOrder, LE};
 use internal::unordered_load3;
 use key::Key;
-use v2x64u::V2x64U;
 use traits::HighwayHash;
+use v2x64u::V2x64U;
 
 #[cfg(target_arch = "x86")]
 use std::arch::x86::*;

@@ -1,7 +1,6 @@
 extern crate highway;
 
-use highway::{PortableHash, Key, AvxHash, SseHash, HighwayHash};
-
+use highway::{AvxHash, HighwayHash, Key, PortableHash, SseHash};
 
 #[test]
 fn portable_hash_simple() {
