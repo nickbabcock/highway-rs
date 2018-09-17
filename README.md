@@ -32,3 +32,8 @@ What should be noted is that there is a performance difference between calculati
 ![64bit-vs-256bit-highwayhash.png](assets/64bit-vs-256bit-highwayhash.png)
 
 Up until 1024 bytes, calculating the 64bit hash is twice as fast when using SIMD instructions; however by 16KiB both implementations reach the same steady state across all implementations.
+
+For those more into numbers and are curious about specifics or want more details about the hash functions at small payloads size, here is a table that breaks down (GB/s) at all payload sizes
+
+![highwayhash-table.png](assets/highwayhash-table.png)
+

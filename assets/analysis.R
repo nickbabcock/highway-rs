@@ -77,3 +77,33 @@ ggplot(df %>% filter(highwayhash == TRUE), aes(value, throughput, color = fn, li
   guides(linetype = FALSE) +
   scale_colour_manual(values = pal)
 ggsave('64bit-vs-256it-highwayhash.png', width = 8, height = 5, dpi = 100)
+
+reldf <- df %>%
+  mutate(throughput = throughput / 10^9) %>%
+  group_by(group, fn, highwayhash, value) %>%
+  summarize(throughput = mean(throughput)) %>%
+  ungroup() %>%
+  group_by(value) %>%
+  mutate(relative = throughput / max(throughput)) %>%
+  ungroup() %>%
+  complete(group, fn, value, fill = list(highwayhash = FALSE))
+
+ordered <- reldf %>% distinct(fn, highwayhash) %>% arrange(highwayhash, fn) %>% pull(fn)
+
+# Group all highway hash functions next to each other in the graph
+reldf$fn <- factor(reldf$fn, levels = ordered)
+
+ggplot(reldf, aes(fn, as.factor(value))) +
+  geom_tile(aes(fill = relative), color = "white") +
+  facet_grid(group ~ .) +
+  scale_x_discrete(position = "top") +
+  scale_fill_gradient(name = "", low = "white", high = "steelblue", na.value = "#D8D8D8", labels = c("lowest", "highest (GB/s)"), breaks = c(0,1)) +
+  xlab("Hash Library") +
+  ylab("Payload Size (bytes)") +
+  geom_text(size = 3.25, aes(label = ifelse(is.na(relative), "NA", format(round(throughput, 2), digits = 3)))) +
+  theme(axis.text.x.top=element_text(angle=45, hjust=0, vjust=0)) +
+  theme(legend.position="bottom") +
+  theme(plot.caption = element_text(hjust=0)) +
+  ggtitle("Comparison of Mean Throughput (GB/s) across Hash Functions") +
+  labs(caption = "Shaded relative by payload and return size\n(eg: fnv has the highest throughput for a 64bit value with a 1 byte payload, so it is a deep blue)")
+ggsave('highwayhash-table.png', width = 8, height = 6, dpi = 100)
