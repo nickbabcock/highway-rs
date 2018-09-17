@@ -1,10 +1,13 @@
 use byteorder::{ByteOrder, LE};
 use key::Key;
 use traits::HighwayHash;
+use internal::{PACKET_SIZE, HashPacket, Filled};
+
 
 #[derive(Default)]
 pub struct PortableHash {
     key: Key,
+    buffer: HashPacket,
     v0: [u64; 4],
     v1: [u64; 4],
     mul0: [u64; 4],
@@ -13,27 +16,29 @@ pub struct PortableHash {
 
 impl HighwayHash for PortableHash {
     fn hash64(mut self, data: &[u8]) -> u64 {
-        self.process_all(data);
+        self.append(data);
         self.finalize64()
     }
 
     fn hash128(mut self, data: &[u8]) -> u128 {
-        self.process_all(data);
+        self.append(data);
         self.finalize128()
     }
 
     fn hash256(mut self, data: &[u8]) -> (u128, u128) {
-        self.process_all(data);
+        self.append(data);
         self.finalize256()
     }
 }
 
 impl PortableHash {
     pub fn new(key: &Key) -> Self {
-        PortableHash {
+        let mut h = PortableHash {
             key: key.clone(),
             ..Default::default()
-        }
+        };
+        h.reset();
+        h
     }
 
     fn reset(&mut self) {
@@ -55,7 +60,11 @@ impl PortableHash {
         self.v1[3] = self.mul1[3] ^ ((self.key[3] >> 32) | (self.key[3] << 32));
     }
 
-    fn finalize64(&mut self) -> u64 {
+    pub fn finalize64(&mut self) -> u64 {
+        if !self.buffer.is_empty() {
+            self.update_remainder();
+        }
+
         for _i in 0..4 {
             self.permute_and_update();
         }
@@ -66,7 +75,11 @@ impl PortableHash {
             .wrapping_add(self.mul1[0])
     }
 
-    fn finalize128(&mut self) -> u128 {
+    pub fn finalize128(&mut self) -> u128 {
+        if !self.buffer.is_empty() {
+            self.update_remainder();
+        }
+
         for _i in 0..6 {
             self.permute_and_update();
         }
@@ -84,7 +97,11 @@ impl PortableHash {
         u128::from(low) + (u128::from(high) << 64)
     }
 
-    fn finalize256(&mut self) -> (u128, u128) {
+    pub fn finalize256(&mut self) -> (u128, u128) {
+        if !self.buffer.is_empty() {
+            self.update_remainder();
+        }
+
         for _i in 0..10 {
             self.permute_and_update();
         }
@@ -161,27 +178,16 @@ impl PortableHash {
     }
 
     fn update_packet(&mut self, packet: &[u8]) {
-        let lanes: [u64; 4] = [
+        self.update(PortableHash::to_lanes(packet));
+    }
+
+    fn to_lanes(packet: &[u8]) -> [u64; 4] {
+        [
             LE::read_u64(&packet[0..8]),
             LE::read_u64(&packet[8..16]),
             LE::read_u64(&packet[16..24]),
             LE::read_u64(&packet[24..32]),
-        ];
-
-        self.update(lanes);
-    }
-
-    fn process_all(&mut self, data: &[u8]) {
-        self.reset();
-        let mut slice = &data[..];
-        while slice.len() >= 32 {
-            self.update_packet(&slice);
-            slice = &slice[32..];
-        }
-
-        if !slice.is_empty() {
-            self.update_remainder(&slice);
-        }
+        ]
     }
 
     fn rotate_32_by(count: u64, lanes: &mut [u64; 4]) {
@@ -193,18 +199,21 @@ impl PortableHash {
         }
     }
 
-    fn update_remainder(&mut self, bytes: &[u8]) {
+    fn update_lanes(&mut self, size: u64) {
+        for i in 0..4 {
+            self.v0[i] += (size << 32) + size;
+        }
+
+        PortableHash::rotate_32_by(size, &mut self.v1);
+    }
+
+    fn remainder(bytes: &[u8]) -> [u8; 32] {
         let size_mod4 = bytes.len() & 3;
         let remainder_jump = bytes.len() & !3;
         let remainder = &bytes[remainder_jump..];
         let size = bytes.len() as u64;
         let mut packet: [u8; 32] = Default::default();
 
-        for i in 0..4 {
-            self.v0[i] += (size << 32) + size;
-        }
-
-        PortableHash::rotate_32_by(size, &mut self.v1);
         packet[..remainder_jump].clone_from_slice(&bytes[..remainder_jump]);
         if size & 16 != 0 {
             for i in 0..4 {
@@ -216,6 +225,32 @@ impl PortableHash {
             packet[16 + 2] = remainder[size_mod4 - 1];
         }
 
+        packet
+    }
+
+    fn update_remainder(&mut self) {
+        let size = self.buffer.len() as u64;
+        self.update_lanes(size);
+        let packet = PortableHash::remainder(self.buffer.as_slice());
         self.update_packet(&packet);
+    }
+
+    pub fn append(&mut self, data: &[u8]) -> &mut Self {
+        match self.buffer.fill(data) {
+            Filled::Consumed => self,
+            Filled::Full(new_data) => {
+                let l = PortableHash::to_lanes(self.buffer.as_slice());
+                self.update(l);
+
+				let mut rest = &new_data[..];
+                while rest.len() >= PACKET_SIZE {
+                    self.update_packet(&rest);
+                    rest = &rest[PACKET_SIZE..];
+                }
+
+                self.buffer.set_to(rest);
+                self
+            }
+        }
     }
 }
