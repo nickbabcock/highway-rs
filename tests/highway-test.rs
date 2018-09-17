@@ -17,7 +17,6 @@ fn portable_hash_append() {
     assert_eq!(0x53c516cce478cad7, hash);
 }
 
-
 #[test]
 fn portable_hash_simple2() {
     let key = Key([1, 2, 3, 4]);
@@ -460,7 +459,7 @@ fn portable_hash_all() {
 fn sse_hash_eq_portable() {
     use highway::SseHash;
 
-    let data: Vec<u8> = (0..65).map(|x| x as u8).collect();
+    let data: Vec<u8> = (0..100).map(|x| x as u8).collect();
     let key = Key([
         0x0706050403020100,
         0x0F0E0D0C0B0A0908,
@@ -468,7 +467,7 @@ fn sse_hash_eq_portable() {
         0x1F1E1D1C1B1A1918,
     ]);
 
-    for i in 0..64 {
+    for i in 0..100 {
         println!("{}", i);
         assert_eq!(
             PortableHash::new(&key).hash64(&data[..i]),
@@ -495,7 +494,7 @@ fn sse_hash_eq_portable() {
 fn avx_hash_eq_portable() {
     use highway::AvxHash;
 
-    let data: Vec<u8> = (0..65).map(|x| x as u8).collect();
+    let data: Vec<u8> = (0..100).map(|x| x as u8).collect();
     let key = Key([
         0x0706050403020100,
         0x0F0E0D0C0B0A0908,
@@ -503,7 +502,7 @@ fn avx_hash_eq_portable() {
         0x1F1E1D1C1B1A1918,
     ]);
 
-    for i in 0..64 {
+    for i in 0..100 {
         println!("{}", i);
         assert_eq!(
             PortableHash::new(&key).hash64(&data[..i]),
@@ -526,7 +525,7 @@ fn avx_hash_eq_portable() {
 fn builder_hash_eq_portable() {
     use highway::HighwayBuilder;
 
-    let data: Vec<u8> = (0..65).map(|x| x as u8).collect();
+    let data: Vec<u8> = (0..100).map(|x| x as u8).collect();
     let key = Key([
         0x0706050403020100,
         0x0F0E0D0C0B0A0908,
@@ -534,7 +533,7 @@ fn builder_hash_eq_portable() {
         0x1F1E1D1C1B1A1918,
     ]);
 
-    for i in 0..64 {
+    for i in 0..100 {
         println!("{}", i);
         assert_eq!(
             PortableHash::new(&key).hash64(&data[..i]),

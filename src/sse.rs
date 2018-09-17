@@ -4,10 +4,12 @@ use key::Key;
 use std::arch::x86_64::*;
 use traits::HighwayHash;
 use v2x64u::V2x64U;
+use internal::{PACKET_SIZE, HashPacket, Filled};
 
 #[derive(Default)]
 pub struct SseHash {
     key: Key,
+    buffer: HashPacket,
     v0L: V2x64U,
     v0H: V2x64U,
     v1L: V2x64U,
@@ -20,27 +22,29 @@ pub struct SseHash {
 
 impl HighwayHash for SseHash {
     fn hash64(mut self, data: &[u8]) -> u64 {
-        self.process_all(data);
+        self.append(data);
         self.finalize64()
     }
 
     fn hash128(mut self, data: &[u8]) -> u128 {
-        self.process_all(data);
+        self.append(data);
         self.finalize128()
     }
 
     fn hash256(mut self, data: &[u8]) -> (u128, u128) {
-        self.process_all(data);
+        self.append(data);
         self.finalize256()
     }
 }
 
 impl SseHash {
     pub unsafe fn force_new(key: &Key) -> Self {
-        SseHash {
+        let mut h = SseHash {
             key: key.clone(),
             ..Default::default()
-        }
+        };
+        h.reset();
+        h
     }
 
     pub fn new(key: &Key) -> Option<Self> {
@@ -102,6 +106,10 @@ impl SseHash {
     }
 
     fn finalize64(&mut self) -> u64 {
+        if !self.buffer.is_empty() {
+            self.update_remainder();
+        }
+
         for _i in 0..4 {
             self.permute_and_update();
         }
@@ -115,6 +123,10 @@ impl SseHash {
     }
 
     fn finalize128(&mut self) -> u128 {
+        if !self.buffer.is_empty() {
+            self.update_remainder();
+        }
+
         for _i in 0..6 {
             self.permute_and_update();
         }
@@ -128,6 +140,10 @@ impl SseHash {
     }
 
     fn finalize256(&mut self) -> (u128, u128) {
+        if !self.buffer.is_empty() {
+            self.update_remainder();
+        }
+
         for _i in 0..10 {
             self.permute_and_update();
         }
@@ -159,7 +175,7 @@ impl SseHash {
         *init ^ shifted2 ^ new_low_bits2 ^ shifted1 ^ new_low_bits1
     }
 
-    fn process_all(&mut self, data: &[u8]) {
+/*    fn process_all(&mut self, data: &[u8]) {
         self.reset();
         let mut slice = &data[..];
         while slice.len() >= 32 {
@@ -176,7 +192,7 @@ impl SseHash {
         if !slice.is_empty() {
             self.update_remainder(&slice);
         }
-    }
+    }*/
 
     fn load_multiple_of_four(bytes: &[u8], size: u64) -> V2x64U {
         let mut data = &bytes[..];
@@ -198,14 +214,9 @@ impl SseHash {
         ret
     }
 
-    fn update_remainder(&mut self, bytes: &[u8]) {
-        let vsize_mod32 = unsafe { _mm_set1_epi32(bytes.len() as i32) };
-        self.v0L += V2x64U::from(vsize_mod32);
-        self.v0H += V2x64U::from(vsize_mod32);
-        self.rotate_32_by(bytes.len() as i64);
+    fn remainder(bytes: &[u8]) -> (V2x64U, V2x64U) {
         let size_mod32 = bytes.len();
         let size_mod4 = size_mod32 & 3;
-
         if size_mod32 & 16 != 0 {
             let packetL = V2x64U::from(unsafe {
                 _mm_loadu_si128((&bytes[0] as *const u8) as *const __m128i)
@@ -214,14 +225,24 @@ impl SseHash {
             let remainder = &bytes[(size_mod32 & !3) + size_mod4 - 4..];
             let last4 = LE::read_i32(remainder);
             let packetH = V2x64U::from(unsafe { _mm_insert_epi32(packett.0, last4, 3) });
-            self.update(packetH, packetL);
+            (packetH, packetL)
         } else {
             let remainder = &bytes[size_mod32 & !3..];
             let packetL = SseHash::load_multiple_of_four(bytes, size_mod32 as u64);
             let last4 = unordered_load3(remainder);
             let packetH = V2x64U::from(unsafe { _mm_cvtsi64_si128(last4 as i64) });
-            self.update(packetH, packetL);
+            (packetH, packetL)
         }
+    }
+
+    fn update_remainder(&mut self) {
+        let size = self.buffer.len();
+        let vsize_mod32 = unsafe { _mm_set1_epi32(size as i32) };
+        self.v0L += V2x64U::from(vsize_mod32);
+        self.v0H += V2x64U::from(vsize_mod32);
+        self.rotate_32_by(size as i64);
+        let (packetH, packetL) = SseHash::remainder(self.buffer.as_slice());
+        self.update(packetH, packetL);
     }
 
     fn rotate_32_by(&mut self, count: i64) {
@@ -236,6 +257,38 @@ impl SseHash {
             let shifted_rightH = V2x64U::from(_mm_srl_epi32(vH.0, count_right));
             *vL = shifted_leftL | shifted_rightL;
             *vH = shifted_leftH | shifted_rightH;
+        }
+    }
+
+    #[inline]
+    fn to_lanes(packet: &[u8]) -> (V2x64U, V2x64U) {
+		let packetL = V2x64U::from(unsafe {
+			_mm_loadu_si128((&packet[0] as *const u8) as *const __m128i)
+		});
+		let packetH = V2x64U::from(unsafe {
+			_mm_loadu_si128((&packet[16] as *const u8) as *const __m128i)
+		});
+
+		(packetH, packetL)
+    }
+
+    pub fn append(&mut self, data: &[u8]) -> &mut Self {
+        match self.buffer.fill(data) {
+            Filled::Consumed => self,
+            Filled::Full(new_data) => {
+                let (packetH, packetL) = SseHash::to_lanes(self.buffer.as_slice());
+				self.update(packetH, packetL);
+
+				let mut rest = &new_data[..];
+                while rest.len() >= PACKET_SIZE {
+					let (packetH, packetL) = SseHash::to_lanes(&rest);
+					self.update(packetH, packetL);
+                    rest = &rest[PACKET_SIZE..];
+                }
+
+                self.buffer.set_to(rest);
+                self
+            }
         }
     }
 }
