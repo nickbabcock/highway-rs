@@ -185,11 +185,11 @@ impl PortableHash {
     }
 
     fn rotate_32_by(count: u64, lanes: &mut [u64; 4]) {
-        for i in 0..4 {
-            let half0: u32 = lanes[i] as u32;
-            let half1: u32 = (lanes[i] >> 32) as u32;
-            lanes[i] = u64::from((half0 << count) | (half0 >> (32 - count)));
-            lanes[i] |= u64::from((half1 << count) | (half1 >> (32 - count))) << 32;
+        for lane in lanes.iter_mut() {
+            let half0: u32 = *lane as u32;
+            let half1: u32 = (*lane >> 32) as u32;
+            *lane = u64::from((half0 << count) | (half0 >> (32 - count)));
+            *lane |= u64::from((half1 << count) | (half1 >> (32 - count))) << 32;
         }
     }
 
