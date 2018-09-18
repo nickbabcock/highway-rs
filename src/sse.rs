@@ -35,6 +35,22 @@ impl HighwayHash for SseHash {
         self.append(data);
         self.finalize256()
     }
+
+    fn append(&mut self, data: &[u8]) {
+        self.append(data);
+    }
+
+    fn finalize64(&mut self) -> u64 {
+        self.finalize64()
+    }
+
+    fn finalize128(&mut self) -> u128 {
+        self.finalize128()
+    }
+
+    fn finalize256(&mut self) -> (u128, u128) {
+        self.finalize256()
+    }
 }
 
 impl SseHash {
@@ -247,9 +263,9 @@ impl SseHash {
         (packetH, packetL)
     }
 
-    pub fn append(&mut self, data: &[u8]) -> &mut Self {
+    pub fn append(&mut self, data: &[u8]) {
         match self.buffer.fill(data) {
-            Filled::Consumed => self,
+            Filled::Consumed => {},
             Filled::Full(new_data) => {
                 let (packetH, packetL) = SseHash::to_lanes(self.buffer.as_slice());
                 self.update(packetH, packetL);
@@ -262,7 +278,6 @@ impl SseHash {
                 }
 
                 self.buffer.set_to(rest);
-                self
             }
         }
     }

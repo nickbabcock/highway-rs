@@ -45,6 +45,46 @@ impl HighwayHash for HighwayBuilder {
             HighwayBuilder::Sse(x) => x.hash256(data),
         }
     }
+
+    fn append(&mut self, data: &[u8]) {
+        match self {
+            HighwayBuilder::Portable(x) => x.append(data),
+            #[cfg(target_arch = "x86_64")]
+            HighwayBuilder::Avx(x) => x.append(data),
+            #[cfg(target_arch = "x86_64")]
+            HighwayBuilder::Sse(x) => x.append(data),
+        }
+    }
+
+    fn finalize64(&mut self) -> u64 {
+        match self {
+            HighwayBuilder::Portable(x) => x.finalize64(),
+            #[cfg(target_arch = "x86_64")]
+            HighwayBuilder::Avx(x) => x.finalize64(),
+            #[cfg(target_arch = "x86_64")]
+            HighwayBuilder::Sse(x) => x.finalize64(),
+        }
+    }
+
+    fn finalize128(&mut self) -> u128 {
+        match self {
+            HighwayBuilder::Portable(x) => x.finalize128(),
+            #[cfg(target_arch = "x86_64")]
+            HighwayBuilder::Avx(x) => x.finalize128(),
+            #[cfg(target_arch = "x86_64")]
+            HighwayBuilder::Sse(x) => x.finalize128(),
+        }
+    }
+
+    fn finalize256(&mut self) -> (u128, u128) {
+        match self {
+            HighwayBuilder::Portable(x) => x.finalize256(),
+            #[cfg(target_arch = "x86_64")]
+            HighwayBuilder::Avx(x) => x.finalize256(),
+            #[cfg(target_arch = "x86_64")]
+            HighwayBuilder::Sse(x) => x.finalize256(),
+        }
+    }
 }
 
 impl HighwayBuilder {

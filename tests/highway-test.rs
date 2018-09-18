@@ -13,7 +13,9 @@ fn portable_hash_simple() {
 fn portable_hash_append() {
     let key = Key([1, 2, 3, 4]);
     let b: Vec<u8> = (0..33).map(|x| 128 + x as u8).collect();
-    let hash = PortableHash::new(&key).append(&b[..]).finalize64();
+    let mut hasher = PortableHash::new(&key);
+    hasher.append(&b[..]);
+    let hash = hasher.finalize64();
     assert_eq!(0x53c516cce478cad7, hash);
 }
 
@@ -27,9 +29,9 @@ fn portable_hash_simple2() {
 #[test]
 fn portable_hash_append2() {
     let key = Key([1, 2, 3, 4]);
-    let hash = PortableHash::new(&key)
-        .append(&[(-1 as i8) as u8])
-        .finalize64();
+    let mut hasher = PortableHash::new(&key);
+    hasher.append(&[(-1 as i8) as u8]);
+    let hash = hasher.finalize64();
     assert_eq!(0x7858f24d2d79b2b2, hash);
 }
 
@@ -449,15 +451,27 @@ fn portable_hash_all() {
 
         assert_eq!(
             expected64[i],
-            PortableHash::new(&key).append(&data[..i]).finalize64()
+            {
+                let mut hasher = PortableHash::new(&key);
+                hasher.append(&data[..i]);
+                hasher.finalize64()
+            }
         );
         assert_eq!(
             expected128[i],
-            PortableHash::new(&key).append(&data[..i]).finalize128()
+            {
+                let mut hasher = PortableHash::new(&key);
+                hasher.append(&data[..i]);
+                hasher.finalize128()
+            }
         );
         assert_eq!(
             expected256[i],
-            PortableHash::new(&key).append(&data[..i]).finalize256()
+            {
+                let mut hasher = PortableHash::new(&key);
+                hasher.append(&data[..i]);
+                hasher.finalize256()
+            }
         );
     }
 }

@@ -28,6 +28,22 @@ impl HighwayHash for PortableHash {
         self.append(data);
         self.finalize256()
     }
+
+    fn append(&mut self, data: &[u8]) {
+        self.append(data);
+    }
+
+    fn finalize64(&mut self) -> u64 {
+        self.finalize64()
+    }
+
+    fn finalize128(&mut self) -> u128 {
+        self.finalize128()
+    }
+
+    fn finalize256(&mut self) -> (u128, u128) {
+        self.finalize256()
+    }
 }
 
 impl PortableHash {
@@ -234,9 +250,9 @@ impl PortableHash {
         self.update_packet(&packet);
     }
 
-    pub fn append(&mut self, data: &[u8]) -> &mut Self {
+    pub fn append(&mut self, data: &[u8]) {
         match self.buffer.fill(data) {
-            Filled::Consumed => self,
+            Filled::Consumed => {},
             Filled::Full(new_data) => {
                 let l = PortableHash::to_lanes(self.buffer.as_slice());
                 self.update(l);
@@ -248,7 +264,6 @@ impl PortableHash {
                 }
 
                 self.buffer.set_to(rest);
-                self
             }
         }
     }
