@@ -9,6 +9,11 @@ if [ ! -z "$CROSS_TARGET" ]; then
   cargo install cross --force
   export CARGO_CMD="cross"
   export TARGET_PARAM="--target $CROSS_TARGET"
+elif [ ! -z "$TARGET" ]; then
+  rustup target add "$TARGET"
+  export RUSTFLAGS="-C target-cpu=native"
+  export CARGO_CMD="cargo"
+  export TARGET_PARAM="--target $TARGET"
 else
   export RUSTFLAGS="-C target-cpu=native"
   export CARGO_CMD="cargo"
