@@ -1,10 +1,10 @@
 use byteorder::{ByteOrder, LE};
 use internal::unordered_load3;
+use internal::{Filled, HashPacket, PACKET_SIZE};
 use key::Key;
+use std::arch::x86_64::*;
 use traits::HighwayHash;
 use v2x64u::V2x64U;
-use internal::{PACKET_SIZE, HashPacket, Filled};
-use std::arch::x86_64::*;
 
 #[derive(Default)]
 pub struct SseHash {
@@ -60,9 +60,7 @@ impl SseHash {
         let init0H = V2x64U::new(0x243f6a8885a308d3, 0x13198a2e03707344);
         let init1L = V2x64U::new(0xc0acf169b5f18a8c, 0x3bd39e10cb0ef593);
         let init1H = V2x64U::new(0x452821e638d01377, 0xbe5466cf34e90c6c);
-        let keyL = V2x64U::from(unsafe {
-            _mm_loadu_si128(self.key.0.as_ptr() as *const __m128i)
-        });
+        let keyL = V2x64U::from(unsafe { _mm_loadu_si128(self.key.0.as_ptr() as *const __m128i) });
         let keyH = V2x64U::from(unsafe {
             _mm_loadu_si128(self.key.0.as_ptr().offset(2) as *const __m128i)
         });
@@ -199,9 +197,8 @@ impl SseHash {
         let size_mod32 = bytes.len();
         let size_mod4 = size_mod32 & 3;
         if size_mod32 & 16 != 0 {
-            let packetL = V2x64U::from(unsafe {
-                _mm_loadu_si128(bytes.as_ptr() as *const __m128i)
-            });
+            let packetL =
+                V2x64U::from(unsafe { _mm_loadu_si128(bytes.as_ptr() as *const __m128i) });
             let packett = SseHash::load_multiple_of_four(&bytes[16..], size_mod32 as u64);
             let remainder = &bytes[(size_mod32 & !3) + size_mod4 - 4..];
             let last4 = LE::read_i32(remainder);
@@ -243,14 +240,11 @@ impl SseHash {
 
     #[inline]
     fn to_lanes(packet: &[u8]) -> (V2x64U, V2x64U) {
-		let packetL = V2x64U::from(unsafe {
-			_mm_loadu_si128(packet.as_ptr() as *const __m128i)
-		});
-		let packetH = V2x64U::from(unsafe {
-			_mm_loadu_si128(packet.as_ptr().offset(16) as *const __m128i)
-		});
+        let packetL = V2x64U::from(unsafe { _mm_loadu_si128(packet.as_ptr() as *const __m128i) });
+        let packetH =
+            V2x64U::from(unsafe { _mm_loadu_si128(packet.as_ptr().offset(16) as *const __m128i) });
 
-		(packetH, packetL)
+        (packetH, packetL)
     }
 
     pub fn append(&mut self, data: &[u8]) -> &mut Self {
@@ -258,12 +252,12 @@ impl SseHash {
             Filled::Consumed => self,
             Filled::Full(new_data) => {
                 let (packetH, packetL) = SseHash::to_lanes(self.buffer.as_slice());
-				self.update(packetH, packetL);
+                self.update(packetH, packetL);
 
-				let mut rest = &new_data[..];
+                let mut rest = &new_data[..];
                 while rest.len() >= PACKET_SIZE {
-					let (packetH, packetL) = SseHash::to_lanes(&rest);
-					self.update(packetH, packetL);
+                    let (packetH, packetL) = SseHash::to_lanes(&rest);
+                    self.update(packetH, packetL);
                     rest = &rest[PACKET_SIZE..];
                 }
 

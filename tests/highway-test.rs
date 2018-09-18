@@ -27,7 +27,9 @@ fn portable_hash_simple2() {
 #[test]
 fn portable_hash_append2() {
     let key = Key([1, 2, 3, 4]);
-    let hash = PortableHash::new(&key).append(&[(-1 as i8) as u8]).finalize64();
+    let hash = PortableHash::new(&key)
+        .append(&[(-1 as i8) as u8])
+        .finalize64();
     assert_eq!(0x7858f24d2d79b2b2, hash);
 }
 
@@ -445,9 +447,18 @@ fn portable_hash_all() {
         assert_eq!(expected128[i], PortableHash::new(&key).hash128(&data[..i]));
         assert_eq!(expected256[i], PortableHash::new(&key).hash256(&data[..i]));
 
-        assert_eq!(expected64[i], PortableHash::new(&key).append(&data[..i]).finalize64());
-        assert_eq!(expected128[i], PortableHash::new(&key).append(&data[..i]).finalize128());
-        assert_eq!(expected256[i], PortableHash::new(&key).append(&data[..i]).finalize256());
+        assert_eq!(
+            expected64[i],
+            PortableHash::new(&key).append(&data[..i]).finalize64()
+        );
+        assert_eq!(
+            expected128[i],
+            PortableHash::new(&key).append(&data[..i]).finalize128()
+        );
+        assert_eq!(
+            expected256[i],
+            PortableHash::new(&key).append(&data[..i]).finalize256()
+        );
     }
 }
 

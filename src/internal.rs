@@ -26,7 +26,7 @@ pub const PACKET_SIZE: usize = 32;
 #[derive(Default, Debug)]
 pub struct HashPacket {
     buf: [u8; PACKET_SIZE],
-    buf_index: usize
+    buf_index: usize,
 }
 
 impl HashPacket {
@@ -74,7 +74,7 @@ mod tests {
             if let Filled::Full(_) = packet.fill(&[0]) {
                 assert!(false);
             }
-            
+
             assert_eq!(i + 1, packet.len() as u8);
             assert_eq!(&vec![0; (i + 1) as usize][..], packet.as_slice());
         }

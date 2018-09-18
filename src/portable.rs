@@ -1,8 +1,7 @@
 use byteorder::{ByteOrder, LE};
+use internal::{Filled, HashPacket, PACKET_SIZE};
 use key::Key;
 use traits::HighwayHash;
-use internal::{PACKET_SIZE, HashPacket, Filled};
-
 
 #[derive(Default)]
 pub struct PortableHash {
@@ -242,7 +241,7 @@ impl PortableHash {
                 let l = PortableHash::to_lanes(self.buffer.as_slice());
                 self.update(l);
 
-				let mut rest = &new_data[..];
+                let mut rest = &new_data[..];
                 while rest.len() >= PACKET_SIZE {
                     self.update_packet(&rest);
                     rest = &rest[PACKET_SIZE..];
