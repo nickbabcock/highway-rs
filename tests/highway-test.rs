@@ -451,10 +451,7 @@ fn portable_hash_all() {
     }
 }
 
-#[cfg(all(
-    any(target_arch = "x86", target_arch = "x86_64"),
-    target_feature = "sse4.1"
-))]
+#[cfg(all(target_arch = "x86_64", target_feature = "sse4.1"))]
 #[test]
 fn sse_hash_eq_portable() {
     use highway::SseHash;
@@ -487,10 +484,7 @@ fn sse_hash_eq_portable() {
 }
 
 #[test]
-#[cfg(all(
-    any(target_arch = "x86", target_arch = "x86_64"),
-    target_feature = "avx2"
-))]
+#[cfg(all(target_arch = "x86_64", target_feature = "avx2"))]
 fn avx_hash_eq_portable() {
     use highway::AvxHash;
 
