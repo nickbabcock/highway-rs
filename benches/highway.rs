@@ -6,7 +6,10 @@ extern crate highway;
 extern crate sha2;
 
 use criterion::{Criterion, ParameterizedBenchmark, Throughput};
-use highway::{AvxHash, HighwayHash, Key, PortableHash, SseHash};
+use highway::{HighwayHash, Key, PortableHash};
+
+#[cfg(target_arch = "x86_64")]
+use highway::{AvxHash, SseHash};
 use sha2::{Digest, Sha256};
 use std::collections::hash_map::DefaultHasher;
 use std::hash::Hasher;
@@ -42,20 +45,23 @@ fn hashing(c: &mut Criterion) {
         b.iter(|| farmhash::hash64(&data))
     }).throughput(|s| Throughput::Bytes(*s as u32));
 
-    if AvxHash::new(&key).is_some() {
-        bit64 = bit64.with_function("avx", |b, param| {
-            let data = vec![0u8; *param];
-            let key = Key([0, 0, 0, 0]);
-            b.iter(|| unsafe { AvxHash::force_new(&key) }.hash64(&data))
-        });
-    }
+    #[cfg(target_arch = "x86_64")]
+    {
+        if AvxHash::new(&key).is_some() {
+            bit64 = bit64.with_function("avx", |b, param| {
+                let data = vec![0u8; *param];
+                let key = Key([0, 0, 0, 0]);
+                b.iter(|| unsafe { AvxHash::force_new(&key) }.hash64(&data))
+            });
+        }
 
-    if SseHash::new(&key).is_some() {
-        bit64 = bit64.with_function("sse", |b, param| {
-            let data = vec![0u8; *param];
-            let key = Key([0, 0, 0, 0]);
-            b.iter(|| unsafe { SseHash::force_new(&key) }.hash64(&data))
-        });
+        if SseHash::new(&key).is_some() {
+            bit64 = bit64.with_function("sse", |b, param| {
+                let data = vec![0u8; *param];
+                let key = Key([0, 0, 0, 0]);
+                b.iter(|| unsafe { SseHash::force_new(&key) }.hash64(&data))
+            });
+        }
     }
 
     c.bench("64bit", bit64);
@@ -73,20 +79,23 @@ fn hashing(c: &mut Criterion) {
         b.iter(|| Sha256::digest(&data))
     }).throughput(|s| Throughput::Bytes(*s as u32));
 
-    if AvxHash::new(&key).is_some() {
-        bit256 = bit256.with_function("avx", |b, param| {
-            let data = vec![0u8; *param];
-            let key = Key([0, 0, 0, 0]);
-            b.iter(|| unsafe { AvxHash::force_new(&key) }.hash256(&data))
-        });
-    }
+    #[cfg(target_arch = "x86_64")]
+    {
+        if AvxHash::new(&key).is_some() {
+            bit256 = bit256.with_function("avx", |b, param| {
+                let data = vec![0u8; *param];
+                let key = Key([0, 0, 0, 0]);
+                b.iter(|| unsafe { AvxHash::force_new(&key) }.hash256(&data))
+            });
+        }
 
-    if SseHash::new(&key).is_some() {
-        bit256 = bit256.with_function("sse", |b, param| {
-            let data = vec![0u8; *param];
-            let key = Key([0, 0, 0, 0]);
-            b.iter(|| unsafe { SseHash::force_new(&key) }.hash256(&data))
-        });
+        if SseHash::new(&key).is_some() {
+            bit256 = bit256.with_function("sse", |b, param| {
+                let data = vec![0u8; *param];
+                let key = Key([0, 0, 0, 0]);
+                b.iter(|| unsafe { SseHash::force_new(&key) }.hash256(&data))
+            });
+        }
     }
 
     c.bench("256bit", bit256);
