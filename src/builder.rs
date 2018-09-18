@@ -56,7 +56,7 @@ impl HighwayHash for HighwayBuilder {
         }
     }
 
-    fn finalize64(&mut self) -> u64 {
+    fn finalize64(self) -> u64 {
         match self {
             HighwayBuilder::Portable(x) => x.finalize64(),
             #[cfg(target_arch = "x86_64")]
@@ -66,7 +66,7 @@ impl HighwayHash for HighwayBuilder {
         }
     }
 
-    fn finalize128(&mut self) -> u128 {
+    fn finalize128(self) -> u128 {
         match self {
             HighwayBuilder::Portable(x) => x.finalize128(),
             #[cfg(target_arch = "x86_64")]
@@ -76,7 +76,7 @@ impl HighwayHash for HighwayBuilder {
         }
     }
 
-    fn finalize256(&mut self) -> (u128, u128) {
+    fn finalize256(self) -> (u128, u128) {
         match self {
             HighwayBuilder::Portable(x) => x.finalize256(),
             #[cfg(target_arch = "x86_64")]

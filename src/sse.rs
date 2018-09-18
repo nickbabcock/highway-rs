@@ -40,16 +40,16 @@ impl HighwayHash for SseHash {
         self.append(data);
     }
 
-    fn finalize64(&mut self) -> u64 {
-        self.finalize64()
+    fn finalize64(mut self) -> u64 {
+        Self::finalize64(&mut self)
     }
 
-    fn finalize128(&mut self) -> u128 {
-        self.finalize128()
+    fn finalize128(mut self) -> u128 {
+        Self::finalize128(&mut self)
     }
 
-    fn finalize256(&mut self) -> (u128, u128) {
-        self.finalize256()
+    fn finalize256(mut self) -> (u128, u128) {
+        Self::finalize256(&mut self)
     }
 }
 
@@ -119,7 +119,7 @@ impl SseHash {
         self.update(low, high);
     }
 
-    fn finalize64(&mut self) -> u64 {
+    pub fn finalize64(&mut self) -> u64 {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
