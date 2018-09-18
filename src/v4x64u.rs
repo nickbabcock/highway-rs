@@ -17,7 +17,7 @@ impl Default for V4x64U {
 impl fmt::Debug for V4x64U {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut arr: [u64; 4] = [0; 4];
-        unsafe { _mm256_storeu_si256((&mut arr[0] as *mut u64) as *mut __m256i, self.0) };
+        unsafe { _mm256_storeu_si256(arr.as_mut_ptr() as *mut __m256i, self.0) };
         write!(f, "V4x64U: {:?}", arr)
     }
 }
@@ -55,13 +55,6 @@ impl From<__m256i> for V4x64U {
         V4x64U(v)
     }
 }
-
-/*
-impl From<[u64; 2]> for V4x64U {
-    fn from(v: [u64; 2]) -> Self {
-        V4x64U(unsafe { _mm_loadu_si128((&v[0] as *const u64) as *const __m256i) })
-    }
-}*/
 
 impl AddAssign for V4x64U {
     fn add_assign(&mut self, other: Self) {

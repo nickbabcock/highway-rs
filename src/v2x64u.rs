@@ -17,7 +17,7 @@ impl Default for V2x64U {
 impl fmt::Debug for V2x64U {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut arr: [u64; 2] = [0, 0];
-        unsafe { _mm_storeu_si128((&mut arr[0] as *mut u64) as *mut __m128i, self.0) };
+        unsafe { _mm_storeu_si128(arr.as_mut_ptr() as *mut __m128i, self.0) };
         write!(f, "V2x64U: {:?}", arr)
     }
 }
@@ -50,7 +50,7 @@ impl From<__m128i> for V2x64U {
 
 impl From<[u64; 2]> for V2x64U {
     fn from(v: [u64; 2]) -> Self {
-        V2x64U(unsafe { _mm_loadu_si128((&v[0] as *const u64) as *const __m128i) })
+        V2x64U(unsafe { _mm_loadu_si128(v.as_ptr() as *const __m128i) })
     }
 }
 

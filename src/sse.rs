@@ -61,10 +61,10 @@ impl SseHash {
         let init1L = V2x64U::new(0xc0acf169b5f18a8c, 0x3bd39e10cb0ef593);
         let init1H = V2x64U::new(0x452821e638d01377, 0xbe5466cf34e90c6c);
         let keyL = V2x64U::from(unsafe {
-            _mm_loadu_si128((&self.key[0] as *const u64) as *const __m128i)
+            _mm_loadu_si128(self.key.0.as_ptr() as *const __m128i)
         });
         let keyH = V2x64U::from(unsafe {
-            _mm_loadu_si128((&self.key[2] as *const u64) as *const __m128i)
+            _mm_loadu_si128(self.key.0.as_ptr().offset(2) as *const __m128i)
         });
         self.v0L = keyL ^ init0L;
         self.v0H = keyH ^ init0H;
@@ -175,32 +175,13 @@ impl SseHash {
         *init ^ shifted2 ^ new_low_bits2 ^ shifted1 ^ new_low_bits1
     }
 
-/*    fn process_all(&mut self, data: &[u8]) {
-        self.reset();
-        let mut slice = &data[..];
-        while slice.len() >= 32 {
-            let packetL = V2x64U::from(unsafe {
-                _mm_loadu_si128((&slice[0] as *const u8) as *const __m128i)
-            });
-            let packetH = V2x64U::from(unsafe {
-                _mm_loadu_si128((&slice[16] as *const u8) as *const __m128i)
-            });
-            self.update(packetH, packetL);
-            slice = &slice[32..];
-        }
-
-        if !slice.is_empty() {
-            self.update_remainder(&slice);
-        }
-    }*/
-
     fn load_multiple_of_four(bytes: &[u8], size: u64) -> V2x64U {
         let mut data = &bytes[..];
         let mut mask4 = V2x64U::from(unsafe { _mm_cvtsi64_si128(0xFFFFFFFF) });
         let mut ret = if size & 8 != 0 {
             mask4 = V2x64U::from(unsafe { _mm_slli_si128(mask4.0, 8) });
             data = &bytes[8..];
-            V2x64U::from(unsafe { _mm_loadl_epi64((&bytes[0] as *const u8) as *const __m128i) })
+            V2x64U::from(unsafe { _mm_loadl_epi64(bytes.as_ptr() as *const __m128i) })
         } else {
             V2x64U::new(0, 0)
         };
@@ -219,7 +200,7 @@ impl SseHash {
         let size_mod4 = size_mod32 & 3;
         if size_mod32 & 16 != 0 {
             let packetL = V2x64U::from(unsafe {
-                _mm_loadu_si128((&bytes[0] as *const u8) as *const __m128i)
+                _mm_loadu_si128(bytes.as_ptr() as *const __m128i)
             });
             let packett = SseHash::load_multiple_of_four(&bytes[16..], size_mod32 as u64);
             let remainder = &bytes[(size_mod32 & !3) + size_mod4 - 4..];
@@ -263,10 +244,10 @@ impl SseHash {
     #[inline]
     fn to_lanes(packet: &[u8]) -> (V2x64U, V2x64U) {
 		let packetL = V2x64U::from(unsafe {
-			_mm_loadu_si128((&packet[0] as *const u8) as *const __m128i)
+			_mm_loadu_si128(packet.as_ptr() as *const __m128i)
 		});
 		let packetH = V2x64U::from(unsafe {
-			_mm_loadu_si128((&packet[16] as *const u8) as *const __m128i)
+			_mm_loadu_si128(packet.as_ptr().offset(16) as *const __m128i)
 		});
 
 		(packetH, packetL)

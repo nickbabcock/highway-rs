@@ -103,7 +103,7 @@ impl AvxHash {
         let sum1 = self.v1 + self.mul1;
         let hash = AvxHash::modular_reduction(&sum1, &sum0);
         let mut result: [u128; 2] = [0, 0];
-        unsafe { _mm256_storeu_si256(&mut result[0] as *mut u128 as *mut __m256i, hash.0) };
+        unsafe { _mm256_storeu_si256(result.as_mut_ptr() as *mut __m256i, hash.0) };
         (result[0], result[1])
     }
 
@@ -122,7 +122,7 @@ impl AvxHash {
         );
 
         let key = V4x64U::from(unsafe {
-            _mm256_load_si256((&self.key[0] as *const u64) as *const __m256i)
+            _mm256_load_si256(self.key.0.as_ptr() as *const __m256i)
         });
 
         self.v0 = key ^ init0;
@@ -134,7 +134,7 @@ impl AvxHash {
     #[inline]
     fn to_lanes(packet: &[u8]) -> V4x64U {
         V4x64U::from(unsafe {
-                _mm256_load_si256((&packet[0] as *const u8) as *const __m256i)
+                _mm256_load_si256(packet.as_ptr() as *const __m256i)
             })
     }
 
@@ -144,10 +144,10 @@ impl AvxHash {
         let size_mod4 = size_mod32 & 3;
         let size = unsafe { _mm256_castsi256_si128(size256) };
         if size_mod32 & 16 != 0 {
-            let packetL = unsafe { _mm_load_si128((&bytes[0] as *const u8) as *const __m128i) };
+            let packetL = unsafe { _mm_load_si128(bytes.as_ptr() as *const __m128i) };
             let int_mask = unsafe { _mm_cmpgt_epi32(size, _mm_set_epi32(31, 27, 23, 19)) };
             let int_lanes = unsafe {
-                _mm_maskload_epi32((&bytes[0] as *const u8).offset(16) as *const i32, int_mask)
+                _mm_maskload_epi32(bytes.as_ptr().offset(16) as *const i32, int_mask)
             };
             let remainder = &bytes[(size_mod32 & !3) + size_mod4 - 4..];
             let last4 = LE::read_i32(remainder);
@@ -158,7 +158,7 @@ impl AvxHash {
         } else {
             let int_mask = unsafe { _mm_cmpgt_epi32(size, _mm_set_epi32(15, 11, 7, 3)) };
             let packetL =
-                unsafe { _mm_maskload_epi32(&bytes[0] as *const u8 as *const i32, int_mask) };
+                unsafe { _mm_maskload_epi32(bytes.as_ptr() as *const i32, int_mask) };
             let remainder = &bytes[size_mod32 & !3..];
             let last3 = unordered_load3(remainder);
             let packetH = unsafe { _mm_cvtsi64_si128(last3 as i64) };
