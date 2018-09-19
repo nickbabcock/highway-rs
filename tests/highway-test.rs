@@ -449,30 +449,21 @@ fn portable_hash_all() {
         assert_eq!(expected128[i], PortableHash::new(&key).hash128(&data[..i]));
         assert_eq!(expected256[i], PortableHash::new(&key).hash256(&data[..i]));
 
-        assert_eq!(
-            expected64[i],
-            {
-                let mut hasher = PortableHash::new(&key);
-                hasher.append(&data[..i]);
-                hasher.finalize64()
-            }
-        );
-        assert_eq!(
-            expected128[i],
-            {
-                let mut hasher = PortableHash::new(&key);
-                hasher.append(&data[..i]);
-                hasher.finalize128()
-            }
-        );
-        assert_eq!(
-            expected256[i],
-            {
-                let mut hasher = PortableHash::new(&key);
-                hasher.append(&data[..i]);
-                hasher.finalize256()
-            }
-        );
+        assert_eq!(expected64[i], {
+            let mut hasher = PortableHash::new(&key);
+            hasher.append(&data[..i]);
+            hasher.finalize64()
+        });
+        assert_eq!(expected128[i], {
+            let mut hasher = PortableHash::new(&key);
+            hasher.append(&data[..i]);
+            hasher.finalize128()
+        });
+        assert_eq!(expected256[i], {
+            let mut hasher = PortableHash::new(&key);
+            hasher.append(&data[..i]);
+            hasher.finalize256()
+        });
     }
 }
 

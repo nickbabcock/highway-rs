@@ -265,7 +265,7 @@ impl SseHash {
 
     pub fn append(&mut self, data: &[u8]) {
         match self.buffer.fill(data) {
-            Filled::Consumed => {},
+            Filled::Consumed => {}
             Filled::Full(new_data) => {
                 let (packetH, packetL) = SseHash::to_lanes(self.buffer.as_slice());
                 self.update(packetH, packetL);
