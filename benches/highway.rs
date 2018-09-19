@@ -6,13 +6,30 @@ extern crate highway;
 extern crate sha2;
 
 use criterion::{Criterion, ParameterizedBenchmark, Throughput};
-use highway::{HighwayHash, Key, PortableHash};
+use highway::{HighwayBuilder, HighwayHash, Key, PortableHash};
 
 #[cfg(target_arch = "x86_64")]
 use highway::{AvxHash, SseHash};
 use sha2::{Digest, Sha256};
 use std::collections::hash_map::DefaultHasher;
 use std::hash::Hasher;
+
+fn builder(c: &mut Criterion) {
+    let parameters = vec![1, 4, 16, 64, 256, 1024, 4096, 16384, 65536];
+
+    c.bench(
+        "highway-builder",
+        ParameterizedBenchmark::new(
+            "64bit",
+            |b, param| {
+                let data = vec![0u8; *param];
+                let key = Key([0, 0, 0, 0]);
+                b.iter(|| HighwayBuilder::new(&key).hash64(&data))
+            },
+            parameters,
+        ).throughput(|s| Throughput::Bytes(*s as u32)),
+    );
+}
 
 fn hashing(c: &mut Criterion) {
     let parameters = vec![1, 4, 16, 64, 256, 1024, 4096, 16384, 65536];
@@ -101,5 +118,5 @@ fn hashing(c: &mut Criterion) {
     c.bench("256bit", bit256);
 }
 
-criterion_group!(benches, hashing);
+criterion_group!(benches, builder, hashing);
 criterion_main!(benches);
