@@ -1,6 +1,7 @@
 use std::ops::Index;
 
-#[derive(Default, Clone)]
+/// Key used in HighwayHash that will drastically change the hash outputs.
+#[derive(Debug, Default, Clone, Copy)]
 pub struct Key(pub [u64; 4]);
 
 impl Index<usize> for Key {

@@ -7,7 +7,9 @@ use traits::HighwayHash;
 use v2x64u::V2x64U;
 use v4x64u::V4x64U;
 
-#[derive(Default)]
+/// AVX empowered implementation that will only work on `x86_64` with avx2 enabled at the CPU
+/// level.
+#[derive(Debug, Default)]
 pub struct AvxHash {
     key: Key,
     buffer: HashPacket,
@@ -51,6 +53,9 @@ impl HighwayHash for AvxHash {
 }
 
 impl AvxHash {
+    /// Creates a new `AvxHash` while circumventing the runtime check for avx2. This function is
+    /// unsafe! If will cause a segfault if avx2 is not enabled. Only use this function if you have
+    /// benchmarked that the runtime check is significant and you know avx2 is already enabled.
     pub unsafe fn force_new(key: &Key) -> Self {
         let mut h = AvxHash {
             key: key.clone(),
@@ -60,6 +65,7 @@ impl AvxHash {
         h
     }
 
+    /// Creates a new `AvxHash` if the avx2 feature is detected.
     pub fn new(key: &Key) -> Option<Self> {
         if is_x86_feature_detected!("avx2") {
             Some(unsafe { Self::force_new(key) })
@@ -238,7 +244,7 @@ impl AvxHash {
         *init ^ shifted2 ^ new_low_bits2 ^ shifted1 ^ new_low_bits1
     }
 
-    pub fn append(&mut self, data: &[u8]) {
+    fn append(&mut self, data: &[u8]) {
         match self.buffer.fill(data) {
             Filled::Consumed => {}
             Filled::Full(new_data) => {

@@ -3,7 +3,8 @@ use internal::{Filled, HashPacket, PACKET_SIZE};
 use key::Key;
 use traits::HighwayHash;
 
-#[derive(Default)]
+/// Portable HighwayHash implementation. Will run on any platform Rust will run on.
+#[derive(Debug, Default)]
 pub struct PortableHash {
     key: Key,
     buffer: HashPacket,
@@ -47,6 +48,7 @@ impl HighwayHash for PortableHash {
 }
 
 impl PortableHash {
+    /// Create a new `PortableHash` from a `Key`
     pub fn new(key: &Key) -> Self {
         let mut h = PortableHash {
             key: key.clone(),
@@ -75,7 +77,7 @@ impl PortableHash {
         self.v1[3] = self.mul1[3] ^ ((self.key[3] >> 32) | (self.key[3] << 32));
     }
 
-    pub fn finalize64(&mut self) -> u64 {
+    fn finalize64(&mut self) -> u64 {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
@@ -90,7 +92,7 @@ impl PortableHash {
             .wrapping_add(self.mul1[0])
     }
 
-    pub fn finalize128(&mut self) -> u128 {
+    fn finalize128(&mut self) -> u128 {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
@@ -112,7 +114,7 @@ impl PortableHash {
         u128::from(low) + (u128::from(high) << 64)
     }
 
-    pub fn finalize256(&mut self) -> (u128, u128) {
+    fn finalize256(&mut self) -> (u128, u128) {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
@@ -250,7 +252,7 @@ impl PortableHash {
         self.update_packet(&packet);
     }
 
-    pub fn append(&mut self, data: &[u8]) {
+    fn append(&mut self, data: &[u8]) {
         match self.buffer.fill(data) {
             Filled::Consumed => {}
             Filled::Full(new_data) => {

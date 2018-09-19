@@ -6,7 +6,9 @@ use std::arch::x86_64::*;
 use traits::HighwayHash;
 use v2x64u::V2x64U;
 
-#[derive(Default)]
+/// SSE empowered implementation that will only work on `x86_64` with sse 4.1 enabled at the CPU
+/// level.
+#[derive(Debug, Default)]
 pub struct SseHash {
     key: Key,
     buffer: HashPacket,
@@ -54,6 +56,9 @@ impl HighwayHash for SseHash {
 }
 
 impl SseHash {
+    /// Creates a new `SseHash` while circumventing the runtime check for sse4.1. This function is
+    /// unsafe! If will cause a segfault if sse4.1 is not enabled. Only use this function if you have
+    /// benchmarked that the runtime check is significant and you know sse4.1 is already enabled.
     pub unsafe fn force_new(key: &Key) -> Self {
         let mut h = SseHash {
             key: key.clone(),
@@ -63,6 +68,7 @@ impl SseHash {
         h
     }
 
+    /// Create a new `SseHash` if the sse4.1 feature is detected
     pub fn new(key: &Key) -> Option<Self> {
         if is_x86_feature_detected!("sse4.1") {
             Some(unsafe { Self::force_new(key) })
@@ -263,7 +269,7 @@ impl SseHash {
         (packetH, packetL)
     }
 
-    pub fn append(&mut self, data: &[u8]) {
+    fn append(&mut self, data: &[u8]) {
         match self.buffer.fill(data) {
             Filled::Consumed => {}
             Filled::Full(new_data) => {
