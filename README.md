@@ -37,3 +37,25 @@ For those more into numbers and are curious about specifics or want more details
 
 ![highwayhash-table.png](assets/highwayhash-table.png)
 
+### Builder Benchmarks
+
+Have fun running the builder benchmarks to see how performance differs with flags:
+
+*Default compilation*
+
+```
+cargo bench -- highway-builder
+```
+
+*Explicitly disable avx2*
+
+```
+RUSTFLAGS="-C target-feature=-avx2" cargo bench -- highway-builder
+```
+
+*Explicitly disable avx2 when targeting native cpu*
+
+```bash
+RUSTFLAGS="-C target-cpu=native -C target-feature=+sse4.1,-avx2" \
+  cargo bench -- highway-builder
+```
