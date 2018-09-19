@@ -1,7 +1,13 @@
 [package]
 name = "highway"
-version = "0.1.0"
+version = "0.1.0-pre"
 authors = ["Nick Babcock <nbabcock19@hotmail.com>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/nickbabcock/highway-rs"
+categories = ["algorithms", "cryptography"]
+description = "Native Rust port of Google's HighwayHash, which makes use of SIMD instructions for a fast and strong hash function"
+keywords = ["HighwayHash", "hash", "simd", "avx"]
 
 [dependencies]
 byteorder = "1"
