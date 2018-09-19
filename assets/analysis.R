@@ -23,7 +23,8 @@ df <- mutate(df,
              fn = `function`,
              highwayhash = is_highwayhash(fn),
              line = get_line_type(fn),
-             throughput = value * iteration_count * 10^9 / sample_time_nanos)
+             throughput = value * iteration_count * 10^9 / sample_time_nanos) %>%
+     filter(group != 'highway-builder')
 
 
 pal <- hue_pal()(df %>% select(fn) %>% distinct() %>% count() %>% pull())
