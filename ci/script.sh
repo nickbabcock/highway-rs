@@ -23,6 +23,11 @@ fi
 "$CARGO_CMD" build --verbose $TARGET_PARAM
 "$CARGO_CMD" test --verbose $TARGET_PARAM
 
+# If you are wondering why we run tests in release mode, it's
+# because sometimes tests in debug mode hide undefined behavior:
+# https://stackoverflow.com/q/52433389/433785
+"$CARGO_CMD" test --release --verbose $TARGET_PARAM
+
 if [ -z "$CROSS_TARGET" ]; then
     "$CARGO_CMD" doc --verbose $TARGET_PARAM
     "$CARGO_CMD" bench --no-run --verbose $TARGET_PARAM
