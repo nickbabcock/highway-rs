@@ -467,10 +467,14 @@ fn portable_hash_all() {
     }
 }
 
-#[cfg(all(target_arch = "x86_64", target_feature = "sse4.1"))]
+#[cfg(target_arch = "x86_64")]
 #[test]
 fn sse_hash_eq_portable() {
     use highway::SseHash;
+
+    if !is_x86_feature_detected!("sse4.1") {
+        return;
+    }
 
     let data: Vec<u8> = (0..100).map(|x| x as u8).collect();
     let key = Key([
@@ -500,9 +504,12 @@ fn sse_hash_eq_portable() {
 }
 
 #[test]
-#[cfg(all(target_arch = "x86_64", target_feature = "avx2"))]
+#[cfg(target_arch = "x86_64")]
 fn avx_hash_eq_portable() {
     use highway::AvxHash;
+    if !is_x86_feature_detected!("avx2") {
+        return;
+    }
 
     let data: Vec<u8> = (0..100).map(|x| x as u8).collect();
     let key = Key([
