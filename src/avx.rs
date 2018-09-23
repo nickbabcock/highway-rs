@@ -165,7 +165,7 @@ impl AvxHash {
     #[inline]
     #[target_feature(enable = "avx2")]
     unsafe fn to_lanes(packet: &[u8]) -> V4x64U {
-        V4x64U::from(_mm256_load_si256(packet.as_ptr() as *const __m256i))
+        V4x64U::from(_mm256_loadu_si256(packet.as_ptr() as *const __m256i))
     }
 
     #[target_feature(enable = "avx2")]

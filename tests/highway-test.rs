@@ -539,6 +539,19 @@ fn avx_hash_eq_portable() {
 }
 
 #[test]
+#[cfg(target_arch = "x86_64")]
+fn avx_survive_crash() {
+    use highway::AvxHash;
+    if !is_x86_feature_detected!("avx2") {
+        return;
+    }
+
+    let data = include_bytes!("../assets/avx-crash-1");
+    let hash = AvxHash::new(&Key([1, 2, 3, 4])).expect("avx2").hash64(&data[..]);
+    assert!(hash != 0);
+}
+
+#[test]
 fn builder_hash_eq_portable() {
     use highway::HighwayBuilder;
 
