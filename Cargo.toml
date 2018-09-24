@@ -17,6 +17,8 @@ criterion = "0.2"
 sha2 = "0.7"
 fnv = "1"
 farmhash = "1"
+blake2 = "0.7.1"
+blake2b_simd = "0.2.4"
 
 [[bench]]
 name = "highway"

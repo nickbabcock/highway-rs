@@ -1,10 +1,14 @@
 #[macro_use]
 extern crate criterion;
+extern crate blake2;
+extern crate blake2b_simd;
 extern crate farmhash;
 extern crate fnv;
 extern crate highway;
 extern crate sha2;
 
+use blake2::Blake2s;
+use blake2b_simd::Params;
 use criterion::{Criterion, ParameterizedBenchmark, Throughput};
 use highway::{HighwayBuilder, HighwayHash, Key, PortableHash};
 
@@ -94,6 +98,23 @@ fn hashing(c: &mut Criterion) {
     ).with_function("sha2", |b, param| {
         let data = vec![0u8; *param];
         b.iter(|| Sha256::digest(&data))
+    }).with_function("blake2s", |b, param| {
+        let data = vec![0u8; *param];
+        b.iter(|| {
+            let mut blake = Blake2s::default();
+            blake.input(&data);
+            blake.result()
+        })
+    }).with_function("blake2b_simd", |b, param| {
+        let data = vec![0u8; *param];
+        b.iter(|| {
+            Params::new()
+                .hash_length(32)
+                .key(&[1, 2, 3, 4])
+                .to_state()
+                .update(&data)
+                .finalize()
+        });
     }).throughput(|s| Throughput::Bytes(*s as u32));
 
     #[cfg(target_arch = "x86_64")]
