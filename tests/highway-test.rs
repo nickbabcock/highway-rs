@@ -547,7 +547,9 @@ fn avx_survive_crash() {
     }
 
     let data = include_bytes!("../assets/avx-crash-1");
-    let hash = AvxHash::new(&Key([1, 2, 3, 4])).expect("avx2").hash64(&data[..]);
+    let hash = AvxHash::new(&Key([1, 2, 3, 4]))
+        .expect("avx2")
+        .hash64(&data[..]);
     assert!(hash != 0);
 }
 
