@@ -136,7 +136,7 @@ impl SseHash {
     }
 
     #[target_feature(enable = "sse4.1")]
-    pub unsafe fn finalize64(&mut self) -> u64 {
+    unsafe fn finalize64(&mut self) -> u64 {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
