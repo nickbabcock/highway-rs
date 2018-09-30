@@ -11,6 +11,11 @@ fuzz_target!(|data: &[u8]| {
     }
 
     unsafe {
-        SseHash::force_new(&Key([1, 2, 3, 4])).hash64(data);
+        let key = Key([1, 2, 3, 4]);
+        let hash1 = SseHash::force_new(&key).hash64(data);
+        let hash2 = SseHash::force_new(&key).hash64(data);
+        assert_eq!(hash1, hash2);
+        SseHash::force_new(&key).hash128(data);
+        SseHash::force_new(&key).hash256(data);
     }
 });
