@@ -77,7 +77,7 @@ ggplot(df %>% filter(highwayhash == TRUE), aes(value, throughput, color = fn, li
        x = "Payload length in bytes")  +
   guides(linetype = FALSE) +
   scale_colour_manual(values = pal)
-ggsave('64bit-vs-256it-highwayhash.png', width = 8, height = 5, dpi = 100)
+ggsave('64bit-vs-256bit-highwayhash.png', width = 8, height = 5, dpi = 100)
 
 reldf <- df %>%
   mutate(throughput = throughput / 10^9) %>%
