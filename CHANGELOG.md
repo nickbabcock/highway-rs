@@ -1,3 +1,7 @@
+## v0.1.4 - 2018-10-01
+
+- Fix: debug arithmetic overflow panic in portable hash
+
 ## v0.1.3 - 2018-09-30
 
 - Remove `SseHash::finalize64` as part of public API (accidentally included)
