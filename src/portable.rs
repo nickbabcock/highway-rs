@@ -218,7 +218,7 @@ impl PortableHash {
 
     fn update_lanes(&mut self, size: u64) {
         for i in 0..4 {
-            self.v0[i] += (size << 32) + size;
+            self.v0[i] = self.v0[i].wrapping_add((size << 32) + size);
         }
 
         PortableHash::rotate_32_by(size, &mut self.v1);
