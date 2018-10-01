@@ -71,6 +71,7 @@ HighwayHash can be used against untrusted user input where weak hashes can't be 
 Benchmarks are ran with the following command:
 
 ```bash
+cargo clean
 RUSTFLAGS="-C target-cpu=native" cargo bench
 find ./target -wholename "*/new/raw.csv" -print0 | xargs -0 xsv cat rows > assets/highway.csv
 ```
