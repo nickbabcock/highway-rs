@@ -89,7 +89,7 @@ reldf <- df %>%
   ungroup() %>%
   complete(group, fn, value, fill = list(highwayhash = FALSE))
 
-ordered <- reldf %>% distinct(fn, highwayhash) %>% arrange(highwayhash, fn) %>% pull(fn)
+ordered <- reldf %>% distinct(fn, highwayhash) %>% arrange(!highwayhash, fn) %>% pull(fn)
 
 # Group all highway hash functions next to each other in the graph
 reldf$fn <- factor(reldf$fn, levels = ordered)
