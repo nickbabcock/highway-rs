@@ -13,7 +13,7 @@ keywords = ["HighwayHash", "hash", "simd", "avx"]
 byteorder = "1"
 
 [dev-dependencies]
-criterion = "0.2"
+criterion = "0.2.5"
 sha2 = "0.7"
 fnv = "1"
 farmhash = "1"
