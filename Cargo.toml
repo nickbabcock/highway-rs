@@ -14,10 +14,10 @@ byteorder = "1"
 
 [dev-dependencies]
 criterion = "0.2.5"
-sha2 = "0.7"
+sha2 = "0.8.0"
 fnv = "1"
 farmhash = "1"
-blake2 = "0.7.1"
+blake2 = "0.8.0"
 blake2b_simd = "0.2.4"
 
 [[bench]]
