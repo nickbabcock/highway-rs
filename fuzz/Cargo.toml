@@ -13,6 +13,9 @@ path = ".."
 [dependencies.libfuzzer-sys]
 git = "https://github.com/rust-fuzz/libfuzzer-sys.git"
 
+[dependencies]
+byteorder = "1"
+
 # Prevent this from interfering with workspaces
 [workspace]
 members = ["."]
