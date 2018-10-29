@@ -18,7 +18,7 @@ sha2 = "0.8.0"
 fnv = "1"
 farmhash = "1"
 blake2 = "0.8.0"
-blake2b_simd = "0.3.1"
+blake2b_simd = "0.4.1"
 
 [[bench]]
 name = "bench_hashes"
