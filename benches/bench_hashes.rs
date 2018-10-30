@@ -4,6 +4,7 @@ extern crate blake2;
 extern crate blake2b_simd;
 extern crate farmhash;
 extern crate fnv;
+extern crate fxhash;
 extern crate highway;
 extern crate sha2;
 
@@ -58,6 +59,13 @@ fn hashing(c: &mut Criterion) {
         let data = vec![0u8; *param];
         b.iter(|| {
             let mut hasher = fnv::FnvHasher::with_key(0);
+            hasher.write(&data);
+            hasher.finish()
+        })
+    }).with_function("fx", |b, param| {
+        let data = vec![0u8; *param];
+        b.iter(|| {
+            let mut hasher = fxhash::FxHasher64::default();
             hasher.write(&data);
             hasher.finish()
         })
