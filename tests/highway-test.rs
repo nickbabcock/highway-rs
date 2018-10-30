@@ -541,8 +541,7 @@ fn avx_hash_eq_portable() {
 #[test]
 fn portable_survive_crash() {
     let data = include_bytes!("../assets/portable-crash-1");
-    let hash = PortableHash::new(&Key([1, 2, 3, 4]))
-        .hash64(&data[..]);
+    let hash = PortableHash::new(&Key([1, 2, 3, 4])).hash64(&data[..]);
     assert!(hash != 0);
 }
 
