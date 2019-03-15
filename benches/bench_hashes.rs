@@ -7,6 +7,7 @@ extern crate fnv;
 extern crate fxhash;
 extern crate highway;
 extern crate sha2;
+extern crate t1ha;
 
 use blake2::Blake2s;
 use blake2b_simd::Params;
@@ -72,6 +73,9 @@ fn hashing(c: &mut Criterion) {
     }).with_function("farmhash", |b, param| {
         let data = vec![0u8; *param];
         b.iter(|| farmhash::hash64(&data))
+    }).with_function("t1ha", |b, param| {
+        let data = vec![0u8; *param];
+        b.iter(|| t1ha::t1ha0(&data, 1234))
     }).throughput(|s| Throughput::Bytes(*s as u32));
 
     #[cfg(target_arch = "x86_64")]

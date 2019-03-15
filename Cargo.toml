@@ -22,6 +22,7 @@ blake2b_simd = "0.4.1"
 fxhash = "0.2.1"
 quickcheck = "0.8"
 quickcheck_macros = "0.8"
+t1ha = "0.1"
 
 [[bench]]
 name = "bench_hashes"
