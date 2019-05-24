@@ -445,9 +445,11 @@ fn portable_hash_all() {
 
     for i in 0..64 {
         println!("{}", i);
+        let res_128 = u64_to_u128(&PortableHash::new(&key).hash128(&data[..i])[..]);
+        let res_256 = u64_to_u256(&PortableHash::new(&key).hash256(&data[..i])[..]);
         assert_eq!(expected64[i], PortableHash::new(&key).hash64(&data[..i]));
-        assert_eq!(expected128[i], PortableHash::new(&key).hash128(&data[..i]));
-        assert_eq!(expected256[i], PortableHash::new(&key).hash256(&data[..i]));
+        assert_eq!(expected128[i], res_128);
+        assert_eq!(expected256[i], res_256);
 
         assert_eq!(expected64[i], {
             let mut hasher = PortableHash::new(&key);
@@ -457,14 +459,22 @@ fn portable_hash_all() {
         assert_eq!(expected128[i], {
             let mut hasher = PortableHash::new(&key);
             hasher.append(&data[..i]);
-            hasher.finalize128()
+            u64_to_u128(&hasher.finalize128()[..])
         });
         assert_eq!(expected256[i], {
             let mut hasher = PortableHash::new(&key);
             hasher.append(&data[..i]);
-            hasher.finalize256()
+            u64_to_u256(&hasher.finalize256()[..])
         });
     }
+}
+
+fn u64_to_u128(data: &[u64]) -> u128 {
+    u128::from(data[0]) + (u128::from(data[1]) << 64)
+}
+
+fn u64_to_u256(data: &[u64]) -> (u128, u128) {
+    (u64_to_u128(data), u64_to_u128(&data[2..]))
 }
 
 #[cfg(target_arch = "x86_64")]

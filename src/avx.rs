@@ -27,14 +27,14 @@ impl HighwayHash for AvxHash {
         }
     }
 
-    fn hash128(mut self, data: &[u8]) -> u128 {
+    fn hash128(mut self, data: &[u8]) -> [u64; 2] {
         unsafe {
             self.append(data);
             self.finalize128()
         }
     }
 
-    fn hash256(mut self, data: &[u8]) -> (u128, u128) {
+    fn hash256(mut self, data: &[u8]) -> [u64; 4] {
         unsafe {
             self.append(data);
             self.finalize256()
@@ -51,11 +51,11 @@ impl HighwayHash for AvxHash {
         unsafe { Self::finalize64(&mut self) }
     }
 
-    fn finalize128(mut self) -> u128 {
+    fn finalize128(mut self) -> [u64; 2] {
         unsafe { Self::finalize128(&mut self) }
     }
 
-    fn finalize256(mut self) -> (u128, u128) {
+    fn finalize256(mut self) -> [u64; 4] {
         unsafe { Self::finalize256(&mut self) }
     }
 }
@@ -103,7 +103,7 @@ impl AvxHash {
     }
 
     #[target_feature(enable = "avx2")]
-    unsafe fn finalize128(&mut self) -> u128 {
+    unsafe fn finalize128(&mut self) -> [u64; 2] {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
@@ -116,13 +116,13 @@ impl AvxHash {
         let sum0 = V2x64U::from(_mm256_castsi256_si128((self.v0 + self.mul0).0));
         let sum1 = V2x64U::from(_mm256_extracti128_si256((self.v1 + self.mul1).0, 1));
         let hash = sum0 + sum1;
-        let mut result: u128 = 0;
-        _mm_storeu_si128(&mut result as *mut u128 as *mut __m128i, hash.0);
+        let mut result: [u64; 2] = [0; 2];
+        _mm_storeu_si128(result.as_mut_ptr() as *mut __m128i, hash.0);
         result
     }
 
     #[target_feature(enable = "avx2")]
-    unsafe fn finalize256(&mut self) -> (u128, u128) {
+    unsafe fn finalize256(&mut self) -> [u64; 4] {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
@@ -135,9 +135,9 @@ impl AvxHash {
         let sum0 = self.v0 + self.mul0;
         let sum1 = self.v1 + self.mul1;
         let hash = AvxHash::modular_reduction(&sum1, &sum0);
-        let mut result: [u128; 2] = [0, 0];
+        let mut result: [u64; 4] = [0; 4];
         _mm256_storeu_si256(result.as_mut_ptr() as *mut __m256i, hash.0);
-        (result[0], result[1])
+        result
     }
 
     #[target_feature(enable = "avx2")]

@@ -38,7 +38,7 @@ impl HighwayHash for HighwayBuilder {
         }
     }
 
-    fn hash128(self, data: &[u8]) -> u128 {
+    fn hash128(self, data: &[u8]) -> [u64; 2] {
         match self.0 {
             HighwayChoices::Portable(x) => x.hash128(data),
             #[cfg(target_arch = "x86_64")]
@@ -48,7 +48,7 @@ impl HighwayHash for HighwayBuilder {
         }
     }
 
-    fn hash256(self, data: &[u8]) -> (u128, u128) {
+    fn hash256(self, data: &[u8]) -> [u64; 4] {
         match self.0 {
             HighwayChoices::Portable(x) => x.hash256(data),
             #[cfg(target_arch = "x86_64")]
@@ -78,7 +78,7 @@ impl HighwayHash for HighwayBuilder {
         }
     }
 
-    fn finalize128(self) -> u128 {
+    fn finalize128(self) -> [u64; 2] {
         match self.0 {
             HighwayChoices::Portable(x) => x.finalize128(),
             #[cfg(target_arch = "x86_64")]
@@ -88,7 +88,7 @@ impl HighwayHash for HighwayBuilder {
         }
     }
 
-    fn finalize256(self) -> (u128, u128) {
+    fn finalize256(self) -> [u64; 4] {
         match self.0 {
             HighwayChoices::Portable(x) => x.finalize256(),
             #[cfg(target_arch = "x86_64")]
