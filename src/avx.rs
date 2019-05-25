@@ -66,7 +66,7 @@ impl AvxHash {
     /// benchmarked that the runtime check is significant and you know avx2 is already enabled.
     pub unsafe fn force_new(key: &Key) -> Self {
         let mut h = AvxHash {
-            key: key.clone(),
+            key: *key,
             ..Default::default()
         };
         h.reset();
@@ -76,7 +76,7 @@ impl AvxHash {
     /// Creates a new `AvxHash` if the avx2 feature is detected.
     pub fn new(key: &Key) -> Option<Self> {
         if is_x86_feature_detected!("avx2") {
-            return Some(unsafe { Self::force_new(key) });
+            Some(unsafe { Self::force_new(key) })
         } else {
             None
         }
@@ -247,7 +247,6 @@ impl AvxHash {
 
     #[target_feature(enable = "avx2")]
     unsafe fn modular_reduction(x: &V4x64U, init: &V4x64U) -> V4x64U {
-        let zero = *x ^ *x;
         let top_bits2 = V4x64U::from(_mm256_srli_epi64(x.0, 62));
         let ones = V4x64U::from(_mm256_cmpeq_epi64(x.0, x.0));
         let shifted1_unmasked = *x + *x;
@@ -255,6 +254,7 @@ impl AvxHash {
         let upper_8bytes = V4x64U::from(_mm256_slli_si256(ones.0, 8));
         let shifted2 = shifted1_unmasked + shifted1_unmasked;
         let upper_bit_of_128 = V4x64U::from(_mm256_slli_epi64(upper_8bytes.0, 63));
+        let zero = V4x64U::default();
         let new_low_bits2 = V4x64U::from(_mm256_unpacklo_epi64(zero.0, top_bits2.0));
         let shifted1 = shifted1_unmasked.and_not(&upper_bit_of_128);
         let new_low_bits1 = V4x64U::from(_mm256_unpacklo_epi64(zero.0, top_bits1.0));

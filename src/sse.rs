@@ -69,7 +69,7 @@ impl SseHash {
     /// benchmarked that the runtime check is significant and you know sse4.1 is already enabled.
     pub unsafe fn force_new(key: &Key) -> Self {
         let mut h = SseHash {
-            key: key.clone(),
+            key: *key,
             ..Default::default()
         };
         h.reset();

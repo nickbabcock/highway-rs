@@ -161,8 +161,8 @@ impl PortableHash {
     }
 
     fn update(&mut self, lanes: [u64; 4]) {
-        for i in 0..4 {
-            self.v1[i] = self.v1[i].wrapping_add(self.mul0[i].wrapping_add(lanes[i]));
+        for (i, lane) in lanes.iter().enumerate() {
+            self.v1[i] = self.v1[i].wrapping_add(self.mul0[i].wrapping_add(*lane));
             self.mul0[i] ^= (self.v1[i] & 0xffffffff).wrapping_mul(self.v0[i] >> 32);
             self.v0[i] = self.v0[i].wrapping_add(self.mul1[i]);
             self.mul1[i] ^= (self.v0[i] & 0xffffffff).wrapping_mul(self.v1[i] >> 32);
