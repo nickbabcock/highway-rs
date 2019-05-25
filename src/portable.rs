@@ -20,12 +20,12 @@ impl HighwayHash for PortableHash {
         self.finalize64()
     }
 
-    fn hash128(mut self, data: &[u8]) -> u128 {
+    fn hash128(mut self, data: &[u8]) -> [u64; 2] {
         self.append(data);
         self.finalize128()
     }
 
-    fn hash256(mut self, data: &[u8]) -> (u128, u128) {
+    fn hash256(mut self, data: &[u8]) -> [u64; 4] {
         self.append(data);
         self.finalize256()
     }
@@ -38,11 +38,11 @@ impl HighwayHash for PortableHash {
         Self::finalize64(&mut self)
     }
 
-    fn finalize128(mut self) -> u128 {
+    fn finalize128(mut self) -> [u64; 2] {
         Self::finalize128(&mut self)
     }
 
-    fn finalize256(mut self) -> (u128, u128) {
+    fn finalize256(mut self) -> [u64; 4] {
         Self::finalize256(&mut self)
     }
 }
@@ -92,7 +92,7 @@ impl PortableHash {
             .wrapping_add(self.mul1[0])
     }
 
-    fn finalize128(&mut self) -> u128 {
+    fn finalize128(&mut self) -> [u64; 2] {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
@@ -111,10 +111,10 @@ impl PortableHash {
             .wrapping_add(self.v1[3])
             .wrapping_add(self.mul1[3]);
 
-        u128::from(low) + (u128::from(high) << 64)
+        [low, high]
     }
 
-    fn finalize256(&mut self) -> (u128, u128) {
+    fn finalize256(&mut self) -> [u64; 4] {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
@@ -123,27 +123,27 @@ impl PortableHash {
             self.permute_and_update();
         }
 
-        let low = PortableHash::module_reduction(
+        let (lowest, low) = PortableHash::module_reduction(
             self.v1[1].wrapping_add(self.mul1[1]),
             self.v1[0].wrapping_add(self.mul1[0]),
             self.v0[1].wrapping_add(self.mul0[1]),
             self.v0[0].wrapping_add(self.mul0[0]),
         );
-        let high = PortableHash::module_reduction(
+        let (high, highest) = PortableHash::module_reduction(
             self.v1[3].wrapping_add(self.mul1[3]),
             self.v1[2].wrapping_add(self.mul1[2]),
             self.v0[3].wrapping_add(self.mul0[3]),
             self.v0[2].wrapping_add(self.mul0[2]),
         );
 
-        (low, high)
+        [lowest, low, high, highest] 
     }
 
-    fn module_reduction(a3_unmasked: u64, a2: u64, a1: u64, a0: u64) -> u128 {
+    fn module_reduction(a3_unmasked: u64, a2: u64, a1: u64, a0: u64) -> (u64, u64) {
         let a3 = a3_unmasked & 0x3FFFFFFFFFFFFFFF;
         let high = a1 ^ ((a3 << 1) | (a2 >> 63)) ^ ((a3 << 2) | (a2 >> 62));
         let low = a0 ^ (a2 << 1) ^ (a2 << 2);
-        u128::from(low) + (u128::from(high) << 64)
+        (low, high)
     }
 
     fn permute(v: &[u64; 4]) -> [u64; 4] {

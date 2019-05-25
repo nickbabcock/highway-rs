@@ -43,16 +43,21 @@
 //! let key = Key([1, 2, 3, 4]);
 //! let mut hasher128 = HighwayBuilder::new(&key);
 //! hasher128.append(&[255]);
-//! let res128: u128 = hasher128.finalize128();
-//! assert_eq!(0x224508f9_16b3991f_bb007d24_62e77f3c, res128);
+//! let res128: [u64; 2] = hasher128.finalize128();
+//! assert_eq!([0xbb007d2462e77f3c, 0x224508f916b3991f], res128);
 //!
 //! // Generate 256bit hash
 //! let key = Key([1, 2, 3, 4]);
 //! let mut hasher256 = HighwayBuilder::new(&key);
 //! hasher256.append(&[255]);
-//! let (res256lo, res256hi): (u128, u128) = hasher256.finalize256();
-//! assert_eq!(0xaac4905d_e62b2f5e_7161cadb_f7cd70e1, res256lo);
-//! assert_eq!(0xc8efcfc4_5b239f8d_07b02b93_6933faa7, res256hi);
+//! let res256: [u64; 4] = hasher256.finalize256();
+//! let expected: [u64; 4] = [
+//!     0x7161cadbf7cd70e1,
+//!     0xaac4905de62b2f5e,
+//!     0x7b02b936933faa7,
+//!     0xc8efcfc45b239f8d,
+//! ];
+//! assert_eq!(expected, res256);
 //! ```
 //!
 //! ## Use Cases

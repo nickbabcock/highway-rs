@@ -7,11 +7,11 @@ pub trait HighwayHash {
 
     /// Convenience function for hashing all data in a single call and receiving a 128bit hash.
     /// Results are equivalent to appending the data manually.
-    fn hash128(self, data: &[u8]) -> u128;
+    fn hash128(self, data: &[u8]) -> [u64; 2];
 
     /// Convenience function for hashing all data in a single call and receiving a 256bit hash.
     /// Results are equivalent to appending the data manually.
-    fn hash256(self, data: &[u8]) -> (u128, u128);
+    fn hash256(self, data: &[u8]) -> [u64; 4];
 
     /// Adds data to be hashed. If it is important, the performance characteristics of this
     /// function differs depending on the amount of data previously hashed and the amount of
@@ -23,8 +23,8 @@ pub trait HighwayHash {
     fn finalize64(self) -> u64;
 
     /// Consumes the hasher to return the 128bit hash
-    fn finalize128(self) -> u128;
+    fn finalize128(self) -> [u64; 2];
 
     /// Consumes the hasher to return the 256bit hash
-    fn finalize256(self) -> (u128, u128);
+    fn finalize256(self) -> [u64; 4];
 }

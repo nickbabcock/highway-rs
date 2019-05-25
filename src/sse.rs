@@ -30,14 +30,14 @@ impl HighwayHash for SseHash {
         }
     }
 
-    fn hash128(mut self, data: &[u8]) -> u128 {
+    fn hash128(mut self, data: &[u8]) -> [u64; 2] {
         unsafe {
             self.append(data);
             self.finalize128()
         }
     }
 
-    fn hash256(mut self, data: &[u8]) -> (u128, u128) {
+    fn hash256(mut self, data: &[u8]) -> [u64; 4] {
         unsafe {
             self.append(data);
             self.finalize256()
@@ -54,11 +54,11 @@ impl HighwayHash for SseHash {
         unsafe { Self::finalize64(&mut self) }
     }
 
-    fn finalize128(mut self) -> u128 {
+    fn finalize128(mut self) -> [u64; 2] {
         unsafe { Self::finalize128(&mut self) }
     }
 
-    fn finalize256(mut self) -> (u128, u128) {
+    fn finalize256(mut self) -> [u64; 4] {
         unsafe { Self::finalize256(&mut self) }
     }
 }
@@ -154,7 +154,7 @@ impl SseHash {
     }
 
     #[target_feature(enable = "sse4.1")]
-    unsafe fn finalize128(&mut self) -> u128 {
+    unsafe fn finalize128(&mut self) -> [u64; 2] {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
@@ -166,13 +166,13 @@ impl SseHash {
         let sum0 = self.v0L + self.mul0L;
         let sum1 = self.v1H + self.mul1H;
         let hash = sum0 + sum1;
-        let mut result: u128 = 0;
-        _mm_storeu_si128((&mut result as *mut u128) as *mut __m128i, hash.0);
+        let mut result: [u64; 2] = [0; 2];
+        _mm_storeu_si128(result.as_mut_ptr() as *mut __m128i, hash.0);
         result
     }
 
     #[target_feature(enable = "sse4.1")]
-    unsafe fn finalize256(&mut self) -> (u128, u128) {
+    unsafe fn finalize256(&mut self) -> [u64; 4] {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
@@ -187,11 +187,10 @@ impl SseHash {
         let sum1H = self.v1H + self.mul1H;
         let hashL = SseHash::modular_reduction(&sum1L, &sum0L);
         let hashH = SseHash::modular_reduction(&sum1H, &sum0H);
-        let mut resultL: u128 = 0;
-        let mut resultH: u128 = 0;
-        _mm_storeu_si128((&mut resultL as *mut u128) as *mut __m128i, hashL.0);
-        _mm_storeu_si128((&mut resultH as *mut u128) as *mut __m128i, hashH.0);
-        (resultL, resultH)
+        let mut result: [u64; 4] = [0; 4];
+        _mm_storeu_si128(result.as_mut_ptr() as *mut __m128i, hashL.0);
+        _mm_storeu_si128(result.as_mut_ptr().offset(2) as *mut __m128i, hashH.0);
+        result
     }
 
     #[target_feature(enable = "sse4.1")]
