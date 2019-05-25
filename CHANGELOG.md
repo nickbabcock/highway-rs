@@ -1,3 +1,20 @@
+## v0.2.0 - 2019-05-25
+
+- Change 128bit hash return type from u128 to [u64; 2] to match the return type from the reference implementation
+- Change 256bit hash return type from (u128, u128) to [u64; 4] to match the return type from the reference implementation
+
+You can use the following code to migrate the current return types to the old ones.
+
+```rust
+fn u64_to_u128(data: &[u64]) -> u128 {
+    u128::from(data[0]) + (u128::from(data[1]) << 64)
+}
+
+fn u64_to_u256(data: &[u64]) -> (u128, u128) {
+    (u64_to_u128(data), u64_to_u128(&data[2..]))
+}
+```
+
 ## v0.1.4 - 2018-10-01
 
 - Fix: debug arithmetic overflow panic in portable hash
