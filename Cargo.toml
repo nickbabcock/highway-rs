@@ -1,6 +1,6 @@
 [package]
 name = "highway"
-version = "0.2.1-pre"
+version = "0.3.0"
 authors = ["Nick Babcock <nbabcock19@hotmail.com>"]
 license = "MIT"
 readme = "README.md"
