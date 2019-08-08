@@ -1,3 +1,38 @@
+## v0.3.0 - 2019-08-08
+
+Allow the use of highway hash in standard rust collections
+
+```rust
+use std::collections::HashMap;
+use highway::{HighwayBuildHasher, Key};
+let mut map =
+  HashMap::with_hasher(HighwayBuildHasher::new(Key([
+    0xcbf29ce484222325,
+    0xc3a5c85c97cb3127,
+    0xb492b66fbe98f273,
+    0x9ae16a3b2f90404f,
+  ])));
+
+map.insert(1, 2);
+assert_eq!(map.get(&1), Some(&2));
+```
+
+Or if utilizing a key is not important, one can use the default
+
+```rust
+use std::collections::HashMap;
+use std::hash::BuildHasherDefault;
+use highway::HighwayHasher;
+let mut map =
+  HashMap::with_hasher(BuildHasherDefault::<HighwayHasher>::default());
+
+map.insert(1, 2);
+assert_eq!(map.get(&1), Some(&2));
+```
+
+- Added clone implementations to many structures
+- impl Default for HighwayBuilder
+
 ## v0.2.0 - 2019-05-25
 
 - Change 128bit hash return type from u128 to [u64; 2] to match the return type from the reference implementation
