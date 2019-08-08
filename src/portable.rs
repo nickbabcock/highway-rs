@@ -4,7 +4,7 @@ use key::Key;
 use traits::HighwayHash;
 
 /// Portable HighwayHash implementation. Will run on any platform Rust will run on.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct PortableHash {
     key: Key,
     buffer: HashPacket,

@@ -1,13 +1,14 @@
 use key::Key;
 use portable::PortableHash;
 use traits::HighwayHash;
+use std::default::Default;
 
 #[cfg(target_arch = "x86_64")]
 use avx::AvxHash;
 #[cfg(target_arch = "x86_64")]
 use sse::SseHash;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum HighwayChoices {
     Portable(PortableHash),
     #[cfg(target_arch = "x86_64")]
@@ -24,7 +25,7 @@ enum HighwayChoices {
 ///  - AvxHash
 ///  - SseHash
 ///  - PortableHash
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct HighwayBuilder(HighwayChoices);
 
 impl HighwayHash for HighwayBuilder {
@@ -114,5 +115,11 @@ impl HighwayBuilder {
         }
 
         HighwayBuilder(HighwayChoices::Portable(PortableHash::new(key)))
+    }
+}
+
+impl Default for HighwayBuilder {
+    fn default() -> Self {
+        HighwayBuilder::new(&Key::default())
     }
 }

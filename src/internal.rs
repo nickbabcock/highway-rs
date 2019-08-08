@@ -23,7 +23,7 @@ pub const PACKET_SIZE: usize = 32;
 /// to simd instructions, so we need to subscribe to the whole "do what C does", else we will
 /// segfault.
 #[repr(C)]
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone, Copy)]
 pub struct HashPacket {
     buf: [u8; PACKET_SIZE],
     buf_index: usize,

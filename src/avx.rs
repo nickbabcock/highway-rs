@@ -9,7 +9,7 @@ use v4x64u::V4x64U;
 
 /// AVX empowered implementation that will only work on `x86_64` with avx2 enabled at the CPU
 /// level.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct AvxHash {
     key: Key,
     buffer: HashPacket,

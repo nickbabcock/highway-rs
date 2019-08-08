@@ -60,6 +60,36 @@
 //! assert_eq!(expected, res256);
 //! ```
 //!
+//! Use highway hash in standard rust collections
+//!
+//! ```
+//! use std::collections::HashMap;
+//! use highway::{HighwayBuildHasher, Key};
+//! let mut map =
+//!   HashMap::with_hasher(HighwayBuildHasher::new(Key([
+//!     0xcbf29ce484222325,
+//!     0xc3a5c85c97cb3127,
+//!     0xb492b66fbe98f273,
+//!     0x9ae16a3b2f90404f,
+//!   ])));
+//!
+//! map.insert(1, 2);
+//! assert_eq!(map.get(&1), Some(&2));
+//! ```
+//!
+//! Or if utilizing a key is not important, one can use the default
+//!
+//! ```
+//! use std::collections::HashMap;
+//! use std::hash::BuildHasherDefault;
+//! use highway::HighwayHasher;
+//! let mut map =
+//!   HashMap::with_hasher(BuildHasherDefault::<HighwayHasher>::default());
+//!
+//! map.insert(1, 2);
+//! assert_eq!(map.get(&1), Some(&2));
+//! ```
+//!
 //! ## Use Cases
 //!
 //! HighwayHash can be used against untrusted user input where weak hashes can't be used due to exploitation, verified cryptographic hashes are too slow, and a strong hash function meets requirements. Some specific scenarios given by the authors of HighwayHash:
@@ -78,11 +108,13 @@ mod internal;
 mod key;
 mod portable;
 mod traits;
+mod hash;
 
 pub use builder::HighwayBuilder;
 pub use key::Key;
 pub use portable::PortableHash;
 pub use traits::HighwayHash;
+pub use hash::{HighwayBuildHasher, HighwayHasher};
 
 #[cfg(target_arch = "x86_64")]
 mod avx;
