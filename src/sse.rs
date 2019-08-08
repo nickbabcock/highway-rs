@@ -8,7 +8,7 @@ use v2x64u::V2x64U;
 
 /// SSE empowered implementation that will only work on `x86_64` with sse 4.1 enabled at the CPU
 /// level.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct SseHash {
     key: Key,
     buffer: HashPacket,
