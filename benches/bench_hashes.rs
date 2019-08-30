@@ -33,7 +33,7 @@ fn builder(c: &mut Criterion) {
                 b.iter(|| HighwayBuilder::new(&key).hash64(&data))
             },
             parameters,
-        ).throughput(|s| Throughput::Bytes(*s as u32)),
+        ).throughput(|s| Throughput::Bytes(*s as u64)),
     );
 }
 
@@ -76,7 +76,7 @@ fn hashing(c: &mut Criterion) {
     }).with_function("t1ha", |b, param| {
         let data = vec![0u8; *param];
         b.iter(|| t1ha::t1ha0(&data, 1234))
-    }).throughput(|s| Throughput::Bytes(*s as u32));
+    }).throughput(|s| Throughput::Bytes(*s as u64));
 
     #[cfg(target_arch = "x86_64")]
     {
@@ -127,7 +127,7 @@ fn hashing(c: &mut Criterion) {
                 .update(&data)
                 .finalize()
         });
-    }).throughput(|s| Throughput::Bytes(*s as u32));
+    }).throughput(|s| Throughput::Bytes(*s as u64));
 
     #[cfg(target_arch = "x86_64")]
     {
