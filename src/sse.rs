@@ -65,7 +65,7 @@ impl HighwayHash for SseHash {
 
 impl SseHash {
     /// Creates a new `SseHash` while circumventing the runtime check for sse4.1. This function is
-    /// unsafe! If will cause a segfault if sse4.1 is not enabled. Only use this function if you have
+    /// unsafe! It will cause a segfault if sse4.1 is not enabled. Only use this function if you have
     /// benchmarked that the runtime check is significant and you know sse4.1 is already enabled.
     pub unsafe fn force_new(key: &Key) -> Self {
         let mut h = SseHash {

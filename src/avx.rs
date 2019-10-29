@@ -62,7 +62,7 @@ impl HighwayHash for AvxHash {
 
 impl AvxHash {
     /// Creates a new `AvxHash` while circumventing the runtime check for avx2. This function is
-    /// unsafe! If will cause a segfault if avx2 is not enabled. Only use this function if you have
+    /// unsafe! It will cause a segfault if avx2 is not enabled. Only use this function if you have
     /// benchmarked that the runtime check is significant and you know avx2 is already enabled.
     pub unsafe fn force_new(key: &Key) -> Self {
         let mut h = AvxHash {
