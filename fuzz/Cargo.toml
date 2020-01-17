@@ -3,6 +3,7 @@
 name = "highway-fuzz"
 version = "0.0.1"
 authors = ["Automatically generated"]
+edition = "2018"
 publish = false
 
 [package.metadata]
@@ -10,11 +11,11 @@ cargo-fuzz = true
 
 [dependencies.highway]
 path = ".."
-[dependencies.libfuzzer-sys]
-git = "https://github.com/rust-fuzz/libfuzzer-sys.git"
+features = ["arbitrary"]
 
 [dependencies]
-byteorder = "1"
+libfuzzer-sys = "0.2.1"
+arbitrary = { version = "0.3", features = ["derive"] }
 
 # Prevent this from interfering with workspaces
 [workspace]

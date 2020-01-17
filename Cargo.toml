@@ -12,6 +12,9 @@ keywords = ["HighwayHash", "hash", "simd", "avx"]
 [dependencies]
 byteorder = "1"
 
+# Used for fuzzing
+arbitrary = { version = "0.3.0", optional = true, features = ["derive"] }
+
 [dev-dependencies]
 criterion = "0.3.0"
 sha2 = "0.8.0"
