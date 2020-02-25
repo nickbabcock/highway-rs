@@ -1,7 +1,6 @@
-extern crate quickcheck;
 #[macro_use]
 extern crate quickcheck_macros;
-extern crate highway;
+
 mod quick_tests {
     use highway::{HighwayBuilder, HighwayHash, Key, PortableHash};
 

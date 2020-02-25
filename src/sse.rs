@@ -1,10 +1,10 @@
+use crate::internal::unordered_load3;
+use crate::internal::{Filled, HashPacket, PACKET_SIZE};
+use crate::key::Key;
+use crate::traits::HighwayHash;
+use crate::v2x64u::V2x64U;
 use byteorder::{ByteOrder, LE};
-use internal::unordered_load3;
-use internal::{Filled, HashPacket, PACKET_SIZE};
-use key::Key;
 use std::arch::x86_64::*;
-use traits::HighwayHash;
-use v2x64u::V2x64U;
 
 /// SSE empowered implementation that will only work on `x86_64` with sse 4.1 enabled at the CPU
 /// level.
@@ -87,10 +87,10 @@ impl SseHash {
 
     #[target_feature(enable = "sse4.1")]
     unsafe fn reset(&mut self) {
-        let init0L = V2x64U::new(0xa4093822299f31d0, 0xdbe6d5d5fe4cce2f);
-        let init0H = V2x64U::new(0x243f6a8885a308d3, 0x13198a2e03707344);
-        let init1L = V2x64U::new(0xc0acf169b5f18a8c, 0x3bd39e10cb0ef593);
-        let init1H = V2x64U::new(0x452821e638d01377, 0xbe5466cf34e90c6c);
+        let init0L = V2x64U::new(0xa409_3822_299f_31d0, 0xdbe6_d5d5_fe4c_ce2f);
+        let init0H = V2x64U::new(0x243f_6a88_85a3_08d3, 0x1319_8a2e_0370_7344);
+        let init1L = V2x64U::new(0xc0ac_f169_b5f1_8a8c, 0x3bd3_9e10_cb0e_f593);
+        let init1H = V2x64U::new(0x4528_21e6_38d0_1377, 0xbe54_66cf_34e9_0c6c);
         let keyL = V2x64U::from(_mm_loadu_si128(self.key.0.as_ptr() as *const __m128i));
         let keyH = V2x64U::from(_mm_loadu_si128(
             self.key.0.as_ptr().offset(2) as *const __m128i
@@ -107,7 +107,7 @@ impl SseHash {
 
     #[target_feature(enable = "sse4.1")]
     unsafe fn zipper_merge(v: &V2x64U) -> V2x64U {
-        v.shuffle(&V2x64U::new(0x070806090D0A040B, 0x000F010E05020C03))
+        v.shuffle(&V2x64U::new(0x0708_0609_0D0A_040B, 0x000F_010E_0502_0C03))
     }
 
     #[target_feature(enable = "sse4.1")]
@@ -196,7 +196,7 @@ impl SseHash {
     #[target_feature(enable = "sse4.1")]
     unsafe fn modular_reduction(x: &V2x64U, init: &V2x64U) -> V2x64U {
         let zero = V2x64U::default();
-        let sign_bit128 = V2x64U::from(_mm_insert_epi32(zero.0, 0x80000000u32 as i32, 3));
+        let sign_bit128 = V2x64U::from(_mm_insert_epi32(zero.0, 0x8000_0000_u32 as i32, 3));
         let top_bits2 = V2x64U::from(_mm_srli_epi64(x.0, 62));
         let shifted1_unmasked = *x + *x;
         let top_bits1 = V2x64U::from(_mm_srli_epi64(x.0, 63));
@@ -210,7 +210,7 @@ impl SseHash {
     #[target_feature(enable = "sse4.1")]
     unsafe fn load_multiple_of_four(bytes: &[u8], size: u64) -> V2x64U {
         let mut data = &bytes[..];
-        let mut mask4 = V2x64U::from(_mm_cvtsi64_si128(0xFFFFFFFF));
+        let mut mask4 = V2x64U::from(_mm_cvtsi64_si128(0xFFFF_FFFF));
         let mut ret = if size & 8 != 0 {
             mask4 = V2x64U::from(_mm_slli_si128(mask4.0, 8));
             data = &bytes[8..];

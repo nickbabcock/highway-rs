@@ -8,6 +8,7 @@ repository = "https://github.com/nickbabcock/highway-rs"
 categories = ["algorithms", "cryptography"]
 description = "Native Rust port of Google's HighwayHash, which makes use of SIMD instructions for a fast and strong hash function"
 keywords = ["HighwayHash", "hash", "simd", "avx"]
+edition = "2018"
 
 [dependencies]
 byteorder = "1"
@@ -23,7 +24,7 @@ farmhash = "1"
 blake2 = "0.8.0"
 blake2b_simd = "0.5.0"
 fxhash = "0.2.1"
-quickcheck = "0.8"
+quickcheck = "0.9"
 quickcheck_macros = "0.9"
 t1ha = "0.1"
 

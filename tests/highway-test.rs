@@ -1,5 +1,3 @@
-extern crate highway;
-
 use highway::{HighwayHash, Key, PortableHash};
 
 #[test]
@@ -7,7 +5,7 @@ fn portable_hash_simple() {
     let key = Key([1, 2, 3, 4]);
     let b: Vec<u8> = (0..33).map(|x| 128 + x as u8).collect();
     let hash = PortableHash::new(&key).hash64(&b[..]);
-    assert_eq!(0x53c516cce478cad7, hash);
+    assert_eq!(0x53c5_16cc_e478_cad7, hash);
 }
 #[test]
 fn portable_hash_append() {
@@ -16,14 +14,14 @@ fn portable_hash_append() {
     let mut hasher = PortableHash::new(&key);
     hasher.append(&b[..]);
     let hash = hasher.finalize64();
-    assert_eq!(0x53c516cce478cad7, hash);
+    assert_eq!(0x53c5_16cc_e478_cad7, hash);
 }
 
 #[test]
 fn portable_hash_simple2() {
     let key = Key([1, 2, 3, 4]);
     let hash = PortableHash::new(&key).hash64(&[(-1 as i8) as u8]);
-    assert_eq!(0x7858f24d2d79b2b2, hash);
+    assert_eq!(0x7858_f24d_2d79_b2b2, hash);
 }
 
 #[test]
@@ -32,77 +30,77 @@ fn portable_hash_append2() {
     let mut hasher = PortableHash::new(&key);
     hasher.append(&[(-1 as i8) as u8]);
     let hash = hasher.finalize64();
-    assert_eq!(0x7858f24d2d79b2b2, hash);
+    assert_eq!(0x7858_f24d_2d79_b2b2, hash);
 }
 
 #[test]
 fn portable_hash_all() {
     let expected64 = [
-        0x907A56DE22C26E53,
-        0x7EAB43AAC7CDDD78,
-        0xB8D0569AB0B53D62,
-        0x5C6BEFAB8A463D80,
-        0xF205A46893007EDA,
-        0x2B8A1668E4A94541,
-        0xBD4CCC325BEFCA6F,
-        0x4D02AE1738F59482,
-        0xE1205108E55F3171,
-        0x32D2644EC77A1584,
-        0xF6E10ACDB103A90B,
-        0xC3BBF4615B415C15,
-        0x243CC2040063FA9C,
-        0xA89A58CE65E641FF,
-        0x24B031A348455A23,
-        0x40793F86A449F33B,
-        0xCFAB3489F97EB832,
-        0x19FE67D2C8C5C0E2,
-        0x04DD90A69C565CC2,
-        0x75D9518E2371C504,
-        0x38AD9B1141D3DD16,
-        0x0264432CCD8A70E0,
-        0xA9DB5A6288683390,
-        0xD7B05492003F028C,
-        0x205F615AEA59E51E,
-        0xEEE0C89621052884,
-        0x1BFC1A93A7284F4F,
-        0x512175B5B70DA91D,
-        0xF71F8976A0A2C639,
-        0xAE093FEF1F84E3E7,
-        0x22CA92B01161860F,
-        0x9FC7007CCF035A68,
-        0xA0C964D9ECD580FC,
-        0x2C90F73CA03181FC,
-        0x185CF84E5691EB9E,
-        0x4FC1F5EF2752AA9B,
-        0xF5B7391A5E0A33EB,
-        0xB9B84B83B4E96C9C,
-        0x5E42FE712A5CD9B4,
-        0xA150F2F90C3F97DC,
-        0x7FA522D75E2D637D,
-        0x181AD0CC0DFFD32B,
-        0x3889ED981E854028,
-        0xFB4297E8C586EE2D,
-        0x6D064A45BB28059C,
-        0x90563609B3EC860C,
-        0x7AA4FCE94097C666,
-        0x1326BAC06B911E08,
-        0xB926168D2B154F34,
-        0x9919848945B1948D,
-        0xA2A98FC534825EBE,
-        0xE9809095213EF0B6,
-        0x582E5483707BC0E9,
-        0x086E9414A88A6AF5,
-        0xEE86B98D20F6743D,
-        0xF89B7FF609B1C0A7,
-        0x4C7D9CC19E22C3E8,
-        0x9A97005024562A6F,
-        0x5DD41CF423E6EBEF,
-        0xDF13609C0468E227,
-        0x6E0DA4F64188155A,
-        0xB755BA4B50D7D4A1,
-        0x887A3484647479BD,
-        0xAB8EEBE9BF2139A0,
-        0x75542C5D4CD2A6FF,
+        0x907A_56DE_22C2_6E53,
+        0x7EAB_43AA_C7CD_DD78,
+        0xB8D0_569A_B0B5_3D62,
+        0x5C6B_EFAB_8A46_3D80,
+        0xF205_A468_9300_7EDA,
+        0x2B8A_1668_E4A9_4541,
+        0xBD4C_CC32_5BEF_CA6F,
+        0x4D02_AE17_38F5_9482,
+        0xE120_5108_E55F_3171,
+        0x32D2_644E_C77A_1584,
+        0xF6E1_0ACD_B103_A90B,
+        0xC3BB_F461_5B41_5C15,
+        0x243C_C204_0063_FA9C,
+        0xA89A_58CE_65E6_41FF,
+        0x24B0_31A3_4845_5A23,
+        0x4079_3F86_A449_F33B,
+        0xCFAB_3489_F97E_B832,
+        0x19FE_67D2_C8C5_C0E2,
+        0x04DD_90A6_9C56_5CC2,
+        0x75D9_518E_2371_C504,
+        0x38AD_9B11_41D3_DD16,
+        0x0264_432C_CD8A_70E0,
+        0xA9DB_5A62_8868_3390,
+        0xD7B0_5492_003F_028C,
+        0x205F_615A_EA59_E51E,
+        0xEEE0_C896_2105_2884,
+        0x1BFC_1A93_A728_4F4F,
+        0x5121_75B5_B70D_A91D,
+        0xF71F_8976_A0A2_C639,
+        0xAE09_3FEF_1F84_E3E7,
+        0x22CA_92B0_1161_860F,
+        0x9FC7_007C_CF03_5A68,
+        0xA0C9_64D9_ECD5_80FC,
+        0x2C90_F73C_A031_81FC,
+        0x185C_F84E_5691_EB9E,
+        0x4FC1_F5EF_2752_AA9B,
+        0xF5B7_391A_5E0A_33EB,
+        0xB9B8_4B83_B4E9_6C9C,
+        0x5E42_FE71_2A5C_D9B4,
+        0xA150_F2F9_0C3F_97DC,
+        0x7FA5_22D7_5E2D_637D,
+        0x181A_D0CC_0DFF_D32B,
+        0x3889_ED98_1E85_4028,
+        0xFB42_97E8_C586_EE2D,
+        0x6D06_4A45_BB28_059C,
+        0x9056_3609_B3EC_860C,
+        0x7AA4_FCE9_4097_C666,
+        0x1326_BAC0_6B91_1E08,
+        0xB926_168D_2B15_4F34,
+        0x9919_8489_45B1_948D,
+        0xA2A9_8FC5_3482_5EBE,
+        0xE980_9095_213E_F0B6,
+        0x582E_5483_707B_C0E9,
+        0x086E_9414_A88A_6AF5,
+        0xEE86_B98D_20F6_743D,
+        0xF89B_7FF6_09B1_C0A7,
+        0x4C7D_9CC1_9E22_C3E8,
+        0x9A97_0050_2456_2A6F,
+        0x5DD4_1CF4_23E6_EBEF,
+        0xDF13_609C_0468_E227,
+        0x6E0D_A4F6_4188_155A,
+        0xB755_BA4B_50D7_D4A1,
+        0x887A_3484_6474_79BD,
+        0xAB8E_EBE9_BF21_39A0,
+        0x7554_2C5D_4CD2_A6FF,
     ];
 
     let expected128 = [
@@ -437,10 +435,10 @@ fn portable_hash_all() {
     ];
     let data: Vec<u8> = (0..65).map(|x| x as u8).collect();
     let key = Key([
-        0x0706050403020100,
-        0x0F0E0D0C0B0A0908,
-        0x1716151413121110,
-        0x1F1E1D1C1B1A1918,
+        0x0706_0504_0302_0100,
+        0x0F0E_0D0C_0B0A_0908,
+        0x1716_1514_1312_1110,
+        0x1F1E_1D1C_1B1A_1918,
     ]);
 
     for i in 0..64 {
@@ -488,10 +486,10 @@ fn sse_hash_eq_portable() {
 
     let data: Vec<u8> = (0..100).map(|x| x as u8).collect();
     let key = Key([
-        0x0706050403020100,
-        0x0F0E0D0C0B0A0908,
-        0x1716151413121110,
-        0x1F1E1D1C1B1A1918,
+        0x0706_0504_0302_0100,
+        0x0F0E_0D0C_0B0A_0908,
+        0x1716_1514_1312_1110,
+        0x1F1E_1D1C_1B1A_1918,
     ]);
 
     for i in 0..100 {
@@ -523,10 +521,10 @@ fn avx_hash_eq_portable() {
 
     let data: Vec<u8> = (0..100).map(|x| x as u8).collect();
     let key = Key([
-        0x0706050403020100,
-        0x0F0E0D0C0B0A0908,
-        0x1716151413121110,
-        0x1F1E1D1C1B1A1918,
+        0x0706_0504_0302_0100,
+        0x0F0E_0D0C_0B0A_0908,
+        0x1716_1514_1312_1110,
+        0x1F1E_1D1C_1B1A_1918,
     ]);
 
     for i in 0..100 {
@@ -576,10 +574,10 @@ fn builder_hash_eq_portable() {
 
     let data: Vec<u8> = (0..100).map(|x| x as u8).collect();
     let key = Key([
-        0x0706050403020100,
-        0x0F0E0D0C0B0A0908,
-        0x1716151413121110,
-        0x1F1E1D1C1B1A1918,
+        0x0706_0504_0302_0100,
+        0x0F0E_0D0C_0B0A_0908,
+        0x1716_1514_1312_1110,
+        0x1F1E_1D1C_1B1A_1918,
     ]);
 
     for i in 0..100 {

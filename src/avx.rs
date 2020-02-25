@@ -1,11 +1,11 @@
+use crate::internal::unordered_load3;
+use crate::internal::{Filled, HashPacket, PACKET_SIZE};
+use crate::key::Key;
+use crate::traits::HighwayHash;
+use crate::v2x64u::V2x64U;
+use crate::v4x64u::V4x64U;
 use byteorder::{ByteOrder, LE};
-use internal::unordered_load3;
-use internal::{Filled, HashPacket, PACKET_SIZE};
-use key::Key;
 use std::arch::x86_64::*;
-use traits::HighwayHash;
-use v2x64u::V2x64U;
-use v4x64u::V4x64U;
 
 /// AVX empowered implementation that will only work on `x86_64` with avx2 enabled at the CPU
 /// level.
@@ -143,16 +143,16 @@ impl AvxHash {
     #[target_feature(enable = "avx2")]
     unsafe fn reset(&mut self) {
         let init0 = V4x64U::new(
-            0x243f6a8885a308d3,
-            0x13198a2e03707344,
-            0xa4093822299f31d0,
-            0xdbe6d5d5fe4cce2f,
+            0x243f_6a88_85a3_08d3,
+            0x1319_8a2e_0370_7344,
+            0xa409_3822_299f_31d0,
+            0xdbe6_d5d5_fe4c_ce2f,
         );
         let init1 = V4x64U::new(
-            0x452821e638d01377,
-            0xbe5466cf34e90c6c,
-            0xc0acf169b5f18a8c,
-            0x3bd39e10cb0ef593,
+            0x4528_21e6_38d0_1377,
+            0xbe54_66cf_34e9_0c6c,
+            0xc0ac_f169_b5f1_8a8c,
+            0x3bd3_9e10_cb0e_f593,
         );
 
         let key = V4x64U::from(_mm256_load_si256(self.key.0.as_ptr() as *const __m256i));
@@ -213,8 +213,8 @@ impl AvxHash {
 
     #[target_feature(enable = "avx2")]
     unsafe fn zipper_merge(v: &V4x64U) -> V4x64U {
-        let hi = 0x070806090D0A040B;
-        let lo = 0x000F010E05020C03;
+        let hi = 0x0708_0609_0D0A_040B;
+        let lo = 0x000F_010E_0502_0C03;
         v.shuffle(&V4x64U::new(hi, lo, hi, lo))
     }
 
@@ -236,10 +236,10 @@ impl AvxHash {
     #[target_feature(enable = "avx2")]
     unsafe fn permute(v: &V4x64U) -> V4x64U {
         let indices = V4x64U::new(
-            0x0000000200000003,
-            0x0000000000000001,
-            0x0000000600000007,
-            0x0000000400000005,
+            0x0000_0002_0000_0003,
+            0x0000_0000_0000_0001,
+            0x0000_0006_0000_0007,
+            0x0000_0004_0000_0005,
         );
 
         V4x64U::from(_mm256_permutevar8x32_epi32(v.0, indices.0))

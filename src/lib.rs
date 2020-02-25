@@ -99,22 +99,21 @@
 //!
 
 #![allow(non_snake_case)]
-extern crate byteorder;
 
 #[macro_use]
 mod macros;
 mod builder;
+mod hash;
 mod internal;
 mod key;
 mod portable;
 mod traits;
-mod hash;
 
-pub use builder::HighwayBuilder;
-pub use key::Key;
-pub use portable::PortableHash;
-pub use traits::HighwayHash;
-pub use hash::{HighwayBuildHasher, HighwayHasher};
+pub use crate::builder::HighwayBuilder;
+pub use crate::hash::{HighwayBuildHasher, HighwayHasher};
+pub use crate::key::Key;
+pub use crate::portable::PortableHash;
+pub use crate::traits::HighwayHash;
 
 #[cfg(target_arch = "x86_64")]
 mod avx;
@@ -126,6 +125,6 @@ mod v2x64u;
 mod v4x64u;
 
 #[cfg(target_arch = "x86_64")]
-pub use avx::AvxHash;
+pub use crate::avx::AvxHash;
 #[cfg(target_arch = "x86_64")]
-pub use sse::SseHash;
+pub use crate::sse::SseHash;

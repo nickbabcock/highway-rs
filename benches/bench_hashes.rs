@@ -1,13 +1,5 @@
 #[macro_use]
 extern crate criterion;
-extern crate blake2;
-extern crate blake2b_simd;
-extern crate farmhash;
-extern crate fnv;
-extern crate fxhash;
-extern crate highway;
-extern crate sha2;
-extern crate t1ha;
 
 use blake2::Blake2s;
 use blake2b_simd::Params;
@@ -33,7 +25,8 @@ fn builder(c: &mut Criterion) {
                 b.iter(|| HighwayBuilder::new(&key).hash64(&data))
             },
             parameters,
-        ).throughput(|s| Throughput::Bytes(*s as u64)),
+        )
+        .throughput(|s| Throughput::Bytes(*s as u64)),
     );
 }
 
@@ -49,34 +42,40 @@ fn hashing(c: &mut Criterion) {
             b.iter(|| PortableHash::new(&key).hash64(&data))
         },
         parameters.clone(),
-    ).with_function("hashmap default", |b, param| {
+    )
+    .with_function("hashmap default", |b, param| {
         let data = vec![0u8; *param];
         b.iter(|| {
             let mut hasher = DefaultHasher::new();
             hasher.write(&data);
             hasher.finish()
         })
-    }).with_function("fnv", |b, param| {
+    })
+    .with_function("fnv", |b, param| {
         let data = vec![0u8; *param];
         b.iter(|| {
             let mut hasher = fnv::FnvHasher::with_key(0);
             hasher.write(&data);
             hasher.finish()
         })
-    }).with_function("fx", |b, param| {
+    })
+    .with_function("fx", |b, param| {
         let data = vec![0u8; *param];
         b.iter(|| {
             let mut hasher = fxhash::FxHasher64::default();
             hasher.write(&data);
             hasher.finish()
         })
-    }).with_function("farmhash", |b, param| {
+    })
+    .with_function("farmhash", |b, param| {
         let data = vec![0u8; *param];
         b.iter(|| farmhash::hash64(&data))
-    }).with_function("t1ha", |b, param| {
+    })
+    .with_function("t1ha", |b, param| {
         let data = vec![0u8; *param];
         b.iter(|| t1ha::t1ha0(&data, 1234))
-    }).throughput(|s| Throughput::Bytes(*s as u64));
+    })
+    .throughput(|s| Throughput::Bytes(*s as u64));
 
     #[cfg(target_arch = "x86_64")]
     {
@@ -106,18 +105,21 @@ fn hashing(c: &mut Criterion) {
             let key = Key([0, 0, 0, 0]);
             b.iter(|| PortableHash::new(&key).hash256(&data))
         },
-        parameters.clone(),
-    ).with_function("sha2", |b, param| {
+        parameters,
+    )
+    .with_function("sha2", |b, param| {
         let data = vec![0u8; *param];
         b.iter(|| Sha256::digest(&data))
-    }).with_function("blake2s", |b, param| {
+    })
+    .with_function("blake2s", |b, param| {
         let data = vec![0u8; *param];
         b.iter(|| {
             let mut blake = Blake2s::default();
             blake.input(&data);
             blake.result()
         })
-    }).with_function("blake2b_simd", |b, param| {
+    })
+    .with_function("blake2b_simd", |b, param| {
         let data = vec![0u8; *param];
         b.iter(|| {
             Params::new()
@@ -127,7 +129,8 @@ fn hashing(c: &mut Criterion) {
                 .update(&data)
                 .finalize()
         });
-    }).throughput(|s| Throughput::Bytes(*s as u64));
+    })
+    .throughput(|s| Throughput::Bytes(*s as u64));
 
     #[cfg(target_arch = "x86_64")]
     {
