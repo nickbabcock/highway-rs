@@ -7,7 +7,7 @@ addons:
 matrix:
   fast_finish: true
   include:
-    - rust: 1.29.0
+    - rust: 1.36.0
     - rust: stable
     - rust: beta
     - rust: nightly
