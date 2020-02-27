@@ -1,17 +1,17 @@
-use std::hash::{Hasher, BuildHasher};
-use key::Key;
-use builder::HighwayBuilder;
-use traits::HighwayHash;
+use crate::builder::HighwayBuilder;
+use crate::key::Key;
+use crate::traits::HighwayHash;
+use std::hash::{BuildHasher, Hasher};
 
 #[derive(Debug, Default)]
 pub struct HighwayHasher {
-    builder: HighwayBuilder
+    builder: HighwayBuilder,
 }
 
 impl HighwayHasher {
     pub fn new(key: &Key) -> Self {
         HighwayHasher {
-            builder: HighwayBuilder::new(key)
+            builder: HighwayBuilder::new(key),
         }
     }
 }
@@ -35,14 +35,12 @@ impl Hasher for HighwayHasher {
 
 #[derive(Debug, Default)]
 pub struct HighwayBuildHasher {
-    key: Key
+    key: Key,
 }
 
 impl HighwayBuildHasher {
     pub fn new(key: Key) -> Self {
-        HighwayBuildHasher {
-            key
-        }
+        HighwayBuildHasher { key }
     }
 }
 

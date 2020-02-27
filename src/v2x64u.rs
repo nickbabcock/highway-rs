@@ -15,7 +15,7 @@ impl Default for V2x64U {
 }
 
 impl fmt::Debug for V2x64U {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "V2x64U: {:?}", unsafe { self.to_arr() })
     }
 }

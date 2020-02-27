@@ -1,12 +1,12 @@
-use key::Key;
-use portable::PortableHash;
-use traits::HighwayHash;
+use crate::key::Key;
+use crate::portable::PortableHash;
+use crate::traits::HighwayHash;
 use std::default::Default;
 
 #[cfg(target_arch = "x86_64")]
-use avx::AvxHash;
+use crate::avx::AvxHash;
 #[cfg(target_arch = "x86_64")]
-use sse::SseHash;
+use crate::sse::SseHash;
 
 #[derive(Debug, Clone)]
 enum HighwayChoices {

@@ -1,7 +1,7 @@
+use crate::internal::{Filled, HashPacket, PACKET_SIZE};
+use crate::key::Key;
+use crate::traits::HighwayHash;
 use byteorder::{ByteOrder, LE};
-use internal::{Filled, HashPacket, PACKET_SIZE};
-use key::Key;
-use traits::HighwayHash;
 
 /// Portable HighwayHash implementation. Will run on any platform Rust will run on.
 #[derive(Debug, Default, Clone)]
@@ -59,14 +59,14 @@ impl PortableHash {
     }
 
     fn reset(&mut self) {
-        self.mul0[0] = 0xdbe6d5d5fe4cce2f;
-        self.mul0[1] = 0xa4093822299f31d0;
-        self.mul0[2] = 0x13198a2e03707344;
-        self.mul0[3] = 0x243f6a8885a308d3;
-        self.mul1[0] = 0x3bd39e10cb0ef593;
-        self.mul1[1] = 0xc0acf169b5f18a8c;
-        self.mul1[2] = 0xbe5466cf34e90c6c;
-        self.mul1[3] = 0x452821e638d01377;
+        self.mul0[0] = 0xdbe6_d5d5_fe4c_ce2f;
+        self.mul0[1] = 0xa409_3822_299f_31d0;
+        self.mul0[2] = 0x1319_8a2e_0370_7344;
+        self.mul0[3] = 0x243f_6a88_85a3_08d3;
+        self.mul1[0] = 0x3bd3_9e10_cb0e_f593;
+        self.mul1[1] = 0xc0ac_f169_b5f1_8a8c;
+        self.mul1[2] = 0xbe54_66cf_34e9_0c6c;
+        self.mul1[3] = 0x4528_21e6_38d0_1377;
         self.v0[0] = self.mul0[0] ^ self.key[0];
         self.v0[1] = self.mul0[1] ^ self.key[1];
         self.v0[2] = self.mul0[2] ^ self.key[2];
@@ -136,11 +136,11 @@ impl PortableHash {
             self.v0[2].wrapping_add(self.mul0[2]),
         );
 
-        [lowest, low, high, highest] 
+        [lowest, low, high, highest]
     }
 
     fn module_reduction(a3_unmasked: u64, a2: u64, a1: u64, a0: u64) -> (u64, u64) {
-        let a3 = a3_unmasked & 0x3FFFFFFFFFFFFFFF;
+        let a3 = a3_unmasked & 0x3FFF_FFFF_FFFF_FFFF;
         let high = a1 ^ ((a3 << 1) | (a2 >> 63)) ^ ((a3 << 2) | (a2 >> 62));
         let low = a0 ^ (a2 << 1) ^ (a2 << 2);
         (low, high)
@@ -163,9 +163,9 @@ impl PortableHash {
     fn update(&mut self, lanes: [u64; 4]) {
         for (i, lane) in lanes.iter().enumerate() {
             self.v1[i] = self.v1[i].wrapping_add(self.mul0[i].wrapping_add(*lane));
-            self.mul0[i] ^= (self.v1[i] & 0xffffffff).wrapping_mul(self.v0[i] >> 32);
+            self.mul0[i] ^= (self.v1[i] & 0xffff_ffff).wrapping_mul(self.v0[i] >> 32);
             self.v0[i] = self.v0[i].wrapping_add(self.mul1[i]);
-            self.mul1[i] ^= (self.v0[i] & 0xffffffff).wrapping_mul(self.v1[i] >> 32);
+            self.mul1[i] ^= (self.v0[i] & 0xffff_ffff).wrapping_mul(self.v1[i] >> 32);
         }
 
         PortableHash::zipper_merge_and_add(self.v1[1], self.v1[0], &mut self.v0, 1, 0);
@@ -176,21 +176,21 @@ impl PortableHash {
 
     fn zipper_merge_and_add(v1: u64, v0: u64, lane: &mut [u64; 4], add1: usize, add0: usize) {
         lane[add0] = lane[add0].wrapping_add(
-            (((v0 & 0xff000000) | (v1 & 0xff00000000)) >> 24)
-                | (((v0 & 0xff0000000000) | (v1 & 0xff000000000000)) >> 16)
-                | (v0 & 0xff0000)
+            (((v0 & 0xff00_0000) | (v1 & 0x00ff_0000_0000)) >> 24)
+                | (((v0 & 0xff00_0000_0000) | (v1 & 0x00ff_0000_0000_0000)) >> 16)
+                | (v0 & 0x00ff_0000)
                 | ((v0 & 0xff00) << 32)
-                | ((v1 & 0xff00000000000000) >> 8)
+                | ((v1 & 0xff00_0000_0000_0000) >> 8)
                 | (v0 << 56),
         );
         lane[add1] = lane[add1].wrapping_add(
-            (((v1 & 0xff000000) | (v0 & 0xff00000000)) >> 24)
-                | (v1 & 0xff0000)
-                | ((v1 & 0xff0000000000) >> 16)
+            (((v1 & 0xff00_0000) | (v0 & 0x00ff_0000_0000)) >> 24)
+                | (v1 & 0x00ff_0000)
+                | ((v1 & 0xff00_0000_0000) >> 16)
                 | ((v1 & 0xff00) << 24)
-                | ((v0 & 0xff000000000000) >> 8)
+                | ((v0 & 0x00ff_0000_0000_0000) >> 8)
                 | ((v1 & 0xff) << 48)
-                | (v0 & 0xff00000000000000),
+                | (v0 & 0xff00_0000_0000_0000),
         );
     }
 
