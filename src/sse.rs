@@ -66,9 +66,9 @@ impl SseHash {
     /// Creates a new `SseHash` while circumventing the runtime check for sse4.1. This function is
     /// unsafe! It will cause a segfault if sse4.1 is not enabled. Only use this function if you have
     /// benchmarked that the runtime check is significant and you know sse4.1 is already enabled.
-    pub unsafe fn force_new(key: &Key) -> Self {
+    pub unsafe fn force_new(key: Key) -> Self {
         let mut h = SseHash {
-            key: *key,
+            key,
             ..Default::default()
         };
         h.reset();
@@ -76,7 +76,7 @@ impl SseHash {
     }
 
     /// Create a new `SseHash` if the sse4.1 feature is detected
-    pub fn new(key: &Key) -> Option<Self> {
+    pub fn new(key: Key) -> Option<Self> {
         if is_x86_feature_detected!("sse4.1") {
             Some(unsafe { Self::force_new(key) })
         } else {

@@ -102,7 +102,7 @@ impl HighwayHash for HighwayBuilder {
 
 impl HighwayBuilder {
     /// Creates a new hasher based on compilation and runtime capabilities
-    pub fn new(key: &Key) -> Self {
+    pub fn new(key: Key) -> Self {
         #[cfg(target_arch = "x86_64")]
         {
             if let Some(h) = AvxHash::new(key) {
@@ -120,6 +120,6 @@ impl HighwayBuilder {
 
 impl Default for HighwayBuilder {
     fn default() -> Self {
-        HighwayBuilder::new(&Key::default())
+        HighwayBuilder::new(Key::default())
     }
 }

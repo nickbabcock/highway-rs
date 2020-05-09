@@ -48,9 +48,9 @@ impl HighwayHash for PortableHash {
 
 impl PortableHash {
     /// Create a new `PortableHash` from a `Key`
-    pub fn new(key: &Key) -> Self {
+    pub fn new(key: Key) -> Self {
         let mut h = PortableHash {
-            key: key.clone(),
+            key,
             ..Default::default()
         };
         h.reset();

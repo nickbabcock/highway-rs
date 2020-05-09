@@ -21,7 +21,7 @@
 //!
 //! // A HighwayBuilder is the recommended approach to hashing,
 //! // as it will select the fastest algorithm available
-//! let mut hasher = HighwayBuilder::new(&key);
+//! let mut hasher = HighwayBuilder::new(key);
 //!
 //! // Append some data
 //! hasher.append(&[255]);
@@ -41,14 +41,14 @@
 //!
 //! // Generate 128bit hash
 //! let key = Key([1, 2, 3, 4]);
-//! let mut hasher128 = HighwayBuilder::new(&key);
+//! let mut hasher128 = HighwayBuilder::new(key);
 //! hasher128.append(&[255]);
 //! let res128: [u64; 2] = hasher128.finalize128();
 //! assert_eq!([0xbb007d2462e77f3c, 0x224508f916b3991f], res128);
 //!
 //! // Generate 256bit hash
 //! let key = Key([1, 2, 3, 4]);
-//! let mut hasher256 = HighwayBuilder::new(&key);
+//! let mut hasher256 = HighwayBuilder::new(key);
 //! hasher256.append(&[255]);
 //! let res256: [u64; 4] = hasher256.finalize256();
 //! let expected: [u64; 4] = [
