@@ -1,7 +1,6 @@
 use crate::internal::{Filled, HashPacket, PACKET_SIZE};
 use crate::key::Key;
 use crate::traits::HighwayHash;
-use byteorder::{ByteOrder, LE};
 
 /// Portable HighwayHash implementation. Will run on any platform Rust will run on.
 #[derive(Debug, Default, Clone)]
@@ -199,11 +198,15 @@ impl PortableHash {
     }
 
     fn to_lanes(packet: &[u8]) -> [u64; 4] {
+        let a = unsafe { &*(packet.as_ptr() as *const [u8; 8]) };
+        let b = unsafe { &*(packet[8..].as_ptr() as *const [u8; 8]) };
+        let c = unsafe { &*(packet[16..].as_ptr() as *const [u8; 8]) };
+        let d = unsafe { &*(packet[24..].as_ptr() as *const [u8; 8]) };
         [
-            LE::read_u64(&packet[0..8]),
-            LE::read_u64(&packet[8..16]),
-            LE::read_u64(&packet[16..24]),
-            LE::read_u64(&packet[24..32]),
+            u64::from_le_bytes([a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]]),
+            u64::from_le_bytes([b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]]),
+            u64::from_le_bytes([c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7]]),
+            u64::from_le_bytes([d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7]]),
         ]
     }
 
