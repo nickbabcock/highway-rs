@@ -236,7 +236,8 @@ impl SseHash {
             let packetL = V2x64U::from(_mm_loadu_si128(bytes.as_ptr() as *const __m128i));
             let packett = SseHash::load_multiple_of_four(&bytes[16..], size_mod32 as u64);
             let remainder = &bytes[(size_mod32 & !3) + size_mod4 - 4..];
-            let last4 = i32::from_le_bytes([remainder[0], remainder[1], remainder[2], remainder[3]]);
+            let last4 =
+                i32::from_le_bytes([remainder[0], remainder[1], remainder[2], remainder[3]]);
             let packetH = V2x64U::from(_mm_insert_epi32(packett.0, last4, 3));
             (packetH, packetL)
         } else {
