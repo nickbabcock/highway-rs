@@ -4,10 +4,18 @@
 
 This crate is a native Rust port of [Google's
 HighwayHash](https://github.com/google/highwayhash), which is a fast, keyed, and strong hash
-function that can take advantage of SIMD instructions (SSE 4.1 and AVX 2) for speed ups that
-allow it to be faster than traditional cryptographic hash functions and even outpace less secure
-functions at large payloads. HighwayHash allows for an incremental approach to hashing and can
-output 64bit, 128bit, and 256bit values.
+function.
+
+## Features
+
+ - ✔ stable rust
+ - ✔ zero dependencies
+ - ✔ generate 64, 128, and 256bit hashes
+ - ✔ > 10 GB/s with SIMD (SSE 4.1 & AVX 2) aware instructions on x86 architectures
+ - ✔ > 1 GB/s portable implementation with zero unsafe constructs
+ - ✔ passes reference test suite
+ - ✔ incremental / streaming hashes
+ - ✔ fuzzed against in-house fuzzing suite
 
 ## Caution
 
