@@ -23,6 +23,17 @@ HighwayHash (the algorithm) has not gone undergone extensive cryptanalysis like 
 
 ## Examples
 
+The quickest way to get started:
+
+```rust
+use highway::{HighwayBuilder, HighwayHash};
+let res: u64 = HighwayBuilder::default().hash64(&[]);
+let res2: [u64; 2] = HighwayBuilder::default().hash128(&[]);
+let res3: [u64; 4] = HighwayBuilder::default().hash256(&[]);
+```
+
+A more complete tour of the API follows:
+
 ```rust
 use highway::{HighwayBuilder, HighwayHash, Key};
 
@@ -107,7 +118,9 @@ assert_eq!(map.get(&1), Some(&2));
 HighwayHash can be used against untrusted user input where weak hashes can't be used due to exploitation, verified cryptographic hashes are too slow, and a strong hash function meets requirements. Some specific scenarios given by the authors of HighwayHash:
 
 - Use 64bit hashes to for authenticating short lived messages
-- Use 128 / 256bit hashes are good for checksums (ie: longer lived data, or strong guarantees against collisions)
+- Use 256bit hashes for checksums. Think file storage (S3) or any longer lived data where there is a need for strong guarantees against collisions.
+
+Highwayhash may not be a good fit if the payloads trend small (< 100 bytes) and speed is up of the upmost importance, as Highwayhash hits its stride at larger payloads.
 
 ## Benchmarks
 
