@@ -1,3 +1,9 @@
+## v0.4.0 - 2020-05-09
+
+- Highway-rs is now dependency free!
+- Use rust 2018 edition
+- **Breaking change**: hashes take an owned `Key` instead of a reference. This is not only better API design, but it could also lead to marginal better performance as the hash implementations would clone the reference regardless. Unfortunately, it is a breaking change, but one should only need to remove an ampersand.
+
 ## v0.3.0 - 2019-08-08
 
 Allow the use of highway hash in standard rust collections
