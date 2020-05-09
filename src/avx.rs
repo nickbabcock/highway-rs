@@ -4,7 +4,6 @@ use crate::key::Key;
 use crate::traits::HighwayHash;
 use crate::v2x64u::V2x64U;
 use crate::v4x64u::V4x64U;
-use byteorder::{ByteOrder, LE};
 use std::arch::x86_64::*;
 
 /// AVX empowered implementation that will only work on `x86_64` with avx2 enabled at the CPU
@@ -179,7 +178,7 @@ impl AvxHash {
             let int_mask = _mm_cmpgt_epi32(size, _mm_set_epi32(31, 27, 23, 19));
             let int_lanes = _mm_maskload_epi32(bytes.as_ptr().offset(16) as *const i32, int_mask);
             let remainder = &bytes[(size_mod32 & !3) + size_mod4 - 4..];
-            let last4 = LE::read_i32(remainder);
+            let last4 = i32::from_le_bytes([remainder[0], remainder[1], remainder[2], remainder[3]]);
             let packetH = _mm_insert_epi32(int_lanes, last4, 3);
             let packetL256 = _mm256_castsi128_si256(packetL);
             let packet = _mm256_inserti128_si256(packetL256, packetH, 1);

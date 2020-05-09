@@ -3,7 +3,6 @@ use crate::internal::{Filled, HashPacket, PACKET_SIZE};
 use crate::key::Key;
 use crate::traits::HighwayHash;
 use crate::v2x64u::V2x64U;
-use byteorder::{ByteOrder, LE};
 use std::arch::x86_64::*;
 
 /// SSE empowered implementation that will only work on `x86_64` with sse 4.1 enabled at the CPU
@@ -220,7 +219,8 @@ impl SseHash {
         };
 
         if size & 4 != 0 {
-            let word2 = _mm_cvtsi32_si128(LE::read_i32(data));
+            let last4 = i32::from_le_bytes([data[0], data[1], data[2], data[3]]);
+            let word2 = _mm_cvtsi32_si128(last4);
             let broadcast = V2x64U::from(_mm_shuffle_epi32(word2, 0));
             ret |= broadcast & mask4;
         }
@@ -236,7 +236,7 @@ impl SseHash {
             let packetL = V2x64U::from(_mm_loadu_si128(bytes.as_ptr() as *const __m128i));
             let packett = SseHash::load_multiple_of_four(&bytes[16..], size_mod32 as u64);
             let remainder = &bytes[(size_mod32 & !3) + size_mod4 - 4..];
-            let last4 = LE::read_i32(remainder);
+            let last4 = i32::from_le_bytes([remainder[0], remainder[1], remainder[2], remainder[3]]);
             let packetH = V2x64U::from(_mm_insert_epi32(packett.0, last4, 3));
             (packetH, packetL)
         } else {
