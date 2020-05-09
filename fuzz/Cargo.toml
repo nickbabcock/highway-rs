@@ -11,11 +11,9 @@ cargo-fuzz = true
 
 [dependencies.highway]
 path = ".."
-features = ["arbitrary"]
 
 [dependencies]
-libfuzzer-sys = "0.2.1"
-arbitrary = { version = "0.3", features = ["derive"] }
+libfuzzer-sys = "0.3.1"
 
 # Prevent this from interfering with workspaces
 [workspace]
