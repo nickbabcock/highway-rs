@@ -1,4 +1,4 @@
 tag-message = "Release {{version}}"
 dev-version-ext = "pre"
 pre-release-commit-message = "Release {{version}}"
-pro-release-commit-message = "Bump to {{next_version}}"
+post-release-commit-message = "Bump to {{next_version}}"
