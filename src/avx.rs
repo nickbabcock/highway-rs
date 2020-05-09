@@ -63,9 +63,9 @@ impl AvxHash {
     /// Creates a new `AvxHash` while circumventing the runtime check for avx2. This function is
     /// unsafe! It will cause a segfault if avx2 is not enabled. Only use this function if you have
     /// benchmarked that the runtime check is significant and you know avx2 is already enabled.
-    pub unsafe fn force_new(key: &Key) -> Self {
+    pub unsafe fn force_new(key: Key) -> Self {
         let mut h = AvxHash {
-            key: *key,
+            key,
             ..Default::default()
         };
         h.reset();
@@ -73,7 +73,7 @@ impl AvxHash {
     }
 
     /// Creates a new `AvxHash` if the avx2 feature is detected.
-    pub fn new(key: &Key) -> Option<Self> {
+    pub fn new(key: Key) -> Option<Self> {
         if is_x86_feature_detected!("avx2") {
             Some(unsafe { Self::force_new(key) })
         } else {

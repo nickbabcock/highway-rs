@@ -9,7 +9,7 @@ pub struct HighwayHasher {
 }
 
 impl HighwayHasher {
-    pub fn new(key: &Key) -> Self {
+    pub fn new(key: Key) -> Self {
         HighwayHasher {
             builder: HighwayBuilder::new(key),
         }
@@ -48,6 +48,6 @@ impl BuildHasher for HighwayBuildHasher {
     type Hasher = HighwayHasher;
 
     fn build_hasher(&self) -> Self::Hasher {
-        HighwayHasher::new(&self.key)
+        HighwayHasher::new(self.key)
     }
 }

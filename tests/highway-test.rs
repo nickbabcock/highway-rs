@@ -4,14 +4,14 @@ use highway::{HighwayHash, Key, PortableHash};
 fn portable_hash_simple() {
     let key = Key([1, 2, 3, 4]);
     let b: Vec<u8> = (0..33).map(|x| 128 + x as u8).collect();
-    let hash = PortableHash::new(&key).hash64(&b[..]);
+    let hash = PortableHash::new(key).hash64(&b[..]);
     assert_eq!(0x53c5_16cc_e478_cad7, hash);
 }
 #[test]
 fn portable_hash_append() {
     let key = Key([1, 2, 3, 4]);
     let b: Vec<u8> = (0..33).map(|x| 128 + x as u8).collect();
-    let mut hasher = PortableHash::new(&key);
+    let mut hasher = PortableHash::new(key);
     hasher.append(&b[..]);
     let hash = hasher.finalize64();
     assert_eq!(0x53c5_16cc_e478_cad7, hash);
@@ -20,14 +20,14 @@ fn portable_hash_append() {
 #[test]
 fn portable_hash_simple2() {
     let key = Key([1, 2, 3, 4]);
-    let hash = PortableHash::new(&key).hash64(&[(-1 as i8) as u8]);
+    let hash = PortableHash::new(key).hash64(&[(-1 as i8) as u8]);
     assert_eq!(0x7858_f24d_2d79_b2b2, hash);
 }
 
 #[test]
 fn portable_hash_append2() {
     let key = Key([1, 2, 3, 4]);
-    let mut hasher = PortableHash::new(&key);
+    let mut hasher = PortableHash::new(key);
     hasher.append(&[(-1 as i8) as u8]);
     let hash = hasher.finalize64();
     assert_eq!(0x7858_f24d_2d79_b2b2, hash);
@@ -443,24 +443,24 @@ fn portable_hash_all() {
 
     for i in 0..64 {
         println!("{}", i);
-        let res_128 = u64_to_u128(&PortableHash::new(&key).hash128(&data[..i])[..]);
-        let res_256 = u64_to_u256(&PortableHash::new(&key).hash256(&data[..i])[..]);
-        assert_eq!(expected64[i], PortableHash::new(&key).hash64(&data[..i]));
+        let res_128 = u64_to_u128(&PortableHash::new(key).hash128(&data[..i])[..]);
+        let res_256 = u64_to_u256(&PortableHash::new(key).hash256(&data[..i])[..]);
+        assert_eq!(expected64[i], PortableHash::new(key).hash64(&data[..i]));
         assert_eq!(expected128[i], res_128);
         assert_eq!(expected256[i], res_256);
 
         assert_eq!(expected64[i], {
-            let mut hasher = PortableHash::new(&key);
+            let mut hasher = PortableHash::new(key);
             hasher.append(&data[..i]);
             hasher.finalize64()
         });
         assert_eq!(expected128[i], {
-            let mut hasher = PortableHash::new(&key);
+            let mut hasher = PortableHash::new(key);
             hasher.append(&data[..i]);
             u64_to_u128(&hasher.finalize128()[..])
         });
         assert_eq!(expected256[i], {
-            let mut hasher = PortableHash::new(&key);
+            let mut hasher = PortableHash::new(key);
             hasher.append(&data[..i]);
             u64_to_u256(&hasher.finalize256()[..])
         });
@@ -495,18 +495,18 @@ fn sse_hash_eq_portable() {
     for i in 0..100 {
         println!("{}", i);
         assert_eq!(
-            PortableHash::new(&key).hash64(&data[..i]),
-            SseHash::new(&key).expect("sse4.1").hash64(&data[..i])
+            PortableHash::new(key).hash64(&data[..i]),
+            SseHash::new(key).expect("sse4.1").hash64(&data[..i])
         );
 
         assert_eq!(
-            PortableHash::new(&key).hash128(&data[..i]),
-            SseHash::new(&key).expect("sse4.1").hash128(&data[..i])
+            PortableHash::new(key).hash128(&data[..i]),
+            SseHash::new(key).expect("sse4.1").hash128(&data[..i])
         );
 
         assert_eq!(
-            PortableHash::new(&key).hash256(&data[..i]),
-            SseHash::new(&key).expect("sse4.1").hash256(&data[..i])
+            PortableHash::new(key).hash256(&data[..i]),
+            SseHash::new(key).expect("sse4.1").hash256(&data[..i])
         );
     }
 }
@@ -530,18 +530,18 @@ fn avx_hash_eq_portable() {
     for i in 0..100 {
         println!("{}", i);
         assert_eq!(
-            PortableHash::new(&key).hash64(&data[..i]),
-            AvxHash::new(&key).expect("avx2").hash64(&data[..i])
+            PortableHash::new(key).hash64(&data[..i]),
+            AvxHash::new(key).expect("avx2").hash64(&data[..i])
         );
 
         assert_eq!(
-            PortableHash::new(&key).hash128(&data[..i]),
-            AvxHash::new(&key).expect("avx2").hash128(&data[..i])
+            PortableHash::new(key).hash128(&data[..i]),
+            AvxHash::new(key).expect("avx2").hash128(&data[..i])
         );
 
         assert_eq!(
-            PortableHash::new(&key).hash256(&data[..i]),
-            AvxHash::new(&key).expect("avx2").hash256(&data[..i])
+            PortableHash::new(key).hash256(&data[..i]),
+            AvxHash::new(key).expect("avx2").hash256(&data[..i])
         );
     }
 }
@@ -549,7 +549,7 @@ fn avx_hash_eq_portable() {
 #[test]
 fn portable_survive_crash() {
     let data = include_bytes!("../assets/portable-crash-1");
-    let hash = PortableHash::new(&Key([1, 2, 3, 4])).hash64(&data[..]);
+    let hash = PortableHash::new(Key([1, 2, 3, 4])).hash64(&data[..]);
     assert!(hash != 0);
 }
 
@@ -562,7 +562,7 @@ fn avx_survive_crash() {
     }
 
     let data = include_bytes!("../assets/avx-crash-1");
-    let hash = AvxHash::new(&Key([1, 2, 3, 4]))
+    let hash = AvxHash::new(Key([1, 2, 3, 4]))
         .expect("avx2")
         .hash64(&data[..]);
     assert!(hash != 0);
@@ -583,18 +583,18 @@ fn builder_hash_eq_portable() {
     for i in 0..100 {
         println!("{}", i);
         assert_eq!(
-            PortableHash::new(&key).hash64(&data[..i]),
-            HighwayBuilder::new(&key).hash64(&data[..i])
+            PortableHash::new(key).hash64(&data[..i]),
+            HighwayBuilder::new(key).hash64(&data[..i])
         );
 
         assert_eq!(
-            PortableHash::new(&key).hash128(&data[..i]),
-            HighwayBuilder::new(&key).hash128(&data[..i])
+            PortableHash::new(key).hash128(&data[..i]),
+            HighwayBuilder::new(key).hash128(&data[..i])
         );
 
         assert_eq!(
-            PortableHash::new(&key).hash256(&data[..i]),
-            HighwayBuilder::new(&key).hash256(&data[..i])
+            PortableHash::new(key).hash256(&data[..i]),
+            HighwayBuilder::new(key).hash256(&data[..i])
         );
     }
 }
