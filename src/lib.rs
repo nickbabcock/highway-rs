@@ -128,3 +128,6 @@ mod v4x64u;
 pub use crate::avx::AvxHash;
 #[cfg(target_arch = "x86_64")]
 pub use crate::sse::SseHash;
+
+#[cfg(doctest)]
+doc_comment::doctest!("../README.md");

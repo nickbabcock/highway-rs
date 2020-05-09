@@ -21,6 +21,7 @@ fxhash = "0.2.1"
 quickcheck = "0.9"
 quickcheck_macros = "0.9"
 t1ha = "0.1"
+doc-comment = "0.3"
 
 [[bench]]
 name = "bench_hashes"
