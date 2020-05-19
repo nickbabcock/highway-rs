@@ -15,6 +15,7 @@ function.
  - ✔ > 1 GB/s portable implementation with zero unsafe constructs
  - ✔ passes reference test suite
  - ✔ incremental / streaming hashes
+ - ✔ zero heap allocations
  - ✔ fuzzed against in-house fuzzing suite
 
 ## Caution
