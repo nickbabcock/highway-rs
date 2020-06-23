@@ -222,13 +222,9 @@ impl AvxHash {
     unsafe fn update(&mut self, packet: V4x64U) {
         self.v1 += packet;
         self.v1 += self.mul0;
-        self.mul0 ^= self
-            .v1
-            .mul_low32(&V4x64U::from(_mm256_srli_epi64(self.v0.0, 32)));
+        self.mul0 ^= self.v1.mul_low32(&(self.v0 >> 32));
         self.v0 += self.mul1;
-        self.mul1 ^= self
-            .v0
-            .mul_low32(&V4x64U::from(_mm256_srli_epi64(self.v1.0, 32)));
+        self.mul1 ^= self.v0.mul_low32(&(self.v1 >> 32));
         self.v0 += AvxHash::zipper_merge(&self.v1);
         self.v1 += AvxHash::zipper_merge(&self.v0);
     }
