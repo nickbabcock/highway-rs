@@ -1,3 +1,7 @@
+## v0.5.0 - 2020-06-24
+
+- 60% throughput increase to the portable highway hash implementation
+
 ## v0.4.0 - 2020-05-09
 
 - Highway-rs is now dependency free!
