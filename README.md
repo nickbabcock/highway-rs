@@ -12,7 +12,7 @@ function.
  - ✔ zero dependencies
  - ✔ generate 64, 128, and 256bit hashes
  - ✔ > 10 GB/s with SIMD (SSE 4.1 & AVX 2) aware instructions on x86 architectures
- - ✔ > 1 GB/s portable implementation with zero unsafe constructs
+ - ✔ > 1 GB/s portable implementation with only one instance of `unsafe`
  - ✔ passes reference test suite
  - ✔ incremental / streaming hashes
  - ✔ zero heap allocations
