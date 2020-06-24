@@ -2,7 +2,7 @@ use std::arch::x86_64::*;
 
 use std::fmt;
 use std::ops::{
-    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, SubAssign,
+    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Shr, SubAssign,
 };
 
 #[derive(Clone, Copy)]
@@ -165,6 +165,16 @@ impl BitXor for V4x64U {
     fn bitxor(self, other: Self) -> Self {
         let mut new = V4x64U(self.0);
         new ^= other;
+        new
+    }
+}
+
+impl Shr<i32> for V4x64U {
+    type Output = Self;
+
+    fn shr(self, shift: i32) -> Self {
+        let mut new = V4x64U(self.0);
+        unsafe { new.0 = _mm256_srli_epi64(self.0, shift) }
         new
     }
 }
