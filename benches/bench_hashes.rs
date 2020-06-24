@@ -116,9 +116,9 @@ fn bit256_hash(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::new("blake2s", i), i, |b, param| {
             let data = vec![0u8; *param];
             b.iter(|| {
-                let mut blake = Blake2s::default();
-                blake.input(&data);
-                blake.result()
+                let mut blake = Blake2s::new();
+                blake.update(&data);
+                blake.finalize()
             })
         });
 
