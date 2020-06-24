@@ -193,17 +193,18 @@ impl PortableHash {
         );
     }
 
-    fn update_packet(&mut self, packet: &[u8]) {
-        self.update(PortableHash::to_lanes(packet));
-    }
-
     fn to_lanes(d: &[u8]) -> [u64; 4] {
-        [
-            u64::from_le_bytes([d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7]]),
-            u64::from_le_bytes([d[8], d[9], d[10], d[11], d[12], d[13], d[14], d[15]]),
-            u64::from_le_bytes([d[16], d[17], d[18], d[19], d[20], d[21], d[22], d[23]]),
-            u64::from_le_bytes([d[24], d[25], d[26], d[27], d[28], d[29], d[30], d[31]]),
-        ]
+        // Use of ptr::read_unaligned gave a 60% throughput increase for large payloads. I'm on the
+        // lookout for a safe alternative that is as performant
+        debug_assert!(d.len() >= std::mem::size_of::<[u64; 4]>());
+        unsafe {
+            [
+                (d.as_ptr().offset(0) as *const u64).read_unaligned(),
+                (d.as_ptr().offset(8) as *const u64).read_unaligned(),
+                (d.as_ptr().offset(16) as *const u64).read_unaligned(),
+                (d.as_ptr().offset(24) as *const u64).read_unaligned(),
+            ]
+        }
     }
 
     fn rotate_32_by(count: u64, lanes: &mut [u64; 4]) {
@@ -248,23 +249,20 @@ impl PortableHash {
         let size = self.buffer.len() as u64;
         self.update_lanes(size);
         let packet = PortableHash::remainder(self.buffer.as_slice());
-        self.update_packet(&packet);
+        self.update(PortableHash::to_lanes(&packet));
     }
 
     fn append(&mut self, data: &[u8]) {
         match self.buffer.fill(data) {
             Filled::Consumed => {}
             Filled::Full(new_data) => {
-                let l = PortableHash::to_lanes(self.buffer.as_slice());
-                self.update(l);
-
-                let mut rest = &new_data[..];
-                while rest.len() >= PACKET_SIZE {
-                    self.update_packet(&rest);
-                    rest = &rest[PACKET_SIZE..];
+                self.update(PortableHash::to_lanes(self.buffer.as_slice()));
+                let mut chunks = new_data.chunks_exact(PACKET_SIZE);
+                while let Some(chunk) = chunks.next() {
+                    self.update(PortableHash::to_lanes(chunk));
                 }
 
-                self.buffer.set_to(rest);
+                self.buffer.set_to(chunks.remainder());
             }
         }
     }
