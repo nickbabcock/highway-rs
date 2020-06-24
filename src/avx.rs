@@ -263,17 +263,13 @@ impl AvxHash {
         match self.buffer.fill(data) {
             Filled::Consumed => {}
             Filled::Full(new_data) => {
-                let packet = AvxHash::to_lanes(self.buffer.as_slice());
-                self.update(packet);
-
-                let mut rest = &new_data[..];
-                while rest.len() >= PACKET_SIZE {
-                    let packet = AvxHash::to_lanes(&rest);
-                    self.update(packet);
-                    rest = &rest[PACKET_SIZE..];
+                self.update(AvxHash::to_lanes(self.buffer.as_slice()));
+                let mut chunks = new_data.chunks_exact(PACKET_SIZE);
+                while let Some(chunk) = chunks.next() {
+                    self.update(AvxHash::to_lanes(chunk));
                 }
 
-                self.buffer.set_to(rest);
+                self.buffer.set_to(chunks.remainder());
             }
         }
     }

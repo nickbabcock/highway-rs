@@ -291,14 +291,13 @@ impl SseHash {
                 let (packetH, packetL) = SseHash::to_lanes(self.buffer.as_slice());
                 self.update(packetH, packetL);
 
-                let mut rest = &new_data[..];
-                while rest.len() >= PACKET_SIZE {
-                    let (packetH, packetL) = SseHash::to_lanes(&rest);
+                let mut chunks = new_data.chunks_exact(PACKET_SIZE);
+                while let Some(chunk) = chunks.next() {
+                    let (packetH, packetL) = SseHash::to_lanes(chunk);
                     self.update(packetH, packetL);
-                    rest = &rest[PACKET_SIZE..];
                 }
 
-                self.buffer.set_to(rest);
+                self.buffer.set_to(chunks.remainder());
             }
         }
     }
