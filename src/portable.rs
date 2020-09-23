@@ -33,16 +33,16 @@ impl HighwayHash for PortableHash {
         self.append(data);
     }
 
-    fn finalize64(mut self) -> u64 {
-        Self::finalize64(&mut self)
+    fn finalize64(&self) -> u64 {
+        Self::finalize64(&mut self.clone())
     }
 
-    fn finalize128(mut self) -> [u64; 2] {
-        Self::finalize128(&mut self)
+    fn finalize128(&self) -> [u64; 2] {
+        Self::finalize128(&mut self.clone())
     }
 
-    fn finalize256(mut self) -> [u64; 4] {
-        Self::finalize256(&mut self)
+    fn finalize256(&self) -> [u64; 4] {
+        Self::finalize256(&mut self.clone())
     }
 }
 
