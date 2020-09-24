@@ -49,16 +49,16 @@ impl HighwayHash for SseHash {
         }
     }
 
-    fn finalize64(&self) -> u64 {
-        unsafe { Self::finalize64(&mut self.clone()) }
+    fn finalize64(mut self) -> u64 {
+        unsafe { Self::finalize64(&mut self) }
     }
 
-    fn finalize128(&self) -> [u64; 2] {
-        unsafe { Self::finalize128(&mut self.clone()) }
+    fn finalize128(mut self) -> [u64; 2] {
+        unsafe { Self::finalize128(&mut self) }
     }
 
-    fn finalize256(&self) -> [u64; 4] {
-        unsafe { Self::finalize256(&mut self.clone()) }
+    fn finalize256(mut self) -> [u64; 4] {
+        unsafe { Self::finalize256(&mut self) }
     }
 }
 
@@ -302,3 +302,6 @@ impl SseHash {
         }
     }
 }
+
+impl_write!(SseHash);
+impl_hasher!(SseHash);

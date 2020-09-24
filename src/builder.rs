@@ -69,8 +69,8 @@ impl HighwayHash for HighwayBuilder {
         }
     }
 
-    fn finalize64(&self) -> u64 {
-        match &self.0 {
+    fn finalize64(self) -> u64 {
+        match self.0 {
             HighwayChoices::Portable(x) => x.finalize64(),
             #[cfg(target_arch = "x86_64")]
             HighwayChoices::Avx(x) => x.finalize64(),
@@ -79,8 +79,8 @@ impl HighwayHash for HighwayBuilder {
         }
     }
 
-    fn finalize128(&self) -> [u64; 2] {
-        match &self.0 {
+    fn finalize128(self) -> [u64; 2] {
+        match self.0 {
             HighwayChoices::Portable(x) => x.finalize128(),
             #[cfg(target_arch = "x86_64")]
             HighwayChoices::Avx(x) => x.finalize128(),
@@ -89,8 +89,8 @@ impl HighwayHash for HighwayBuilder {
         }
     }
 
-    fn finalize256(&self) -> [u64; 4] {
-        match &self.0 {
+    fn finalize256(self) -> [u64; 4] {
+        match self.0 {
             HighwayChoices::Portable(x) => x.finalize256(),
             #[cfg(target_arch = "x86_64")]
             HighwayChoices::Avx(x) => x.finalize256(),
@@ -123,3 +123,6 @@ impl Default for HighwayBuilder {
         HighwayBuilder::new(Key::default())
     }
 }
+
+impl_write!(HighwayBuilder);
+impl_hasher!(HighwayBuilder);

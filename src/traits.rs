@@ -20,30 +20,11 @@ pub trait HighwayHash {
     fn append(&mut self, data: &[u8]);
 
     /// Consumes the hasher to return the 64bit hash
-    fn finalize64(&self) -> u64;
+    fn finalize64(self) -> u64;
 
     /// Consumes the hasher to return the 128bit hash
-    fn finalize128(&self) -> [u64; 2];
+    fn finalize128(self) -> [u64; 2];
 
     /// Consumes the hasher to return the 256bit hash
-    fn finalize256(&self) -> [u64; 4];
-}
-
-impl core::hash::Hasher for dyn HighwayHash {
-    fn write(&mut self, bytes: &[u8]) {
-        self.append(bytes);
-    }
-    fn finish(&self) -> u64 {
-        self.clone().finalize64()
-    }
-}
-
-impl std::io::Write for dyn HighwayHash {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        self.append(buf);
-        Ok(buf.len())
-    }
-    fn flush(&mut self) -> std::io::Result<()> {
-        Ok(())
-    }
+    fn finalize256(self) -> [u64; 4];
 }
