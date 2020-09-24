@@ -29,7 +29,7 @@ macro_rules! impl_hasher {
             fn write(&mut self, bytes: &[u8]) {
                 crate::HighwayHash::append(self, bytes);
             }
-            fn finish(&self) -> ::std::primitive::u64 {
+            fn finish(&self) -> u64 {
                 crate::HighwayHash::finalize64(self.clone())
             }
         }
