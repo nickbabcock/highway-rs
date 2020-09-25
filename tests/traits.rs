@@ -11,6 +11,7 @@ where
 }
 
 #[test]
+#[cfg(target_arch = "x86_64")]
 fn hashers_should_implement_write_and_hasher() {
     assert!(hash::<highway::AvxHash>().is_ok());
     assert!(hash::<highway::PortableHash>().is_ok());
