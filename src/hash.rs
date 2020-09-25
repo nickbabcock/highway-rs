@@ -33,6 +33,16 @@ impl Hasher for HighwayHasher {
     }
 }
 
+impl std::io::Write for HighwayHasher {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.builder.append(buf);
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
 #[derive(Debug, Default)]
 pub struct HighwayBuildHasher {
     key: Key,
