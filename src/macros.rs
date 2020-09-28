@@ -10,10 +10,10 @@ macro_rules! _mm_shuffle {
 }
 
 macro_rules! impl_write {
-    ($hasher_struct:ident) => {
+    ($hasher_struct:ty) => {
         impl ::std::io::Write for $hasher_struct {
             fn write(&mut self, bytes: &[u8]) -> ::std::io::Result<usize> {
-                crate::HighwayHash::append(self, bytes);
+                $crate::HighwayHash::append(self, bytes);
                 Ok(bytes.len())
             }
             fn flush(&mut self) -> ::std::io::Result<()> {
@@ -24,13 +24,13 @@ macro_rules! impl_write {
 }
 
 macro_rules! impl_hasher {
-    ($hasher_struct:ident) => {
+    ($hasher_struct:ty) => {
         impl ::core::hash::Hasher for $hasher_struct {
             fn write(&mut self, bytes: &[u8]) {
-                crate::HighwayHash::append(self, bytes);
+                $crate::HighwayHash::append(self, bytes);
             }
             fn finish(&self) -> u64 {
-                crate::HighwayHash::finalize64(self.clone())
+                $crate::HighwayHash::finalize64(self.clone())
             }
         }
     };
