@@ -118,12 +118,14 @@ Hashing a file, or anything implementing `Read`
 
 ```rust
 use std::fs::File;
-use highway::{HighwayHasher, HighwayHash};
-let mut file = File::open(...)?;
-let mut hasher = HighwayHasher::default();
-std::io::copy(&mut file, &mut hasher)?;
+use std::hash::Hasher;
+use highway::{PortableHash, HighwayHash};
+
+let mut file = File::open("./README.md").unwrap();
+let mut hasher = PortableHash::default();
+std::io::copy(&mut file, &mut hasher).unwrap();
 let hash64 = hasher.finish(); // core Hasher API
-let hash256 = hasher.finalize256(); // highway API
+let hash256 = hasher.finalize256(); // HighwayHash API
 ```
 
 ## Use Cases
