@@ -30,6 +30,13 @@ macro_rules! impl_hasher {
                 $crate::HighwayHash::append(self, bytes);
             }
             fn finish(&self) -> u64 {
+                // Reasons why we need to clone. finalize64` mutates internal state so either we need our
+                // Hasher to consume itself or receive a mutable reference on `finish`. We receive neither,
+                // due to finish being a misnomer (additional writes could be expected) and it's intended
+                // for the hasher to merely return it's current state. The issue with HighwayHash is that
+                // there are several rounds of permutations when finalizing a value, and internal state is
+                // modified during that process. We work around these constraints by cloning the hasher and
+                // finalizing that one.
                 $crate::HighwayHash::finalize64(self.clone())
             }
         }
