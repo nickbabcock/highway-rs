@@ -114,6 +114,20 @@ map.insert(1, 2);
 assert_eq!(map.get(&1), Some(&2));
 ```
 
+Hashing a file, or anything implementing `Read`
+
+```rust
+use std::fs::File;
+use std::hash::Hasher;
+use highway::{PortableHash, HighwayHash};
+
+let mut file = File::open("./README.md").unwrap();
+let mut hasher = PortableHash::default();
+std::io::copy(&mut file, &mut hasher).unwrap();
+let hash64 = hasher.finish(); // core Hasher API
+let hash256 = hasher.finalize256(); // HighwayHash API
+```
+
 ## Use Cases
 
 HighwayHash can be used against untrusted user input where weak hashes can't be used due to exploitation, verified cryptographic hashes are too slow, and a strong hash function meets requirements. Some specific scenarios given by the authors of HighwayHash:

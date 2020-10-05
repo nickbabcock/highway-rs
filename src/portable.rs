@@ -267,3 +267,6 @@ impl PortableHash {
         }
     }
 }
+
+impl_write!(PortableHash);
+impl_hasher!(PortableHash);

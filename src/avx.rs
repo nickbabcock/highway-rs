@@ -274,3 +274,6 @@ impl AvxHash {
         }
     }
 }
+
+impl_write!(AvxHash);
+impl_hasher!(AvxHash);

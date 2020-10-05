@@ -302,3 +302,6 @@ impl SseHash {
         }
     }
 }
+
+impl_write!(SseHash);
+impl_hasher!(SseHash);

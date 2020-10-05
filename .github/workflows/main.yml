@@ -18,6 +18,7 @@ jobs:
       TARGET:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         build:
         - pinned

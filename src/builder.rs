@@ -123,3 +123,6 @@ impl Default for HighwayBuilder {
         HighwayBuilder::new(Key::default())
     }
 }
+
+impl_write!(HighwayBuilder);
+impl_hasher!(HighwayBuilder);
