@@ -60,9 +60,13 @@ impl HighwayHash for AvxHash {
 }
 
 impl AvxHash {
-    /// Creates a new `AvxHash` while circumventing the runtime check for avx2. This function is
-    /// unsafe! It will cause a segfault if avx2 is not enabled. Only use this function if you have
-    /// benchmarked that the runtime check is significant and you know avx2 is already enabled.
+    /// Creates a new `AvxHash` while circumventing the runtime check for avx2.
+    ///
+    /// # Safety
+    ///
+    /// If called on a machine without avx2, a segfault will occur. Only use if you have
+    /// control over the deployment environment and have either benchmarked that the runtime
+    /// check is significant or are unable to check for avx2 capabilities
     pub unsafe fn force_new(key: Key) -> Self {
         let mut h = AvxHash {
             key,
@@ -163,7 +167,7 @@ impl AvxHash {
 
     #[inline]
     #[target_feature(enable = "avx2")]
-    unsafe fn to_lanes(packet: &[u8]) -> V4x64U {
+    unsafe fn data_to_lanes(packet: &[u8]) -> V4x64U {
         V4x64U::from(_mm256_loadu_si256(packet.as_ptr() as *const __m256i))
     }
 
@@ -263,10 +267,10 @@ impl AvxHash {
         match self.buffer.fill(data) {
             Filled::Consumed => {}
             Filled::Full(new_data) => {
-                self.update(AvxHash::to_lanes(self.buffer.as_slice()));
+                self.update(AvxHash::data_to_lanes(self.buffer.as_slice()));
                 let mut chunks = new_data.chunks_exact(PACKET_SIZE);
                 while let Some(chunk) = chunks.next() {
-                    self.update(AvxHash::to_lanes(chunk));
+                    self.update(AvxHash::data_to_lanes(chunk));
                 }
 
                 self.buffer.set_to(chunks.remainder());

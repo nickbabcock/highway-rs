@@ -63,9 +63,13 @@ impl HighwayHash for SseHash {
 }
 
 impl SseHash {
-    /// Creates a new `SseHash` while circumventing the runtime check for sse4.1. This function is
-    /// unsafe! It will cause a segfault if sse4.1 is not enabled. Only use this function if you have
-    /// benchmarked that the runtime check is significant and you know sse4.1 is already enabled.
+    /// Creates a new `SseHash` while circumventing the runtime check for sse4.1.
+    ///
+    /// # Safety
+    ///
+    /// If called on a machine without sse4.1, a segfault will occur. Only use if you have
+    /// control over the deployment environment and have either benchmarked that the runtime
+    /// check is significant or are unable to check for sse4.1 capabilities
     pub unsafe fn force_new(key: Key) -> Self {
         let mut h = SseHash {
             key,
@@ -276,7 +280,7 @@ impl SseHash {
 
     #[inline]
     #[target_feature(enable = "sse4.1")]
-    unsafe fn to_lanes(packet: &[u8]) -> (V2x64U, V2x64U) {
+    unsafe fn data_to_lanes(packet: &[u8]) -> (V2x64U, V2x64U) {
         let packetL = V2x64U::from(_mm_loadu_si128(packet.as_ptr() as *const __m128i));
         let packetH = V2x64U::from(_mm_loadu_si128(packet.as_ptr().offset(16) as *const __m128i));
 
@@ -288,12 +292,12 @@ impl SseHash {
         match self.buffer.fill(data) {
             Filled::Consumed => {}
             Filled::Full(new_data) => {
-                let (packetH, packetL) = SseHash::to_lanes(self.buffer.as_slice());
+                let (packetH, packetL) = SseHash::data_to_lanes(self.buffer.as_slice());
                 self.update(packetH, packetL);
 
                 let mut chunks = new_data.chunks_exact(PACKET_SIZE);
                 while let Some(chunk) = chunks.next() {
-                    let (packetH, packetL) = SseHash::to_lanes(chunk);
+                    let (packetH, packetL) = SseHash::data_to_lanes(chunk);
                     self.update(packetH, packetL);
                 }
 
