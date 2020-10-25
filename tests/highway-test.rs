@@ -494,20 +494,22 @@ fn sse_hash_eq_portable() {
 
     for i in 0..100 {
         println!("{}", i);
-        assert_eq!(
-            PortableHash::new(key).hash64(&data[..i]),
-            SseHash::new(key).expect("sse4.1").hash64(&data[..i])
-        );
+        unsafe {
+            assert_eq!(
+                PortableHash::new(key).hash64(&data[..i]),
+                SseHash::force_new(key).hash64(&data[..i])
+            );
 
-        assert_eq!(
-            PortableHash::new(key).hash128(&data[..i]),
-            SseHash::new(key).expect("sse4.1").hash128(&data[..i])
-        );
+            assert_eq!(
+                PortableHash::new(key).hash128(&data[..i]),
+                SseHash::force_new(key).hash128(&data[..i])
+            );
 
-        assert_eq!(
-            PortableHash::new(key).hash256(&data[..i]),
-            SseHash::new(key).expect("sse4.1").hash256(&data[..i])
-        );
+            assert_eq!(
+                PortableHash::new(key).hash256(&data[..i]),
+                SseHash::force_new(key).hash256(&data[..i])
+            );
+        }
     }
 }
 
@@ -529,20 +531,22 @@ fn avx_hash_eq_portable() {
 
     for i in 0..100 {
         println!("{}", i);
-        assert_eq!(
-            PortableHash::new(key).hash64(&data[..i]),
-            AvxHash::new(key).expect("avx2").hash64(&data[..i])
-        );
+        unsafe {
+            assert_eq!(
+                PortableHash::new(key).hash64(&data[..i]),
+                AvxHash::force_new(key).hash64(&data[..i])
+            );
 
-        assert_eq!(
-            PortableHash::new(key).hash128(&data[..i]),
-            AvxHash::new(key).expect("avx2").hash128(&data[..i])
-        );
+            assert_eq!(
+                PortableHash::new(key).hash128(&data[..i]),
+                AvxHash::force_new(key).hash128(&data[..i])
+            );
 
-        assert_eq!(
-            PortableHash::new(key).hash256(&data[..i]),
-            AvxHash::new(key).expect("avx2").hash256(&data[..i])
-        );
+            assert_eq!(
+                PortableHash::new(key).hash256(&data[..i]),
+                AvxHash::force_new(key).hash256(&data[..i])
+            );
+        }
     }
 }
 
@@ -562,9 +566,7 @@ fn avx_survive_crash() {
     }
 
     let data = include_bytes!("../assets/avx-crash-1");
-    let hash = AvxHash::new(Key([1, 2, 3, 4]))
-        .expect("avx2")
-        .hash64(&data[..]);
+    let hash = unsafe { AvxHash::force_new(Key([1, 2, 3, 4])) }.hash64(&data[..]);
     assert!(hash != 0);
 }
 

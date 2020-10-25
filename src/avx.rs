@@ -4,11 +4,12 @@ use crate::key::Key;
 use crate::traits::HighwayHash;
 use crate::v2x64u::V2x64U;
 use crate::v4x64u::V4x64U;
-use std::arch::x86_64::*;
+use core::arch::x86_64::*;
 
 /// AVX empowered implementation that will only work on `x86_64` with avx2 enabled at the CPU
 /// level.
-#[derive(Debug, Default, Clone)]
+#[cfg_attr(feature = "std", derive(Debug))]
+#[derive(Default, Clone)]
 pub struct AvxHash {
     key: Key,
     buffer: HashPacket,
@@ -78,9 +79,18 @@ impl AvxHash {
 
     /// Creates a new `AvxHash` if the avx2 feature is detected.
     pub fn new(key: Key) -> Option<Self> {
-        if is_x86_feature_detected!("avx2") {
-            Some(unsafe { Self::force_new(key) })
-        } else {
+        #[cfg(feature = "std")]
+        {
+            if is_x86_feature_detected!("avx2") {
+                Some(unsafe { Self::force_new(key) })
+            } else {
+                None
+            }
+        }
+
+        #[cfg(not(feature = "std"))]
+        {
+            let _key = key;
             None
         }
     }

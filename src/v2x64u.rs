@@ -1,6 +1,5 @@
-use std::arch::x86_64::*;
-use std::fmt;
-use std::ops::{
+use core::arch::x86_64::*;
+use core::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, ShlAssign,
     ShrAssign, SubAssign,
 };
@@ -14,8 +13,9 @@ impl Default for V2x64U {
     }
 }
 
-impl fmt::Debug for V2x64U {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+#[cfg(feature = "std")]
+impl std::fmt::Debug for V2x64U {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "V2x64U: {:?}", unsafe { self.to_arr() })
     }
 }
@@ -32,6 +32,7 @@ impl V2x64U {
     }
 
     #[target_feature(enable = "sse4.1")]
+    #[cfg(feature = "std")]
     unsafe fn to_arr(&self) -> [u64; 2] {
         let mut arr: [u64; 2] = [0, 0];
         _mm_storeu_si128(arr.as_mut_ptr() as *mut __m128i, self.0);

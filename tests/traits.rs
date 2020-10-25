@@ -1,3 +1,5 @@
+#![cfg(feature = "std")]
+
 fn hash<H>() -> std::io::Result<u64>
 where
     H: std::hash::Hasher,

@@ -1,14 +1,15 @@
 use crate::key::Key;
 use crate::portable::PortableHash;
 use crate::traits::HighwayHash;
-use std::default::Default;
+use core::default::Default;
 
 #[cfg(target_arch = "x86_64")]
 use crate::avx::AvxHash;
 #[cfg(target_arch = "x86_64")]
 use crate::sse::SseHash;
 
-#[derive(Debug, Clone)]
+#[cfg_attr(feature = "std", derive(Debug))]
+#[derive(Clone)]
 enum HighwayChoices {
     Portable(PortableHash),
     #[cfg(target_arch = "x86_64")]
@@ -25,7 +26,8 @@ enum HighwayChoices {
 ///  - AvxHash
 ///  - SseHash
 ///  - PortableHash
-#[derive(Debug, Clone)]
+#[cfg_attr(feature = "std", derive(Debug))]
+#[derive(Clone)]
 pub struct HighwayBuilder(HighwayChoices);
 
 impl HighwayHash for HighwayBuilder {

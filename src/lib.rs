@@ -72,6 +72,8 @@ assert_eq!(expected, res256);
 Use highway hash in standard rust collections
 
 ```rust
+# #[cfg(feature = "std")]
+# {
 use std::collections::HashMap;
 use highway::{HighwayBuildHasher, Key};
 let mut map =
@@ -84,11 +86,14 @@ let mut map =
 
 map.insert(1, 2);
 assert_eq!(map.get(&1), Some(&2));
+# }
 ```
 
 Or if utilizing a key is not important, one can use the default
 
 ```rust
+# #[cfg(feature = "std")]
+# {
 use std::collections::HashMap;
 use std::hash::BuildHasherDefault;
 use highway::HighwayHasher;
@@ -97,11 +102,14 @@ let mut map =
 
 map.insert(1, 2);
 assert_eq!(map.get(&1), Some(&2));
+# }
 ```
 
 Hashing a file, or anything implementing `Read`
 
 ```rust
+# #[cfg(feature = "std")]
+# {
 use std::fs::File;
 use std::hash::Hasher;
 use highway::{PortableHash, HighwayHash};
@@ -111,10 +119,12 @@ let mut hasher = PortableHash::default();
 std::io::copy(&mut file, &mut hasher).unwrap();
 let hash64 = hasher.finish(); // core Hasher API
 let hash256 = hasher.finalize256(); // HighwayHash API
+# }
 ```
 
 */
 #![allow(non_snake_case)]
+#![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
 
 #[macro_use]
 mod macros;
@@ -145,5 +155,6 @@ pub use crate::avx::AvxHash;
 #[cfg(target_arch = "x86_64")]
 pub use crate::sse::SseHash;
 
+#[cfg(feature = "std")]
 #[cfg(doctest)]
 doc_comment::doctest!("../README.md");

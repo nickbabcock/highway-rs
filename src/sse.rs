@@ -3,11 +3,12 @@ use crate::internal::{Filled, HashPacket, PACKET_SIZE};
 use crate::key::Key;
 use crate::traits::HighwayHash;
 use crate::v2x64u::V2x64U;
-use std::arch::x86_64::*;
+use core::arch::x86_64::*;
 
 /// SSE empowered implementation that will only work on `x86_64` with sse 4.1 enabled at the CPU
 /// level.
-#[derive(Debug, Default, Clone)]
+#[cfg_attr(feature = "std", derive(Debug))]
+#[derive(Default, Clone)]
 pub struct SseHash {
     key: Key,
     buffer: HashPacket,
@@ -81,9 +82,18 @@ impl SseHash {
 
     /// Create a new `SseHash` if the sse4.1 feature is detected
     pub fn new(key: Key) -> Option<Self> {
-        if is_x86_feature_detected!("sse4.1") {
-            Some(unsafe { Self::force_new(key) })
-        } else {
+        #[cfg(feature = "std")]
+        {
+            if is_x86_feature_detected!("sse4.1") {
+                Some(unsafe { Self::force_new(key) })
+            } else {
+                None
+            }
+        }
+
+        #[cfg(not(feature = "std"))]
+        {
+            let _key = key;
             None
         }
     }

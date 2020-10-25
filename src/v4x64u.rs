@@ -1,7 +1,5 @@
-use std::arch::x86_64::*;
-
-use std::fmt;
-use std::ops::{
+use core::arch::x86_64::*;
+use core::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Shr, SubAssign,
 };
 
@@ -14,8 +12,9 @@ impl Default for V4x64U {
     }
 }
 
-impl fmt::Debug for V4x64U {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+#[cfg(feature = "std")]
+impl std::fmt::Debug for V4x64U {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "V4x64U: {:?}", unsafe { self.to_arr() })
     }
 }
@@ -43,6 +42,7 @@ impl V4x64U {
     }
 
     #[target_feature(enable = "avx2")]
+    #[cfg(feature = "std")]
     unsafe fn to_arr(&self) -> [u64; 4] {
         let mut arr: [u64; 4] = [0; 4];
         _mm256_storeu_si256(arr.as_mut_ptr() as *mut __m256i, self.0);

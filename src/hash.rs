@@ -1,6 +1,6 @@
 use crate::builder::HighwayBuilder;
 use crate::key::Key;
-use std::hash::BuildHasher;
+use core::hash::BuildHasher;
 
 pub type HighwayHasher = HighwayBuilder;
 
