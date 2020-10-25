@@ -14,21 +14,6 @@ pub struct PortableHash {
 }
 
 impl HighwayHash for PortableHash {
-    fn hash64(mut self, data: &[u8]) -> u64 {
-        self.append(data);
-        self.finalize64()
-    }
-
-    fn hash128(mut self, data: &[u8]) -> [u64; 2] {
-        self.append(data);
-        self.finalize128()
-    }
-
-    fn hash256(mut self, data: &[u8]) -> [u64; 4] {
-        self.append(data);
-        self.finalize256()
-    }
-
     fn append(&mut self, data: &[u8]) {
         self.append(data);
     }

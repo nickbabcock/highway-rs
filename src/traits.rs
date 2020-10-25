@@ -1,16 +1,25 @@
 /// The common set of methods for hashing data.
-pub trait HighwayHash {
+pub trait HighwayHash: Sized {
     /// Convenience function for hashing all data in a single call and receiving a 64bit hash.
     /// Results are equivalent to appending the data manually.
-    fn hash64(self, data: &[u8]) -> u64;
+    fn hash64(mut self, data: &[u8]) -> u64 {
+        self.append(data);
+        self.finalize64()
+    }
 
     /// Convenience function for hashing all data in a single call and receiving a 128bit hash.
     /// Results are equivalent to appending the data manually.
-    fn hash128(self, data: &[u8]) -> [u64; 2];
+    fn hash128(mut self, data: &[u8]) -> [u64; 2] {
+        self.append(data);
+        self.finalize128()
+    }
 
     /// Convenience function for hashing all data in a single call and receiving a 256bit hash.
     /// Results are equivalent to appending the data manually.
-    fn hash256(self, data: &[u8]) -> [u64; 4];
+    fn hash256(mut self, data: &[u8]) -> [u64; 4] {
+        self.append(data);
+        self.finalize256()
+    }
 
     /// Adds data to be hashed. If it is important, the performance characteristics of this
     /// function differs depending on the amount of data previously hashed and the amount of

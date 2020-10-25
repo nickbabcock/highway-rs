@@ -22,36 +22,6 @@ enum HighwayChoices {
 pub struct HighwayBuilder(HighwayChoices);
 
 impl HighwayHash for HighwayBuilder {
-    fn hash64(self, data: &[u8]) -> u64 {
-        match self.0 {
-            HighwayChoices::Portable(x) => x.hash64(data),
-            #[cfg(target_arch = "x86_64")]
-            HighwayChoices::Avx(x) => x.hash64(data),
-            #[cfg(target_arch = "x86_64")]
-            HighwayChoices::Sse(x) => x.hash64(data),
-        }
-    }
-
-    fn hash128(self, data: &[u8]) -> [u64; 2] {
-        match self.0 {
-            HighwayChoices::Portable(x) => x.hash128(data),
-            #[cfg(target_arch = "x86_64")]
-            HighwayChoices::Avx(x) => x.hash128(data),
-            #[cfg(target_arch = "x86_64")]
-            HighwayChoices::Sse(x) => x.hash128(data),
-        }
-    }
-
-    fn hash256(self, data: &[u8]) -> [u64; 4] {
-        match self.0 {
-            HighwayChoices::Portable(x) => x.hash256(data),
-            #[cfg(target_arch = "x86_64")]
-            HighwayChoices::Avx(x) => x.hash256(data),
-            #[cfg(target_arch = "x86_64")]
-            HighwayChoices::Sse(x) => x.hash256(data),
-        }
-    }
-
     fn append(&mut self, data: &[u8]) {
         match &mut self.0 {
             HighwayChoices::Portable(x) => x.append(data),
