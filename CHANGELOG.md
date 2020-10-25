@@ -1,3 +1,9 @@
+## v0.6.0 - 2020-10-25
+
+- `no_std` compatible when default cargo features are disabled. To get SIMD implementations, one will need to call the `force_new` constructors explicitly.
+- All highway hash implementations now implement the `Hasher` and `Write` trait
+- Make `HighwayHasher` an alias to `HighwayBuilder` and recommend the use of `HighwayHasher` in documentation
+
 ## v0.5.0 - 2020-06-24
 
 - 60% throughput increase to the portable highway hash implementation
