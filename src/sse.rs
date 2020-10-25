@@ -7,8 +7,7 @@ use core::arch::x86_64::*;
 
 /// SSE empowered implementation that will only work on `x86_64` with sse 4.1 enabled at the CPU
 /// level.
-#[cfg_attr(feature = "std", derive(Debug))]
-#[derive(Default, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct SseHash {
     key: Key,
     buffer: HashPacket,

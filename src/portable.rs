@@ -3,8 +3,7 @@ use crate::key::Key;
 use crate::traits::HighwayHash;
 
 /// Portable HighwayHash implementation. Will run on any platform Rust will run on.
-#[cfg_attr(feature = "std", derive(Debug))]
-#[derive(Default, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct PortableHash {
     key: Key,
     buffer: HashPacket,
