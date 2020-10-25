@@ -1,5 +1,4 @@
-/// The shared trait between all the hashing implementations, which directs the APIs available for
-/// appending data and receiving a hash result.
+/// The common set of methods for hashing data.
 pub trait HighwayHash {
     /// Convenience function for hashing all data in a single call and receiving a 64bit hash.
     /// Results are equivalent to appending the data manually.

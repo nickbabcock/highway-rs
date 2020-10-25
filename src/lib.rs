@@ -125,6 +125,7 @@ let hash256 = hasher.finalize256(); // HighwayHash API
 */
 #![allow(non_snake_case)]
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
+#![warn(missing_docs)]
 
 #[macro_use]
 mod macros;

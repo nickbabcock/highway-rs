@@ -17,14 +17,7 @@ enum HighwayChoices {
     Avx(AvxHash),
 }
 
-/// Main HighwayHash implementation that delegates to one of the other implementations depending on
-/// the target compiled for and a runtime CPU check.
-///
-/// In order of preference:
-///
-///  - AvxHash
-///  - SseHash
-///  - PortableHash
+/// HighwayHash implementation that selects best hash implementation at runtime.
 #[derive(Debug, Clone)]
 pub struct HighwayBuilder(HighwayChoices);
 
