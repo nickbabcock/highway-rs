@@ -12,25 +12,25 @@ HighwayHash (the algorithm) has not gone undergone extensive cryptanalysis like 
 The quickest way to get started:
 
 ```rust
-use highway::{HighwayBuilder, HighwayHash};
-let res: u64 = HighwayBuilder::default().hash64(&[]);
-let res2: [u64; 2] = HighwayBuilder::default().hash128(&[]);
-let res3: [u64; 4] = HighwayBuilder::default().hash256(&[]);
+use highway::{HighwayHasher, HighwayHash};
+let res: u64 = HighwayHasher::default().hash64(&[]);
+let res2: [u64; 2] = HighwayHasher::default().hash128(&[]);
+let res3: [u64; 4] = HighwayHasher::default().hash256(&[]);
 ```
 
 A more complete tour of the API follows:
 
 ```rust
-use highway::{HighwayBuilder, HighwayHash, Key};
+use highway::{HighwayHasher, HighwayHash, Key};
 
 // HighwayHash requires a key that should be hidden from attackers
 // to ensure outputs are unpredictable, so attackers can't mount
 // DoS attacks.
 let key = Key([1, 2, 3, 4]);
 
-// A HighwayBuilder is the recommended approach to hashing,
+// A HighwayHasher is the recommended approach to hashing,
 // as it will select the fastest algorithm available
-let mut hasher = HighwayBuilder::new(key);
+let mut hasher = HighwayHasher::new(key);
 
 // Append some data
 hasher.append(&[255]);
@@ -46,18 +46,18 @@ assert_eq!(0x07858f24d_2d79b2b2, res);
 Creating a 128bit and 256bit hash is just as simple.
 
 ```rust
-use highway::{HighwayBuilder, HighwayHash, Key};
+use highway::{HighwayHasher, HighwayHash, Key};
 
 // Generate 128bit hash
 let key = Key([1, 2, 3, 4]);
-let mut hasher128 = HighwayBuilder::new(key);
+let mut hasher128 = HighwayHasher::new(key);
 hasher128.append(&[255]);
 let res128: [u64; 2] = hasher128.finalize128();
 assert_eq!([0xbb007d2462e77f3c, 0x224508f916b3991f], res128);
 
 // Generate 256bit hash
 let key = Key([1, 2, 3, 4]);
-let mut hasher256 = HighwayBuilder::new(key);
+let mut hasher256 = HighwayHasher::new(key);
 hasher256.append(&[255]);
 let res256: [u64; 4] = hasher256.finalize256();
 let expected: [u64; 4] = [
