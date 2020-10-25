@@ -22,27 +22,6 @@ pub struct SseHash {
 }
 
 impl HighwayHash for SseHash {
-    fn hash64(mut self, data: &[u8]) -> u64 {
-        unsafe {
-            self.append(data);
-            self.finalize64()
-        }
-    }
-
-    fn hash128(mut self, data: &[u8]) -> [u64; 2] {
-        unsafe {
-            self.append(data);
-            self.finalize128()
-        }
-    }
-
-    fn hash256(mut self, data: &[u8]) -> [u64; 4] {
-        unsafe {
-            self.append(data);
-            self.finalize256()
-        }
-    }
-
     fn append(&mut self, data: &[u8]) {
         unsafe {
             self.append(data);
