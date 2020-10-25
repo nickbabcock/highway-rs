@@ -87,6 +87,10 @@ jobs:
       if: matrix.build != 'pinned'
       run: ${{ env.CARGO }} test --verbose $TARGET
 
+    - name: No Std Tests
+      if: matrix.build != 'pinned'
+      run: ${{ env.CARGO }} test --no-default-features --verbose $TARGET
+
       # If you are wondering why we run tests in release mode, it's
       # because sometimes tests in debug mode hide undefined behavior:
       # https://stackoverflow.com/q/52433389/433785

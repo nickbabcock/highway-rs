@@ -11,6 +11,7 @@ macro_rules! _mm_shuffle {
 
 macro_rules! impl_write {
     ($hasher_struct:ty) => {
+        #[cfg(feature = "std")]
         impl ::std::io::Write for $hasher_struct {
             fn write(&mut self, bytes: &[u8]) -> ::std::io::Result<usize> {
                 $crate::HighwayHash::append(self, bytes);

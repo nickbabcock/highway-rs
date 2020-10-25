@@ -3,7 +3,8 @@ use crate::key::Key;
 use crate::traits::HighwayHash;
 
 /// Portable HighwayHash implementation. Will run on any platform Rust will run on.
-#[derive(Debug, Default, Clone)]
+#[cfg_attr(feature = "std", derive(Debug))]
+#[derive(Default, Clone)]
 pub struct PortableHash {
     key: Key,
     buffer: HashPacket,
@@ -196,7 +197,7 @@ impl PortableHash {
     fn data_to_lanes(d: &[u8]) -> [u64; 4] {
         // Use of ptr::read_unaligned gave a 60% throughput increase for large payloads. I'm on the
         // lookout for a safe alternative that is as performant
-        debug_assert!(d.len() >= std::mem::size_of::<[u64; 4]>());
+        debug_assert!(d.len() >= core::mem::size_of::<[u64; 4]>());
         unsafe {
             [
                 (d.as_ptr().offset(0) as *const u64).read_unaligned(),

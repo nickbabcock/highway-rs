@@ -5,10 +5,14 @@ authors = ["Nick Babcock <nbabcock19@hotmail.com>"]
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/nickbabcock/highway-rs"
-categories = ["algorithms", "cryptography"]
+categories = ["algorithms", "cryptography", "no-std"]
 description = "Native Rust port of Google's HighwayHash, which makes use of SIMD instructions for a fast and strong hash function"
 keywords = ["HighwayHash", "hash", "simd", "avx"]
 edition = "2018"
+
+[features]
+default = ["std"]
+std = []
 
 [dev-dependencies]
 criterion = "0.3.0"

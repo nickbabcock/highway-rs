@@ -16,6 +16,7 @@ function.
  - ✔ passes reference test suite
  - ✔ incremental / streaming hashes
  - ✔ zero heap allocations
+ - ✔ `no_std` compatible
  - ✔ fuzzed against in-house fuzzing suite
 
 ## Caution
@@ -136,6 +137,10 @@ HighwayHash can be used against untrusted user input where weak hashes can't be 
 - Use 256bit hashes for checksums. Think file storage (S3) or any longer lived data where there is a need for strong guarantees against collisions.
 
 Highwayhash may not be a good fit if the payloads trend small (< 100 bytes) and speed is up of the upmost importance, as Highwayhash hits its stride at larger payloads.
+
+## Crate Features
+
+`highway` is `no_std` compatible when the default features are disabled. Be aware that the `no_std` version is unable to detect CPU features and so will always default to the portable implementation. If building for a known SSE 4.1 or AVX 2 machine (and the majority of machines in the last decade will support SSE 4.1), these hashers can still be constructed with `force_new`. 
 
 ## Benchmarks
 
