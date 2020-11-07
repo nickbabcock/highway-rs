@@ -21,7 +21,7 @@ function.
 
 ## Caution
 
-HighwayHash (the algorithm) has not gone undergone extensive cryptanalysis like SipHash (the default hashing algorithm in Rust), but according to the authors, HighwayHash output bits are uniformly distributed and should withstand differential and rotational attacks. Hence HighwayHash is referred to as a strong hash function, not a cryptographic hash function. I encourage anyone interested to [peruse the paper](https://arxiv.org/abs/1612.06257) to understand the risks.
+HighwayHash (the algorithm) has not undergone extensive cryptanalysis like SipHash (the default hashing algorithm in Rust), but according to the authors, HighwayHash output bits are uniformly distributed and should withstand differential and rotational attacks. Hence HighwayHash is referred to as a strong hash function, not a cryptographic hash function. I encourage anyone interested to [peruse the paper](https://arxiv.org/abs/1612.06257) to understand the risks.
 
 ## Examples
 
@@ -136,7 +136,7 @@ HighwayHash can be used against untrusted user input where weak hashes can't be 
 - Use 64bit hashes to for authenticating short lived messages
 - Use 256bit hashes for checksums. Think file storage (S3) or any longer lived data where there is a need for strong guarantees against collisions.
 
-Highwayhash may not be a good fit if the payloads trend small (< 100 bytes) and speed is up of the upmost importance, as Highwayhash hits its stride at larger payloads.
+Highwayhash may not be a good fit if the payloads trend small (< 100 bytes) and speed is up of the utmost importance, as Highwayhash hits its stride at larger payloads.
 
 ## Crate Features
 
