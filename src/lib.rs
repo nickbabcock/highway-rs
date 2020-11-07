@@ -122,6 +122,19 @@ let hash256 = hasher.finalize256(); // HighwayHash API
 # }
 ```
 
+## Use Cases
+
+HighwayHash can be used against untrusted user input where weak hashes can't be used due to exploitation, verified cryptographic hashes are too slow, and a strong hash function meets requirements. Some specific scenarios given by the authors of HighwayHash:
+
+- Use 64bit hashes to for authenticating short lived messages
+- Use 256bit hashes for checksums. Think file storage (S3) or any longer lived data where there is a need for strong guarantees against collisions.
+
+Highwayhash may not be a good fit if the payloads trend small (< 100 bytes) and speed is up of the utmost importance, as Highwayhash hits its stride at larger payloads.
+
+## Crate Features
+
+`highway` is `no_std` compatible when the default features are disabled. Be aware that the `no_std` version is unable to detect CPU features and so will always default to the portable implementation. If building for a known SSE 4.1 or AVX 2 machine (and the majority of machines in the last decade will support SSE 4.1), these hashers can still be constructed with `force_new`. 
+
 */
 #![allow(non_snake_case)]
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
