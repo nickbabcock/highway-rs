@@ -1,3 +1,7 @@
+## v0.6.1 - 2020-11-08
+
+No code changes -- just some docs updates and this crate is now tagged with the `hasher` keyword.
+
 ## v0.6.0 - 2020-10-25
 
 - `no_std` compatible when default cargo features are disabled. To get SIMD implementations, one will need to call the `force_new` constructors explicitly.
