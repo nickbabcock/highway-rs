@@ -133,7 +133,7 @@ Highwayhash may not be a good fit if the payloads trend small (< 100 bytes) and 
 
 ## Crate Features
 
-`highway` is `no_std` compatible when the default features are disabled. Be aware that the `no_std` version is unable to detect CPU features and so will always default to the portable implementation. If building for a known SSE 4.1 or AVX 2 machine (and the majority of machines in the last decade will support SSE 4.1), these hashers can still be constructed with `force_new`. 
+`highway` is `no_std` compatible when the default features are disabled. Be aware that the `no_std` version is unable to detect CPU features and so will always default to the portable implementation. If building for a known SSE 4.1 or AVX 2 machine (and the majority of machines in the last decade will support SSE 4.1), these hashers can still be constructed with `force_new`.
 
 */
 #![allow(non_snake_case)]
