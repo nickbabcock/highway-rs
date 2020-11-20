@@ -1,3 +1,7 @@
+## v0.6.2 - 2020-11-19
+
+Fix hash calculation on big endian platforms. This regression was introduced in v0.5.0 and all users are advised to upgrade.
+
 ## v0.6.1 - 2020-11-08
 
 No code changes -- just some docs updates and this crate is now tagged with the `hasher` keyword.
