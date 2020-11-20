@@ -184,10 +184,10 @@ impl PortableHash {
         debug_assert!(d.len() >= core::mem::size_of::<[u64; 4]>());
         unsafe {
             [
-                (d.as_ptr().offset(0) as *const u64).read_unaligned(),
-                (d.as_ptr().offset(8) as *const u64).read_unaligned(),
-                (d.as_ptr().offset(16) as *const u64).read_unaligned(),
-                (d.as_ptr().offset(24) as *const u64).read_unaligned(),
+                (d.as_ptr().offset(0) as *const u64).read_unaligned().to_le(),
+                (d.as_ptr().offset(8) as *const u64).read_unaligned().to_le(),
+                (d.as_ptr().offset(16) as *const u64).read_unaligned().to_le(),
+                (d.as_ptr().offset(24) as *const u64).read_unaligned().to_le(),
             ]
         }
     }
