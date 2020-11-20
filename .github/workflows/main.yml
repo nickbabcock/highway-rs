@@ -75,7 +75,10 @@ jobs:
 
     - name: Use Cross
       if: matrix.target != ''
-      run: cargo install cross
+      run: |
+        cargo install cross
+        echo "CARGO=cross" >> $GITHUB_ENV
+        echo "TARGET=--target ${{ matrix.target }}" >> $GITHUB_ENV
 
     - name: Build
       run: ${{ env.CARGO }} build --verbose $TARGET
