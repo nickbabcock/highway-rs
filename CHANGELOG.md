@@ -1,3 +1,7 @@
+## v0.6.3 - 2020-12-04
+
+Extremely minor update that removes the last vestiges of `unsafe` from the portable implementation -- without sacrificing performance. No changes in behavior.
+
 ## v0.6.2 - 2020-11-19
 
 Fix hash calculation on big endian platforms. This regression was introduced in v0.5.0 and all users are advised to upgrade.
