@@ -138,9 +138,17 @@ HighwayHash can be used against untrusted user input where weak hashes can't be 
 
 Highwayhash may not be a good fit if the payloads trend small (< 100 bytes) and speed is up of the utmost importance, as Highwayhash hits its stride at larger payloads.
 
-## Crate Features
+### `no_std` crates
 
-`highway` is `no_std` compatible when the default features are disabled. Be aware that the `no_std` version is unable to detect CPU features and so will always default to the portable implementation. If building for a known SSE 4.1 or AVX 2 machine (and the majority of machines in the last decade will support SSE 4.1), these hashers can still be constructed with `force_new`. 
+This crate has a feature, `std`, that is enabled by default. To use this crate
+in a `no_std` context, add the following to your `Cargo.toml`:
+
+```toml
+[dependencies]
+highway = { version = "x", default-features = false }
+```
+
+Be aware that the `no_std` version is unable to detect CPU features and so will always default to the portable implementation. If building for a known SSE 4.1 or AVX 2 machine (and the majority of machines in the last decade will support SSE 4.1), these hashers can still be constructed with `force_new`.
 
 ## Benchmarks
 
