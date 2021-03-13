@@ -7,8 +7,8 @@ pub struct FuzzKey {
     pub data: Vec<u8>,
 }
 
-impl Arbitrary for FuzzKey {
-    fn arbitrary(u: &mut Unstructured<'_>) -> Result<Self> {
+impl<'a> Arbitrary<'a> for FuzzKey {
+    fn arbitrary(u: &mut Unstructured<'a>) -> Result<Self> {
         let d = <[u64; 4]>::arbitrary(u)?;
         let key = Key(d);
         let data = <Vec<u8>>::arbitrary(u)?;
