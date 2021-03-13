@@ -13,11 +13,10 @@ function.
  - ✔ generate 64, 128, and 256bit hashes
  - ✔ > 10 GB/s with SIMD (SSE 4.1 & AVX 2) aware instructions on x86 architectures
  - ✔ > 1 GB/s portable implementation with zero unsafe code
- - ✔ passes reference test suite
  - ✔ incremental / streaming hashes
  - ✔ zero heap allocations
  - ✔ `no_std` compatible
- - ✔ fuzzed against in-house fuzzing suite
+ - ✔ fuzzed against reference implementation to ensure stability and compatibility
 
 ## Caution
 

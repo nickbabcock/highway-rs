@@ -1,0 +1,3 @@
+[submodule "fuzz/highwayhash"]
+	path = fuzz/highwayhash
+	url = https://github.com/google/highwayhash.git
