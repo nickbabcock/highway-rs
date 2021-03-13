@@ -13,20 +13,12 @@ cargo-fuzz = true
 path = ".."
 
 [dependencies]
-libfuzzer-sys = "0.4"
+libfuzzer-sys = { version = "0.4", features = ["arbitrary-derive"] }
 
 # Prevent this from interfering with workspaces
 [workspace]
 members = ["."]
 
 [[bin]]
-name = "fuzz_portable"
-path = "fuzz_targets/fuzz_portable.rs"
-
-[[bin]]
-name = "fuzz_sse"
-path = "fuzz_targets/fuzz_sse.rs"
-
-[[bin]]
-name = "fuzz_avx"
-path = "fuzz_targets/fuzz_avx.rs"
+name = "fuzz_highway"
+path = "fuzz_targets/fuzz_highway.rs"
