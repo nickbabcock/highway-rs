@@ -1,6 +1,6 @@
 use core::arch::x86_64::*;
 use core::ops::{
-    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Shr, SubAssign,
+    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, SubAssign,
 };
 
 #[derive(Clone, Copy)]
@@ -50,6 +50,11 @@ impl V4x64U {
     #[target_feature(enable = "avx2")]
     pub unsafe fn rotate_by_32(&self) -> Self {
         V4x64U(_mm256_shuffle_epi32(self.0, _mm_shuffle!(2, 3, 0, 1)))
+    }
+
+    #[target_feature(enable = "avx2")]
+    pub unsafe fn shr_by_32(&self) -> Self {
+        V4x64U(_mm256_srli_epi64(self.0, 32))
     }
 
     #[target_feature(enable = "avx2")]
@@ -163,16 +168,6 @@ impl BitXor for V4x64U {
     fn bitxor(self, other: Self) -> Self {
         let mut new = V4x64U(self.0);
         new ^= other;
-        new
-    }
-}
-
-impl Shr<i32> for V4x64U {
-    type Output = Self;
-
-    fn shr(self, shift: i32) -> Self {
-        let mut new = V4x64U(self.0);
-        unsafe { new.0 = _mm256_srli_epi64(self.0, shift) }
         new
     }
 }

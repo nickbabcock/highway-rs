@@ -214,9 +214,9 @@ impl AvxHash {
     unsafe fn update(&mut self, packet: V4x64U) {
         self.v1 += packet;
         self.v1 += self.mul0;
-        self.mul0 ^= self.v1.mul_low32(&(self.v0 >> 32));
+        self.mul0 ^= self.v1.mul_low32(&self.v0.shr_by_32());
         self.v0 += self.mul1;
-        self.mul1 ^= self.v0.mul_low32(&(self.v1 >> 32));
+        self.mul1 ^= self.v0.mul_low32(&self.v1.shr_by_32());
         self.v0 += AvxHash::zipper_merge(&self.v1);
         self.v1 += AvxHash::zipper_merge(&self.v0);
     }
