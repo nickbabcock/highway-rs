@@ -1,3 +1,7 @@
+## v0.6.4 - 2021-04-16
+
+Allow for forwards compatibility with later rust compilers due to changes in some AVX2 usage
+
 ## v0.6.3 - 2020-12-04
 
 Extremely minor update that removes the last vestiges of `unsafe` from the portable implementation -- without sacrificing performance. No changes in behavior.
