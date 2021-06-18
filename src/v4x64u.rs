@@ -14,7 +14,7 @@ impl Default for V4x64U {
 
 impl core::fmt::Debug for V4x64U {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "V4x64U: {:?}", unsafe { self.to_arr() })
+        write!(f, "V4x64U: {:?}", unsafe { self.as_arr() })
     }
 }
 
@@ -41,7 +41,7 @@ impl V4x64U {
     }
 
     #[target_feature(enable = "avx2")]
-    unsafe fn to_arr(&self) -> [u64; 4] {
+    unsafe fn as_arr(&self) -> [u64; 4] {
         let mut arr: [u64; 4] = [0; 4];
         _mm256_storeu_si256(arr.as_mut_ptr() as *mut __m256i, self.0);
         arr
