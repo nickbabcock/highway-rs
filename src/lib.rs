@@ -1,7 +1,8 @@
 /*!
 
-This crate is a native Rust port of [Google's HighwayHash](https://github.com/google/highwayhash),
-which is a fast, keyed, and strong hash function.
+This crate is a native Rust port of [Google's
+HighwayHash](https://github.com/google/highwayhash), which is a fast, keyed,
+portable (output is hardware independent) and strong hash function.
 
 ## Caution
 
@@ -129,7 +130,7 @@ HighwayHash can be used against untrusted user input where weak hashes can't be 
 - Use 64bit hashes to for authenticating short lived messages
 - Use 256bit hashes for checksums. Think file storage (S3) or any longer lived data where there is a need for strong guarantees against collisions.
 
-Highwayhash may not be a good fit if the payloads trend small (< 100 bytes) and speed is up of the utmost importance, as Highwayhash hits its stride at larger payloads.
+HighwayHash may not be a good fit if the payloads trend small (< 100 bytes) and speed is up of the utmost importance, as HighwayHash hits its stride at larger payloads. 
 
 ### `no_std` crates
 
