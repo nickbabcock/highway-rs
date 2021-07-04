@@ -1,6 +1,7 @@
 library(scales)
 library(tidyverse)
 library(readr)
+library(RColorBrewer)
 
 is_highwayhash <- Vectorize(function(fn) {
   switch(fn,
@@ -19,16 +20,23 @@ get_line_type <- Vectorize(function(fn) {
 })
 
 df <- read_csv("./highway.csv")
-df <- mutate(df,
-             fn = `function`,
-             highwayhash = is_highwayhash(fn),
-             line = get_line_type(fn),
-             throughput = value * iteration_count * 10^9 / sample_time_nanos) %>%
-     filter(group != 'highway-builder')
+df <- mutate(
+  df,
+  fn = `function`,
+  highwayhash = is_highwayhash(fn),
+  line = get_line_type(fn),
+  throughput = value * iteration_count * 10 ^ 9 / sample_measured_value,
+  hashes_per_ms = iteration_count * 10 ^ 6 / sample_measured_value,
+)
 
-
-pal <- hue_pal()(df %>% select(fn) %>% distinct() %>% count() %>% pull())
-names(pal) <- df %>% select(fn) %>% distinct() %>% pull()
+# We create a custom palette for two reasons:
+#  - We want hashes that produce both 64bit and 256bit results to have
+#    consistent colors between multiple graphs
+#  - The total number of hashes we are comparing across both 64bit and 256bit
+#    output exceeds the default max of 12 distinct colors
+function_names <- df %>% select(fn) %>% distinct()
+pal <- colorRampPalette(brewer.pal(12, "Paired"))(function_names %>% count() %>% pull())
+names(pal) <- function_names %>% pull()
 
 df64 <- df %>% filter(group == '64bit')
 df256 <- df %>% filter(group == '256bit')
@@ -38,26 +46,26 @@ byte_rate <- function(l) {
 }
 
 ggplot(df64, aes(value, throughput, color = fn)) + 
-  stat_summary(fun.y = mean, geom="point", size = 1.5) +
-  stat_summary(aes(linetype = line), fun.y = mean, geom="line", size = 1.2) +
+  stat_summary(fun = mean, geom="point", size = 1.5) +
+  stat_summary(aes(linetype = line), fun = mean, geom="line", size = 1.2) +
   scale_y_continuous(labels = byte_rate, limits = c(0, NA), breaks = pretty_breaks(10)) +
   scale_x_continuous(trans='log2', limit = c(1, NA), breaks = c(1, 4, 16, 64, 256, 1024, 4096, 16384, 65536)) +
   labs(title = "Comparison of throughput for 64bit hash functions at varying payload lengths",
-       caption = "solid lines are highway hash functions",
+       caption = "solid lines are HighwayHash functions",
        col = "Hash function",
        y = "Throughput",
        x = "Payload length in bytes") +
   guides(linetype = FALSE) +
-  scale_colour_manual( values = pal)
+  scale_colour_manual(values = pal)
 ggsave('64bit-highwayhash.png', width = 8, height = 5, dpi = 100)
 
 ggplot(df256, aes(value, throughput, color = fn)) + 
-  stat_summary(fun.y = mean, geom="point", size = 1.5) +
-  stat_summary(aes(linetype = line), fun.y = mean, geom="line", size = 1.2) +
+  stat_summary(fun = mean, geom="point", size = 1.5) +
+  stat_summary(aes(linetype = line), fun = mean, geom="line", size = 1.2) +
   scale_y_continuous(labels = byte_rate, limits = c(0, NA), breaks = pretty_breaks(10)) +
   scale_x_continuous(trans='log2', limit = c(1, NA), breaks = c(1, 4, 16, 64, 256, 1024, 4096, 16384, 65536)) +
   labs(title = "Comparison of throughput for 256bit hash functions at varying payload lengths",
-       caption = "solid lines are highway hash functions",
+       caption = "solid lines are HighwayHash functions",
        col = "Hash function",
        y = "Throughput",
        x = "Payload length in bytes") +
@@ -65,12 +73,26 @@ ggplot(df256, aes(value, throughput, color = fn)) +
   scale_colour_manual(values = pal)
 ggsave('256bit-highwayhash.png', width = 8, height = 5, dpi = 100)
 
+ggplot(df256, aes(value, hashes_per_ms, color = fn)) + 
+  stat_summary(fun = mean, geom="point", size = 1.5) +
+  stat_summary(aes(linetype = line), fun = mean, geom="line", size = 1.2) +
+  scale_y_continuous(limits = c(0, NA), breaks = pretty_breaks(10)) +
+  scale_x_continuous(trans='log2', limit = c(1, NA), breaks = c(1, 4, 16, 64, 256, 1024, 4096, 16384, 65536)) +
+  labs(title = "Comparison of hash rate for 256bit hash functions at varying payload lengths",
+       caption = "solid lines are HighwayHash functions",
+       col = "Hash function",
+       y = "Hashes per ms",
+       x = "Payload length in bytes") +
+  guides(linetype = FALSE) +
+  scale_colour_manual(values = pal)
+ggsave('256bit-highwayhash-rate.png', width = 8, height = 5, dpi = 100)
+
 ggplot(df %>% filter(highwayhash == TRUE), aes(value, throughput, color = fn, line_type = group)) + 
-  stat_summary(fun.y = mean, geom="point", size = 1.5) +
-  stat_summary(aes(linetype = as.factor(group)), fun.y = mean, geom="line", size = 1.2) +
+  stat_summary(fun = mean, geom="point", size = 1.5) +
+  stat_summary(aes(linetype = as.factor(group)), fun = mean, geom="line", size = 1.2) +
   scale_y_continuous(labels = byte_rate, limits = c(0, NA), breaks = pretty_breaks(10)) +
   scale_x_continuous(trans='log2', limit = c(1, NA), breaks = c(1, 4, 16, 64, 256, 1024, 4096, 16384, 65536)) +
-  labs(title = "Comparison of throughput for 64bit vs 256bit highway hash",
+  labs(title = "Comparison of throughput for 64bit vs 256bit HighwayHash",
        caption = "solid lines are 256bit",
        col = "Hash function",
        y = "Throughput",

@@ -1,0 +1,33 @@
+[package]
+name = "compare"
+version = "0.0.1"
+authors = ["Nick Babcock <nbabcock19@hotmail.com>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/nickbabcock/highway-rs"
+description = "Comparing hash functions"
+edition = "2018"
+publish = false
+
+[workspace]
+members = ["."]
+
+[dev-dependencies]
+criterion = "0.3"
+sha2 = "0.9"
+fnv = "1"
+farmhash = "1"
+blake3 = "0.3"
+blake2b_simd = "0.5"
+fxhash = "0.2"
+t1ha = "0.1"
+ahash = "0.7"
+highway = { path = '..' }
+
+[[bench]]
+name = "bench_hashes"
+harness = false
+
+[profile.release]
+lto = true
+codegen-units = 1

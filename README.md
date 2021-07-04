@@ -3,8 +3,8 @@
 # Highway-rs
 
 This crate is a native Rust port of [Google's
-HighwayHash](https://github.com/google/highwayhash), which is a fast, keyed, and strong hash
-function.
+HighwayHash](https://github.com/google/highwayhash), which is a fast, keyed,
+portable (output is hardware independent) and strong hash function.
 
 ## Features
 
@@ -135,7 +135,7 @@ HighwayHash can be used against untrusted user input where weak hashes can't be 
 - Use 64bit hashes to for authenticating short lived messages
 - Use 256bit hashes for checksums. Think file storage (S3) or any longer lived data where there is a need for strong guarantees against collisions.
 
-Highwayhash may not be a good fit if the payloads trend small (< 100 bytes) and speed is up of the utmost importance, as Highwayhash hits its stride at larger payloads.
+HighwayHash may not be a good fit if the payloads trend small (< 100 bytes) and speed is up of the utmost importance, as HighwayHash hits its stride at larger payloads.
 
 ### `no_std` crates
 
@@ -154,12 +154,11 @@ Be aware that the `no_std` version is unable to detect CPU features and so will 
 Benchmarks are ran with the following command:
 
 ```bash
-cargo clean
-RUSTFLAGS="-C target-cpu=native" cargo bench
-find ./target -wholename "*/new/raw.csv" -print0 | xargs -0 xsv cat rows > assets/highway.csv
+(cd compare && cargo clean && RUSTFLAGS="-C target-cpu=native" cargo bench)
+find ./compare/target -wholename "*/new/raw.csv" -print0 | xargs -0 xsv cat rows > assets/highway.csv
 ```
 
-And can be analyzed with the R script found in the assets directory
+And can be analyzed with the [R script](assets/analysis.R) found in the assets directory
 
 Keep in mind, benchmarks will vary by machine. Newer machines typically handle AVX payloads better than older.
 
@@ -167,21 +166,38 @@ We'll first take a look at the throughput when calculating the 64bit hash of a v
 
 ![64bit-highwayhash.png](assets/64bit-highwayhash.png)
 
-HighwayHash is not meant to be fast for extremely short payloads, as we can see that it falls short of fnv and Farmhash. HighwayHash has a series of rounds executed when the hash value is finally computed that permutes internal state, and the computation occurs at any payload size. This overhead is where the vast majority of time is spent at shorter payloads. At larger payload sizes we see HighwayHash as one of the top leaders. Some may find HighwayHash more desirable than Farmhash due to HighwayHash offering itself as a strong hash function and having a 256bit output.
+Takeaways:
 
-Now taking a look at calculating a 256 hash value, we see a similar story.
+- The lower left corner of the graph illustrates HighwayHash's weakness: small payloads, as with a bit of squinting, one can see that HighwayHash ranks amongst the bottom.
+- At larger payloads, HighwayHash can be competitive in performance as the CPU has room to stretch its proverbial SIMD legs on the input.
+- AHash and t1ha perform fantastically and should be in one's toolkit for in memory data structures.
+
+Now taking a look at calculating a 256bit hash value, we see a similar story.
 
 ![256bit-highwayhash.png](assets/256bit-highwayhash.png)
 
-HighwayHash is slow and comparable to other functions, but HighwayHash shines at larger payloads.
+Takeaways:
 
-What should be noted is that there is a performance difference between calculating the 64bit and 256bit HighwayHash due to the 256bit requiring more rounds of permutation. The graph below depicts these differences.
+- HighwayHash is by far the fastest compared to the other functions, but if one needs a cryptographic hash, then BLAKE3 should be chosen
+
+Even with the best eyesight, the differences are indistinguishable at smaller payloads, so let's look at the hash rate: 
+
+![256bit-highwayhash-rate.png](assets/256bit-highwayhash-rate.png)
+
+Takeaways:
+
+- At smaller payloads HighwayHash maintains its performance lead
+
+HighwayHash uses more rounds of permutation when finalizing the 256bit output compared to the 64bit and this is reflected in the following graphic:
 
 ![64bit-vs-256bit-highwayhash.png](assets/64bit-vs-256bit-highwayhash.png)
 
-Up until 1024 bytes, calculating the 64bit hash is twice as fast when using SIMD instructions; however by 16KiB both implementations reach the same steady state across all implementations.
+Takeaways:
 
-For those more into numbers and are curious about specifics or want more details about the hash functions at small payloads size, here is a table that breaks down (GB/s) at all payload sizes
+- At max, the 64bit hash can be computed 33% faster than the 256bit output
+- After 64KiB there is no performance difference between 64bit and 256bit outputs 
+
+For those more into numbers and are curious about specifics or want more details about the hash functions at small payloads size, here is a table that breaks down throughput (in GB/s) at all payload sizes
 
 ![highwayhash-table.png](assets/highwayhash-table.png)
 
