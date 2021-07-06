@@ -56,6 +56,9 @@ byte_rate <- function(l) {
 }
 
 ggplot(mapping=aes(value, throughput)) +
+  stat_summary(data=df64, mapping=aes(value, throughput, color = fn), fun = mean, geom="point", size = 1.5) +
+  scale_color_manual("Points", values=pal64, guide=FALSE) +
+  ggnewscale::new_scale_color() +
   stat_summary(data=df64highway, mapping=aes(linetype = line, color = fn), fun = mean, geom="line", size = 1.2) +
   scale_color_manual("HighwayHash", values=pal64, guide=guide_legend(order = 1)) +
   scale_linetype(guide = FALSE) +
@@ -72,6 +75,9 @@ ggplot(mapping=aes(value, throughput)) +
 ggsave('64bit-highwayhash.png', width = 8, height = 5, dpi = 100)
 
 ggplot(mapping=aes(value, throughput)) +
+  stat_summary(data=df256, mapping=aes(value, throughput, color = fn), fun = mean, geom="point", size = 1.5) +
+  scale_color_manual("Points", values=pal256, guide=FALSE) +
+  ggnewscale::new_scale_color() +
   stat_summary(data=df256highway, mapping=aes(linetype = line, color = fn), fun = mean, geom="line", size = 1.2) +
   scale_color_manual("HighwayHash", values=pal256, guide=guide_legend(order = 1)) +
   scale_linetype(guide = FALSE) +
@@ -89,6 +95,9 @@ ggplot(mapping=aes(value, throughput)) +
 ggsave('256bit-highwayhash.png', width = 8, height = 5, dpi = 100)
 
 ggplot(mapping=aes(value, hashes_per_ms)) +
+  stat_summary(data=df256, mapping=aes(value, hashes_per_ms, color = fn), fun = mean, geom="point", size = 1.5) +
+  scale_color_manual("Points", values=pal256, guide=FALSE) +
+  ggnewscale::new_scale_color() +
   stat_summary(data=df256highway, mapping=aes(linetype = line, color = fn), fun = mean, geom="line", size = 1.2) +
   scale_color_manual("HighwayHash", values=pal256, guide=guide_legend(order = 1)) +
   scale_linetype(guide = FALSE) +
