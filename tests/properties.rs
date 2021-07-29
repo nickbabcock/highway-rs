@@ -57,11 +57,11 @@ mod quick_tests {
         let key = Key([k1, k2, k3, k4]);
         let hash1 = PortableHash::new(key).hash64(data.as_slice());
         let hash2 = HighwayBuilder::new(key).hash64(data.as_slice());
-        let mut res = hash1 == hash2;
 
         #[cfg(target_arch = "x86_64")]
         {
             use highway::{AvxHash, SseHash};
+            let mut res = hash1 == hash2;
             if let Some(h) = AvxHash::new(key) {
                 res &= h.hash64(data.as_slice()) == hash1;
             }
@@ -69,9 +69,13 @@ mod quick_tests {
             if let Some(h) = SseHash::new(key) {
                 res &= h.hash64(data.as_slice()) == hash1;
             }
+            res
         }
 
-        res
+        #[cfg(not(target_arch = "x86_64"))]
+        {
+            hash1 == hash2
+        }
     }
 
     #[quickcheck]
@@ -79,11 +83,11 @@ mod quick_tests {
         let key = Key([k1, k2, k3, k4]);
         let hash1 = PortableHash::new(key).hash128(data.as_slice());
         let hash2 = HighwayBuilder::new(key).hash128(data.as_slice());
-        let mut res = hash1 == hash2;
 
         #[cfg(target_arch = "x86_64")]
         {
             use highway::{AvxHash, SseHash};
+            let mut res = hash1 == hash2;
             if let Some(h) = AvxHash::new(key) {
                 res &= h.hash128(data.as_slice()) == hash1;
             }
@@ -91,9 +95,13 @@ mod quick_tests {
             if let Some(h) = SseHash::new(key) {
                 res &= h.hash128(data.as_slice()) == hash1;
             }
+            res
         }
 
-        res
+        #[cfg(not(target_arch = "x86_64"))]
+        {
+            hash1 == hash2
+        }
     }
 
     #[quickcheck]
@@ -101,11 +109,11 @@ mod quick_tests {
         let key = Key([k1, k2, k3, k4]);
         let hash1 = PortableHash::new(key).hash256(data.as_slice());
         let hash2 = HighwayBuilder::new(key).hash256(data.as_slice());
-        let mut res = hash1 == hash2;
 
         #[cfg(target_arch = "x86_64")]
         {
             use highway::{AvxHash, SseHash};
+            let mut res = hash1 == hash2;
             if let Some(h) = AvxHash::new(key) {
                 res &= h.hash256(data.as_slice()) == hash1;
             }
@@ -113,9 +121,13 @@ mod quick_tests {
             if let Some(h) = SseHash::new(key) {
                 res &= h.hash256(data.as_slice()) == hash1;
             }
+            res
         }
 
-        res
+        #[cfg(not(target_arch = "x86_64"))]
+        {
+            hash1 == hash2
+        }
     }
 }
 

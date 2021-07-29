@@ -1,12 +1,20 @@
 use highway::{HighwayHash, Key, PortableHash};
 
 #[test]
+fn hash_zeroes() {
+    let key = Key([0, 0, 0, 0]);
+    let hash = PortableHash::new(key).hash64(&[]);
+    assert_eq!(0x7035_DA75_B9D5_4469, hash);
+}
+
+#[test]
 fn portable_hash_simple() {
     let key = Key([1, 2, 3, 4]);
     let b: Vec<u8> = (0..33).map(|x| 128 + x as u8).collect();
     let hash = PortableHash::new(key).hash64(&b[..]);
     assert_eq!(0x53c5_16cc_e478_cad7, hash);
 }
+
 #[test]
 fn portable_hash_append() {
     let key = Key([1, 2, 3, 4]);
@@ -473,6 +481,20 @@ fn u64_to_u128(data: &[u64]) -> u128 {
 
 fn u64_to_u256(data: &[u64]) -> (u128, u128) {
     (u64_to_u128(data), u64_to_u128(&data[2..]))
+}
+
+#[cfg(target_arch = "x86_64")]
+#[test]
+fn sse_hash_zeroes() {
+    use highway::SseHash;
+
+    if !is_x86_feature_detected!("sse4.1") {
+        return;
+    }
+
+    let key = Key([0, 0, 0, 0]);
+    let hash = unsafe { SseHash::force_new(key).hash64(&[]) };
+    assert_eq!(0x7035_DA75_B9D5_4469, hash);
 }
 
 #[cfg(target_arch = "x86_64")]

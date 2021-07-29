@@ -123,6 +123,26 @@ let hash256 = hasher.finalize256(); // HighwayHash API
 # }
 ```
 
+## Wasm SIMD
+
+When deploying HighwayHash to a Wasm environment, one can opt into using the Wasm SIMD instructions by adding a Rust flag:
+
+```bash
+RUSTFLAGS="-C target-feature=+simd128" wasm-pack build
+```
+
+Then the `WasmHash` struct becomes available.
+
+```rust,ignore
+use highway::{HighwayHash, Key, WasmHash};
+let key = Key([0, 0, 0, 0]);
+if let Some(hasher) = WasmHash::new(key) {
+  let result = hasher.hash64(&[]);
+}
+```
+
+Once opted in, the execution environment must support Wasm SIMD instructions, which Chrome, Firefox, and Node LTS have stabilized since mid-2021. The opt in is required as there is not a way for Wasm to detect SIMD capabilities at runtime.
+
 ## Use Cases
 
 HighwayHash can be used against untrusted user input where weak hashes can't be used due to exploitation, verified cryptographic hashes are too slow, and a strong hash function meets requirements. Some specific scenarios given by the authors of HighwayHash:
@@ -130,7 +150,7 @@ HighwayHash can be used against untrusted user input where weak hashes can't be 
 - Use 64bit hashes to for authenticating short lived messages
 - Use 256bit hashes for checksums. Think file storage (S3) or any longer lived data where there is a need for strong guarantees against collisions.
 
-HighwayHash may not be a good fit if the payloads trend small (< 100 bytes) and speed is up of the utmost importance, as HighwayHash hits its stride at larger payloads. 
+HighwayHash may not be a good fit if the payloads trend small (< 100 bytes) and speed is up of the utmost importance, as HighwayHash hits its stride at larger payloads.
 
 ### `no_std` crates
 
@@ -172,11 +192,16 @@ mod sse;
 mod v2x64u;
 #[cfg(target_arch = "x86_64")]
 mod v4x64u;
+#[cfg(all(target_family = "wasm", target_feature = "simd128"))]
+mod wasm;
 
 #[cfg(target_arch = "x86_64")]
 pub use crate::avx::AvxHash;
 #[cfg(target_arch = "x86_64")]
 pub use crate::sse::SseHash;
+
+#[cfg(all(target_family = "wasm", target_feature = "simd128"))]
+pub use crate::wasm::WasmHash;
 
 #[cfg(feature = "std")]
 #[cfg(doctest)]

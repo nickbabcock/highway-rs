@@ -31,7 +31,7 @@ impl V2x64U {
     }
 
     #[target_feature(enable = "sse4.1")]
-    unsafe fn as_arr(&self) -> [u64; 2] {
+    pub unsafe fn as_arr(&self) -> [u64; 2] {
         let mut arr: [u64; 2] = [0, 0];
         _mm_storeu_si128(arr.as_mut_ptr() as *mut __m128i, self.0);
         arr
@@ -171,5 +171,67 @@ impl ShlAssign<__m128i> for V2x64U {
 impl ShrAssign<__m128i> for V2x64U {
     fn shr_assign(&mut self, count: __m128i) {
         unsafe { self.shr_assign(count) }
+    }
+}
+
+#[cfg(test)]
+pub mod tests {
+    use super::*;
+
+    #[test]
+    fn test_as_arr() {
+        unsafe {
+            let x = V2x64U::new(55, 1);
+            let res = x.as_arr();
+            assert_eq!(res, [1, 55]);
+        }
+    }
+
+    #[test]
+    fn test_rotate_by_32() {
+        unsafe {
+            let x = V2x64U::new(0x0264_432C_CD8A_70E0, 0x0B28_E3EF_EBB3_172D);
+            let y = x.rotate_by_32();
+            let res = y.as_arr();
+            assert_eq!(res, [0xEBB3_172D_0B28_E3EF, 0xCD8A_70E0_0264_432C]);
+        }
+    }
+
+    #[test]
+    fn test_add() {
+        unsafe {
+            let x = V2x64U::new(55, 1);
+            let y = V2x64U::new(0x0264_432C_CD8A_70E0, 0x0B28E_3EFE_BB3_172D);
+            let z = x + y;
+            assert_eq!(z.as_arr(), [0x0B28_E3EF_EBB3_172E, 0x2644_32CC_D8A7_117]);
+        }
+    }
+
+    #[test]
+    fn test_mm_srli_epi64() {
+        unsafe {
+            let x = V2x64U::new(0x0264_432C_CD8A_70E0, 0x0B28E_3EFE_BB3_172D);
+            let y = V2x64U::from(_mm_srli_epi64(x.0, 33));
+            assert_eq!(y.as_arr(), [0x0000_0000_0594_71F7, 0x0000_0000_0132_2196]);
+        }
+    }
+
+    #[test]
+    fn test_mm_mul_epu32() {
+        unsafe {
+            let x = V2x64U::new(0x0264_432C_CD8A_70E0, 0x0B28_E3EF_EBB3_172D);
+            let y = V2x64U::new(0x0B28_E3EF_EBB3_172D, 0x0264_432C_CD8A_70E0);
+            let z = V2x64U::from(_mm_mul_epu32(x.0, y.0));
+            assert_eq!(z.as_arr(), [0xBD3D_E006_1E19_F760, 0xBD3D_E006_1E19_F760]);
+        }
+    }
+
+    #[test]
+    fn test_mm_slli_si128_8() {
+        unsafe {
+            let x = V2x64U::new(0, 0xFFFF_FFFF);
+            let y = V2x64U::from(_mm_slli_si128(x.0, 8));
+            assert_eq!(y.as_arr(), [0, 0xFFFF_FFFF]);
+        }
     }
 }
