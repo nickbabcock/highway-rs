@@ -237,7 +237,7 @@ impl PortableHash {
             Filled::Full(new_data) => {
                 self.update(PortableHash::data_to_lanes(self.buffer.as_slice()));
                 let mut chunks = new_data.chunks_exact(PACKET_SIZE);
-                while let Some(chunk) = chunks.next() {
+                for chunk in chunks.by_ref() {
                     self.update(PortableHash::data_to_lanes(chunk));
                 }
 

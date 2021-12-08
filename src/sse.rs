@@ -284,7 +284,7 @@ impl SseHash {
                 self.update(packetH, packetL);
 
                 let mut chunks = new_data.chunks_exact(PACKET_SIZE);
-                while let Some(chunk) = chunks.next() {
+                for chunk in chunks.by_ref() {
                     let (packetH, packetL) = SseHash::data_to_lanes(chunk);
                     self.update(packetH, packetL);
                 }
