@@ -297,3 +297,17 @@ impl SseHash {
 
 impl_write!(SseHash);
 impl_hasher!(SseHash);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_zipper_merge() {
+        unsafe {
+            let x = V2x64U::new(0x0264_432C_CD8A_70E0, 0x0B28_E3EF_EBB3_172D);
+            let y = SseHash::zipper_merge(&x);
+            assert_eq!(y.as_arr(), [0x2D02_1764_E3B3_2CEB, 0x0BE0_2870_438A_EFCD]);
+        }
+    }
+}

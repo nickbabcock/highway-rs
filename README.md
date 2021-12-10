@@ -1,4 +1,4 @@
-![ci](https://github.com/nickbabcock/highway-rs/workflows/ci/badge.svg) [![](https://docs.rs/highway/badge.svg)](https://docs.rs/highway) [![Rust](https://img.shields.io/badge/rust-1.36%2B-blue.svg?maxAge=3600)](https://github.com/nickbabcock/highway-rs) [![Version](https://img.shields.io/crates/v/highway.svg?style=flat-square)](https://crates.io/crates/highway)
+![ci](https://github.com/nickbabcock/highway-rs/workflows/ci/badge.svg) [![](https://docs.rs/highway/badge.svg)](https://docs.rs/highway) [![Rust](https://img.shields.io/badge/rust-1.54%2B-blue.svg?maxAge=3600)](https://github.com/nickbabcock/highway-rs) [![Version](https://img.shields.io/crates/v/highway.svg?style=flat-square)](https://crates.io/crates/highway)
 
 # Highway-rs
 
@@ -12,6 +12,7 @@ portable (output is hardware independent) and strong hash function.
  - ✔ zero dependencies
  - ✔ generate 64, 128, and 256bit hashes
  - ✔ > 10 GB/s with SIMD (SSE 4.1 & AVX 2) aware instructions on x86 architectures
+ - ✔ > 3 GB/s on Wasm with the Wasm SIMD extension
  - ✔ > 1 GB/s portable implementation with zero unsafe code
  - ✔ incremental / streaming hashes
  - ✔ zero heap allocations
@@ -127,6 +128,26 @@ std::io::copy(&mut file, &mut hasher).unwrap();
 let hash64 = hasher.finish(); // core Hasher API
 let hash256 = hasher.finalize256(); // HighwayHash API
 ```
+
+## Wasm SIMD
+
+When deploying HighwayHash to a Wasm environment, one can opt into using the Wasm SIMD instructions by adding a Rust flag:
+
+```bash
+RUSTFLAGS="-C target-feature=+simd128" wasm-pack build
+```
+
+Then the `WasmHash` struct becomes available.
+
+```rust,ignore
+use highway::{HighwayHash, Key, WasmHash};
+let key = Key([0, 0, 0, 0]);
+if let Some(hasher) = WasmHash::new(key) {
+  let result = hasher.hash64(&[]);
+}
+```
+
+Once opted in, the execution environment must support Wasm SIMD instructions, which Chrome, Firefox, and Node LTS have stabilized since mid-2021. The opt in is required as there is not a way for Wasm to detect SIMD capabilities at runtime.
 
 ## Use Cases
 
