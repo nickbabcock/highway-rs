@@ -1,3 +1,9 @@
+## v0.7.0 - 2021-12-12
+
+- Update minimum supported rust to 1.54
+- Add Wasm SIMD implementation for 3x performance gain. See readme for caveats and how to opt-in
+- `no_std` builds will use a SIMD implementation when opted in at compile time
+
 ## v0.6.4 - 2021-04-16
 
 Allow for forwards compatibility with later rust compilers due to changes in some AVX2 usage
