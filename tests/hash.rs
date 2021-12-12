@@ -1,4 +1,4 @@
-use highway::{HighwayHash, Key, PortableHash};
+use highway::{HighwayHash, HighwayHasher, Key, PortableHash};
 
 #[test]
 fn hash_zeroes() {
@@ -41,8 +41,7 @@ fn portable_hash_append2() {
     assert_eq!(0x7858_f24d_2d79_b2b2, hash);
 }
 
-#[test]
-fn portable_hash_all() {
+pub fn hash_all() {
     let expected64 = [
         0x907A_56DE_22C2_6E53,
         0x7EAB_43AA_C7CD_DD78,
@@ -451,28 +450,33 @@ fn portable_hash_all() {
 
     for i in 0..64 {
         println!("{}", i);
-        let res_128 = u64_to_u128(&PortableHash::new(key).hash128(&data[..i])[..]);
-        let res_256 = u64_to_u256(&PortableHash::new(key).hash256(&data[..i])[..]);
-        assert_eq!(expected64[i], PortableHash::new(key).hash64(&data[..i]));
+        let res_128 = u64_to_u128(&HighwayHasher::new(key).hash128(&data[..i])[..]);
+        let res_256 = u64_to_u256(&HighwayHasher::new(key).hash256(&data[..i])[..]);
+        assert_eq!(expected64[i], HighwayHasher::new(key).hash64(&data[..i]));
         assert_eq!(expected128[i], res_128);
         assert_eq!(expected256[i], res_256);
 
         assert_eq!(expected64[i], {
-            let mut hasher = PortableHash::new(key);
+            let mut hasher = HighwayHasher::new(key);
             hasher.append(&data[..i]);
             hasher.finalize64()
         });
         assert_eq!(expected128[i], {
-            let mut hasher = PortableHash::new(key);
+            let mut hasher = HighwayHasher::new(key);
             hasher.append(&data[..i]);
             u64_to_u128(&hasher.finalize128()[..])
         });
         assert_eq!(expected256[i], {
-            let mut hasher = PortableHash::new(key);
+            let mut hasher = HighwayHasher::new(key);
             hasher.append(&data[..i]);
             u64_to_u256(&hasher.finalize256()[..])
         });
     }
+}
+
+#[test]
+fn test_hash_all() {
+    hash_all();
 }
 
 fn u64_to_u128(data: &[u64]) -> u128 {

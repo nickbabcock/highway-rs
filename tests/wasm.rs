@@ -2,6 +2,8 @@
 use highway::{HighwayHash, Key, PortableHash, WasmHash};
 use wasm_bindgen_test::*;
 
+mod hash;
+
 #[wasm_bindgen_test]
 fn hash_zeroes() {
     let key = Key([0, 0, 0, 0]);
@@ -43,4 +45,9 @@ fn wasm_eq_portable() {
             PortableHash::new(key).hash256(&data[..i])
         );
     }
+}
+
+#[wasm_bindgen_test]
+fn wasm_hash_all() {
+    hash::hash_all();
 }
