@@ -160,7 +160,12 @@ in a `no_std` context, add the following to your `Cargo.toml`:
 highway = { version = "x", default-features = false }
 ```
 
-Be aware that the `no_std` version is unable to detect CPU features and so will always default to the portable implementation. If building for a known SSE 4.1 or AVX 2 machine (and the majority of machines in the last decade will support SSE 4.1), these hashers can still be constructed with `force_new`.
+Be aware that the `no_std` version is unable to detect CPU features and so will always default to the portable implementation. If building for a known SSE 4.1 or AVX 2 machine (and the majority of machines in the last decade will support SSE 4.1), then explicitly enable the target feature:
+
+```bash
+RUSTFLAGS="-C target-feature=+sse4.1" cargo test
+RUSTFLAGS="-C target-feature=+avx2" cargo test
+```
 
 ## Benchmarks
 

@@ -146,15 +146,12 @@ HighwayHash may not be a good fit if the payloads trend small (< 100 bytes) and 
 
 ### `no_std` crates
 
-This crate has a feature, `std`, that is enabled by default. To use this crate
-in a `no_std` context, add the following to your `Cargo.toml`:
+Be aware that the `no_std` version is unable to detect CPU features and so will always default to the portable implementation. If building for a known SSE 4.1 or AVX 2 machine (and the majority of machines in the last decade will support SSE 4.1), then explicitly enable the target feature:
 
-```toml
-[dependencies]
-highway = { version = "x", default-features = false }
+```bash
+RUSTFLAGS="-C target-feature=+sse4.1" cargo test
+RUSTFLAGS="-C target-feature=+avx2" cargo test
 ```
-
-Be aware that the `no_std` version is unable to detect CPU features and so will always default to the portable implementation. If building for a known SSE 4.1 or AVX 2 machine (and the majority of machines in the last decade will support SSE 4.1), these hashers can still be constructed with `force_new`.
 
 */
 #![allow(non_snake_case)]

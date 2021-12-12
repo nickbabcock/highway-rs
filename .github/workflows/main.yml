@@ -133,3 +133,16 @@ jobs:
 
     - name: Run tests (with SIMD)
       run: RUSTFLAGS="-C target-feature=+simd128" wasm-pack test --node -- --verbose
+
+  instructions:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        feature: ["-sse4.1,-avx2", "-sse4.1,+avx2", "+sse4.1,+avx2", "+sse4.1,-avx2"]
+    steps:
+    - uses: actions/checkout@v1
+    - name: Test
+      run: RUSTFLAGS="-C target-feature=${{matrix.feature}}" cargo test --verbose
+    - name: No Std Tests
+      run: RUSTFLAGS="-C target-feature=${{matrix.feature}}" cargo test --no-default-features --verbose

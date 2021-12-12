@@ -86,12 +86,20 @@ impl HighwayBuilder {
     pub fn new(key: Key) -> Self {
         #[cfg(target_arch = "x86_64")]
         {
-            if let Some(h) = AvxHash::new(key) {
+            if cfg!(target_feature = "avx2") {
+                let h = unsafe { AvxHash::force_new(key) };
                 return HighwayBuilder(HighwayChoices::Avx(h));
-            }
-
-            if let Some(h) = SseHash::new(key) {
+            } else if cfg!(target_feature = "sse4.1") {
+                let h = unsafe { SseHash::force_new(key) };
                 return HighwayBuilder(HighwayChoices::Sse(h));
+            } else {
+                if let Some(h) = AvxHash::new(key) {
+                    return HighwayBuilder(HighwayChoices::Avx(h));
+                }
+
+                if let Some(h) = SseHash::new(key) {
+                    return HighwayBuilder(HighwayChoices::Sse(h));
+                }
             }
         }
 
