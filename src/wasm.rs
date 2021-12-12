@@ -41,18 +41,13 @@ impl HighwayHash for WasmHash {
 
 impl WasmHash {
     /// Creates a new `WasmHash` based on Wasm SIMD extension
-    pub fn force_new(key: Key) -> Self {
+    pub fn new(key: Key) -> Self {
         let mut h = WasmHash {
             key,
             ..Default::default()
         };
         h.reset();
         h
-    }
-
-    /// Create a new `WasmHash` if the sse4.1 feature is detected
-    pub fn new(key: Key) -> Option<Self> {
-        Some(Self::force_new(key))
     }
 
     fn reset(&mut self) {

@@ -5,7 +5,7 @@ use wasm_bindgen_test::*;
 #[wasm_bindgen_test]
 fn hash_zeroes() {
     let key = Key([0, 0, 0, 0]);
-    let hash = WasmHash::new(key).unwrap().hash64(&[]);
+    let hash = WasmHash::new(key).hash64(&[]);
     assert_eq!(0x7035_DA75_B9D5_4469, hash);
 }
 
@@ -13,7 +13,7 @@ fn hash_zeroes() {
 fn hash_simple() {
     let key = Key([1, 2, 3, 4]);
     let b: Vec<u8> = (0..33).map(|x| 128 + x as u8).collect();
-    let hash = WasmHash::new(key).unwrap().hash64(&b[..]);
+    let hash = WasmHash::new(key).hash64(&b[..]);
     assert_eq!(0x53c5_16cc_e478_cad7, hash);
 }
 
@@ -29,17 +29,17 @@ fn wasm_eq_portable() {
 
     for i in 0..data.len() {
         assert_eq!(
-            WasmHash::new(key).unwrap().hash64(&data[..i]),
+            WasmHash::new(key).hash64(&data[..i]),
             PortableHash::new(key).hash64(&data[..i])
         );
 
         assert_eq!(
-            WasmHash::new(key).unwrap().hash128(&data[..i]),
+            WasmHash::new(key).hash128(&data[..i]),
             PortableHash::new(key).hash128(&data[..i])
         );
 
         assert_eq!(
-            WasmHash::new(key).unwrap().hash256(&data[..i]),
+            WasmHash::new(key).hash256(&data[..i]),
             PortableHash::new(key).hash256(&data[..i])
         );
     }
