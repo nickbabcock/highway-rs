@@ -142,9 +142,8 @@ Then the `WasmHash` struct becomes available.
 ```rust,ignore
 use highway::{HighwayHash, Key, WasmHash};
 let key = Key([0, 0, 0, 0]);
-if let Some(hasher) = WasmHash::new(key) {
-  let result = hasher.hash64(&[]);
-}
+let hasher = WasmHash::new(key);
+let result = hasher.hash64(&[]);
 ```
 
 Once opted in, the execution environment must support Wasm SIMD instructions, which Chrome, Firefox, and Node LTS have stabilized since mid-2021. The opt in is required as there is not a way for Wasm to detect SIMD capabilities at runtime.
