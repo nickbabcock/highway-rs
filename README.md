@@ -137,16 +137,9 @@ When deploying HighwayHash to a Wasm environment, one can opt into using the Was
 RUSTFLAGS="-C target-feature=+simd128" wasm-pack build
 ```
 
-Then the `WasmHash` struct becomes available.
+Then `HighwayHasher` will automatically defer to the Wasm SIMD implementation via `WasmHash`.
 
-```rust,ignore
-use highway::{HighwayHash, Key, WasmHash};
-let key = Key([0, 0, 0, 0]);
-let hasher = WasmHash::new(key);
-let result = hasher.hash64(&[]);
-```
-
-Once opted in, the execution environment must support Wasm SIMD instructions, which Chrome, Firefox, and Node LTS have stabilized since mid-2021. The opt in is required as there is not a way for Wasm to detect SIMD capabilities at runtime.
+Once opted in, the execution environment must support Wasm SIMD instructions, which Chrome, Firefox, and Node LTS have stabilized since mid-2021. The opt in is required as there is not a way for Wasm to detect SIMD capabilities at runtime. The mere presence of Wasm SIMD instructions will cause incompatible environments to fail to compile, so it is recommended to provide two Wasm payloads to downstream users: one with SIMD enabled and one without.
 
 ## Use Cases
 
