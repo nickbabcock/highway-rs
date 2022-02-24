@@ -173,6 +173,8 @@ pub use crate::key::Key;
 pub use crate::portable::PortableHash;
 pub use crate::traits::HighwayHash;
 
+#[cfg(target_arch = "aarch64")]
+mod aarch64;
 #[cfg(target_arch = "x86_64")]
 mod avx;
 #[cfg(target_arch = "x86_64")]
@@ -184,6 +186,8 @@ mod v4x64u;
 #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
 mod wasm;
 
+#[cfg(target_arch = "aarch64")]
+pub use crate::aarch64::NeonHash;
 #[cfg(target_arch = "x86_64")]
 pub use crate::avx::AvxHash;
 #[cfg(target_arch = "x86_64")]
