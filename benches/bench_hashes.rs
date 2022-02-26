@@ -27,16 +27,15 @@ fn bit64_hash(c: &mut Criterion) {
         group.throughput(Throughput::Bytes(*i as u64));
         group.bench_with_input(BenchmarkId::new("portable", i), i, |b, param| {
             let data = vec![0u8; *param];
-            let key = Key([0, 0, 0, 0]);
             b.iter(|| PortableHash::new(key).hash64(&data))
         });
 
         #[cfg(target_arch = "x86_64")]
         {
+            let key = Key([0, 0, 0, 0]);
             if AvxHash::new(key).is_some() {
                 group.bench_with_input(BenchmarkId::new("avx", i), i, |b, param| {
                     let data = vec![0u8; *param];
-                    let key = Key([0, 0, 0, 0]);
                     b.iter(|| unsafe { AvxHash::force_new(key) }.hash64(&data))
                 });
             }
@@ -44,7 +43,6 @@ fn bit64_hash(c: &mut Criterion) {
             if SseHash::new(key).is_some() {
                 group.bench_with_input(BenchmarkId::new("sse", i), i, |b, param| {
                     let data = vec![0u8; *param];
-                    let key = Key([0, 0, 0, 0]);
                     b.iter(|| unsafe { SseHash::force_new(key) }.hash64(&data))
                 });
             }
@@ -62,7 +60,6 @@ fn bit256_hash(c: &mut Criterion) {
         group.throughput(Throughput::Bytes(*i as u64));
         group.bench_with_input(BenchmarkId::new("portable", i), i, |b, param| {
             let data = vec![0u8; *param];
-            let key = Key([0, 0, 0, 0]);
             b.iter(|| PortableHash::new(key).hash256(&data))
         });
 
@@ -71,7 +68,6 @@ fn bit256_hash(c: &mut Criterion) {
             if AvxHash::new(key).is_some() {
                 group.bench_with_input(BenchmarkId::new("avx", i), i, |b, param| {
                     let data = vec![0u8; *param];
-                    let key = Key([0, 0, 0, 0]);
                     b.iter(|| unsafe { AvxHash::force_new(key) }.hash256(&data))
                 });
             }
@@ -79,7 +75,6 @@ fn bit256_hash(c: &mut Criterion) {
             if SseHash::new(key).is_some() {
                 group.bench_with_input(BenchmarkId::new("sse", i), i, |b, param| {
                     let data = vec![0u8; *param];
-                    let key = Key([0, 0, 0, 0]);
                     b.iter(|| unsafe { SseHash::force_new(key) }.hash256(&data))
                 });
             }
