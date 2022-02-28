@@ -1,7 +1,7 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 #[cfg(target_arch = "x86_64")]
 use highway::{AvxHash, SseHash};
-use highway::{HighwayBuilder, HighwayHash, Key, PortableHash};
+use highway::{HighwayHash, HighwayHasher, Key, PortableHash};
 
 fn builder(c: &mut Criterion) {
     let mut group = c.benchmark_group("highway-builder");
@@ -11,7 +11,7 @@ fn builder(c: &mut Criterion) {
         group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, size| {
             let data = vec![0u8; *size];
             let key = Key([0, 0, 0, 0]);
-            b.iter(|| HighwayBuilder::new(key).hash64(&data));
+            b.iter(|| HighwayHasher::new(key).hash64(&data));
         });
     }
 

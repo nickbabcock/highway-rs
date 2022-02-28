@@ -598,7 +598,7 @@ fn avx_survive_crash() {
 
 #[test]
 fn builder_hash_eq_portable() {
-    use highway::HighwayBuilder;
+    use highway::HighwayHasher;
 
     let data: Vec<u8> = (0..100).map(|x| x as u8).collect();
     let key = Key([
@@ -612,17 +612,17 @@ fn builder_hash_eq_portable() {
         println!("{}", i);
         assert_eq!(
             PortableHash::new(key).hash64(&data[..i]),
-            HighwayBuilder::new(key).hash64(&data[..i])
+            HighwayHasher::new(key).hash64(&data[..i])
         );
 
         assert_eq!(
             PortableHash::new(key).hash128(&data[..i]),
-            HighwayBuilder::new(key).hash128(&data[..i])
+            HighwayHasher::new(key).hash128(&data[..i])
         );
 
         assert_eq!(
             PortableHash::new(key).hash256(&data[..i]),
-            HighwayBuilder::new(key).hash256(&data[..i])
+            HighwayHasher::new(key).hash256(&data[..i])
         );
     }
 }

@@ -1,9 +1,6 @@
-use crate::builder::HighwayBuilder;
+use crate::builder::HighwayHasher;
 use crate::key::Key;
 use core::hash::BuildHasher;
-
-/// HighwayHash implementation that selects best hash implementation at runtime.
-pub type HighwayHasher = HighwayBuilder;
 
 /// Constructs a hasher used in rust collections
 #[derive(Debug, Default)]
@@ -22,6 +19,6 @@ impl BuildHasher for HighwayBuildHasher {
     type Hasher = HighwayHasher;
 
     fn build_hasher(&self) -> Self::Hasher {
-        HighwayBuilder::new(self.key)
+        HighwayHasher::new(self.key)
     }
 }
