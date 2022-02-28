@@ -2,7 +2,7 @@
 extern crate quickcheck_macros;
 
 mod quick_tests {
-    use highway::{HighwayBuilder, HighwayHash, Key, PortableHash};
+    use highway::{HighwayHash, HighwayHasher, Key, PortableHash};
 
     #[quickcheck]
     fn portable64_eq(k1: u64, k2: u64, k3: u64, k4: u64, data: Vec<u8>) -> bool {
@@ -31,24 +31,24 @@ mod quick_tests {
     #[quickcheck]
     fn builder64_eq(k1: u64, k2: u64, k3: u64, k4: u64, data: Vec<u8>) -> bool {
         let key = Key([k1, k2, k3, k4]);
-        let hash1 = HighwayBuilder::new(key).hash64(data.as_slice());
-        let hash2 = HighwayBuilder::new(key).hash64(data.as_slice());
+        let hash1 = HighwayHasher::new(key).hash64(data.as_slice());
+        let hash2 = HighwayHasher::new(key).hash64(data.as_slice());
         hash1 == hash2
     }
 
     #[quickcheck]
     fn builder128_eq(k1: u64, k2: u64, k3: u64, k4: u64, data: Vec<u8>) -> bool {
         let key = Key([k1, k2, k3, k4]);
-        let hash1 = HighwayBuilder::new(key).hash128(data.as_slice());
-        let hash2 = HighwayBuilder::new(key).hash128(data.as_slice());
+        let hash1 = HighwayHasher::new(key).hash128(data.as_slice());
+        let hash2 = HighwayHasher::new(key).hash128(data.as_slice());
         hash1 == hash2
     }
 
     #[quickcheck]
     fn builder256_eq(k1: u64, k2: u64, k3: u64, k4: u64, data: Vec<u8>) -> bool {
         let key = Key([k1, k2, k3, k4]);
-        let hash1 = HighwayBuilder::new(key).hash256(data.as_slice());
-        let hash2 = HighwayBuilder::new(key).hash256(data.as_slice());
+        let hash1 = HighwayHasher::new(key).hash256(data.as_slice());
+        let hash2 = HighwayHasher::new(key).hash256(data.as_slice());
         hash1 == hash2
     }
 
@@ -56,7 +56,7 @@ mod quick_tests {
     fn all64_eq(k1: u64, k2: u64, k3: u64, k4: u64, data: Vec<u8>) -> bool {
         let key = Key([k1, k2, k3, k4]);
         let hash1 = PortableHash::new(key).hash64(data.as_slice());
-        let hash2 = HighwayBuilder::new(key).hash64(data.as_slice());
+        let hash2 = HighwayHasher::new(key).hash64(data.as_slice());
 
         #[cfg(target_arch = "x86_64")]
         {
@@ -82,7 +82,7 @@ mod quick_tests {
     fn all128_eq(k1: u64, k2: u64, k3: u64, k4: u64, data: Vec<u8>) -> bool {
         let key = Key([k1, k2, k3, k4]);
         let hash1 = PortableHash::new(key).hash128(data.as_slice());
-        let hash2 = HighwayBuilder::new(key).hash128(data.as_slice());
+        let hash2 = HighwayHasher::new(key).hash128(data.as_slice());
 
         #[cfg(target_arch = "x86_64")]
         {
@@ -108,7 +108,7 @@ mod quick_tests {
     fn all256_eq(k1: u64, k2: u64, k3: u64, k4: u64, data: Vec<u8>) -> bool {
         let key = Key([k1, k2, k3, k4]);
         let hash1 = PortableHash::new(key).hash256(data.as_slice());
-        let hash2 = HighwayBuilder::new(key).hash256(data.as_slice());
+        let hash2 = HighwayHasher::new(key).hash256(data.as_slice());
 
         #[cfg(target_arch = "x86_64")]
         {

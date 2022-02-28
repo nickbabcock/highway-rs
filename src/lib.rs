@@ -167,8 +167,8 @@ mod key;
 mod portable;
 mod traits;
 
-pub use crate::builder::HighwayBuilder;
-pub use crate::hash::{HighwayBuildHasher, HighwayHasher};
+pub use crate::builder::HighwayHasher;
+pub use crate::hash::HighwayBuildHasher;
 pub use crate::key::Key;
 pub use crate::portable::PortableHash;
 pub use crate::traits::HighwayHash;

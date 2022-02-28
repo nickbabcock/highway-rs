@@ -35,9 +35,9 @@ enum HighwayChoices {
 
 /// HighwayHash implementation that selects best hash implementation at runtime.
 #[derive(Debug, Clone)]
-pub struct HighwayBuilder(HighwayChoices);
+pub struct HighwayHasher(HighwayChoices);
 
-impl HighwayHash for HighwayBuilder {
+impl HighwayHash for HighwayHasher {
     fn append(&mut self, data: &[u8]) {
         match &mut self.0 {
             #[cfg(not(any(
@@ -111,24 +111,24 @@ impl HighwayHash for HighwayBuilder {
     }
 }
 
-impl HighwayBuilder {
+impl HighwayHasher {
     /// Creates a new hasher based on compilation and runtime capabilities
     pub fn new(key: Key) -> Self {
         #[cfg(target_arch = "x86_64")]
         {
             if cfg!(target_feature = "avx2") {
                 let h = unsafe { AvxHash::force_new(key) };
-                return HighwayBuilder(HighwayChoices::Avx(h));
+                return HighwayHasher(HighwayChoices::Avx(h));
             } else if cfg!(target_feature = "sse4.1") {
                 let h = unsafe { SseHash::force_new(key) };
-                return HighwayBuilder(HighwayChoices::Sse(h));
+                return HighwayHasher(HighwayChoices::Sse(h));
             } else {
                 if let Some(h) = AvxHash::new(key) {
-                    return HighwayBuilder(HighwayChoices::Avx(h));
+                    return HighwayHasher(HighwayChoices::Avx(h));
                 }
 
                 if let Some(h) = SseHash::new(key) {
-                    return HighwayBuilder(HighwayChoices::Sse(h));
+                    return HighwayHasher(HighwayChoices::Sse(h));
                 }
             }
         }
@@ -149,12 +149,12 @@ impl HighwayBuilder {
             // aarch64 environment is neon capable. If a use case is found
             // where neon is not available, we can patch that in later.
             let h = unsafe { NeonHash::force_new(key) };
-            HighwayBuilder(HighwayChoices::Neon(h))
+            HighwayHasher(HighwayChoices::Neon(h))
         }
 
         #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
         {
-            HighwayBuilder(HighwayChoices::Wasm(WasmHash::new(key)))
+            HighwayHasher(HighwayChoices::Wasm(WasmHash::new(key)))
         }
 
         #[cfg(not(any(
@@ -162,16 +162,16 @@ impl HighwayBuilder {
             target_arch = "aarch64"
         )))]
         {
-            HighwayBuilder(HighwayChoices::Portable(PortableHash::new(key)))
+            HighwayHasher(HighwayChoices::Portable(PortableHash::new(key)))
         }
     }
 }
 
-impl Default for HighwayBuilder {
+impl Default for HighwayHasher {
     fn default() -> Self {
-        HighwayBuilder::new(Key::default())
+        HighwayHasher::new(Key::default())
     }
 }
 
-impl_write!(HighwayBuilder);
-impl_hasher!(HighwayBuilder);
+impl_write!(HighwayHasher);
+impl_hasher!(HighwayHasher);
