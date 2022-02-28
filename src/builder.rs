@@ -4,17 +4,15 @@ use core::default::Default;
 
 #[cfg(target_arch = "aarch64")]
 use crate::aarch64::NeonHash;
-#[cfg(target_arch = "x86_64")]
-use crate::avx::AvxHash;
 #[cfg(not(any(
     all(target_family = "wasm", target_feature = "simd128"),
     target_arch = "aarch64"
 )))]
 use crate::portable::PortableHash;
-#[cfg(target_arch = "x86_64")]
-use crate::sse::SseHash;
 #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
 use crate::wasm::WasmHash;
+#[cfg(target_arch = "x86_64")]
+use crate::{AvxHash, SseHash};
 
 #[derive(Debug, Clone)]
 enum HighwayChoices {
