@@ -1,5 +1,6 @@
 #[cfg(any(
     target_arch = "x86_64",
+    target_arch = "aarch64",
     all(target_family = "wasm", target_feature = "simd128")
 ))]
 pub fn unordered_load3(from: &[u8]) -> u64 {

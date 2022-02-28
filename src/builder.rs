@@ -2,9 +2,14 @@ use crate::key::Key;
 use crate::traits::HighwayHash;
 use core::default::Default;
 
+#[cfg(target_arch = "aarch64")]
+use crate::aarch64::NeonHash;
 #[cfg(target_arch = "x86_64")]
 use crate::avx::AvxHash;
-#[cfg(not(all(target_family = "wasm", target_feature = "simd128")))]
+#[cfg(not(any(
+    all(target_family = "wasm", target_feature = "simd128"),
+    target_arch = "aarch64"
+)))]
 use crate::portable::PortableHash;
 #[cfg(target_arch = "x86_64")]
 use crate::sse::SseHash;
@@ -13,12 +18,17 @@ use crate::wasm::WasmHash;
 
 #[derive(Debug, Clone)]
 enum HighwayChoices {
-    #[cfg(not(all(target_family = "wasm", target_feature = "simd128")))]
+    #[cfg(not(any(
+        all(target_family = "wasm", target_feature = "simd128"),
+        target_arch = "aarch64"
+    )))]
     Portable(PortableHash),
     #[cfg(target_arch = "x86_64")]
     Sse(SseHash),
     #[cfg(target_arch = "x86_64")]
     Avx(AvxHash),
+    #[cfg(target_arch = "aarch64")]
+    Neon(NeonHash),
     #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
     Wasm(WasmHash),
 }
@@ -30,12 +40,17 @@ pub struct HighwayBuilder(HighwayChoices);
 impl HighwayHash for HighwayBuilder {
     fn append(&mut self, data: &[u8]) {
         match &mut self.0 {
-            #[cfg(not(all(target_family = "wasm", target_feature = "simd128")))]
+            #[cfg(not(any(
+                all(target_family = "wasm", target_feature = "simd128"),
+                target_arch = "aarch64"
+            )))]
             HighwayChoices::Portable(x) => x.append(data),
             #[cfg(target_arch = "x86_64")]
             HighwayChoices::Avx(x) => x.append(data),
             #[cfg(target_arch = "x86_64")]
             HighwayChoices::Sse(x) => x.append(data),
+            #[cfg(target_arch = "aarch64")]
+            HighwayChoices::Neon(x) => x.append(data),
             #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
             HighwayChoices::Wasm(x) => x.append(data),
         }
@@ -43,12 +58,17 @@ impl HighwayHash for HighwayBuilder {
 
     fn finalize64(self) -> u64 {
         match self.0 {
-            #[cfg(not(all(target_family = "wasm", target_feature = "simd128")))]
+            #[cfg(not(any(
+                all(target_family = "wasm", target_feature = "simd128"),
+                target_arch = "aarch64"
+            )))]
             HighwayChoices::Portable(x) => x.finalize64(),
             #[cfg(target_arch = "x86_64")]
             HighwayChoices::Avx(x) => x.finalize64(),
             #[cfg(target_arch = "x86_64")]
             HighwayChoices::Sse(x) => x.finalize64(),
+            #[cfg(target_arch = "aarch64")]
+            HighwayChoices::Neon(x) => x.finalize64(),
             #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
             HighwayChoices::Wasm(x) => x.finalize64(),
         }
@@ -56,12 +76,17 @@ impl HighwayHash for HighwayBuilder {
 
     fn finalize128(self) -> [u64; 2] {
         match self.0 {
-            #[cfg(not(all(target_family = "wasm", target_feature = "simd128")))]
+            #[cfg(not(any(
+                all(target_family = "wasm", target_feature = "simd128"),
+                target_arch = "aarch64"
+            )))]
             HighwayChoices::Portable(x) => x.finalize128(),
             #[cfg(target_arch = "x86_64")]
             HighwayChoices::Avx(x) => x.finalize128(),
             #[cfg(target_arch = "x86_64")]
             HighwayChoices::Sse(x) => x.finalize128(),
+            #[cfg(target_arch = "aarch64")]
+            HighwayChoices::Neon(x) => x.finalize128(),
             #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
             HighwayChoices::Wasm(x) => x.finalize128(),
         }
@@ -69,12 +94,17 @@ impl HighwayHash for HighwayBuilder {
 
     fn finalize256(self) -> [u64; 4] {
         match self.0 {
-            #[cfg(not(all(target_family = "wasm", target_feature = "simd128")))]
+            #[cfg(not(any(
+                all(target_family = "wasm", target_feature = "simd128"),
+                target_arch = "aarch64"
+            )))]
             HighwayChoices::Portable(x) => x.finalize256(),
             #[cfg(target_arch = "x86_64")]
             HighwayChoices::Avx(x) => x.finalize256(),
             #[cfg(target_arch = "x86_64")]
             HighwayChoices::Sse(x) => x.finalize256(),
+            #[cfg(target_arch = "aarch64")]
+            HighwayChoices::Neon(x) => x.finalize256(),
             #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
             HighwayChoices::Wasm(x) => x.finalize256(),
         }
@@ -103,12 +133,34 @@ impl HighwayBuilder {
             }
         }
 
+        #[cfg(target_arch = "aarch64")]
+        {
+            // Based on discussions here:
+            // https://github.com/nickbabcock/highway-rs/pull/51#discussion_r815247129
+            //
+            // The following aren't stable:
+            //  - std::is_aarch64_feature_detected
+            //  - aarch64 target features
+            //
+            // We're not really able to detect at runtime or compile time
+            // if neon support is available
+            //
+            // The good news is that it seems reasonable to assume the
+            // aarch64 environment is neon capable. If a use case is found
+            // where neon is not available, we can patch that in later.
+            let h = unsafe { NeonHash::force_new(key) };
+            HighwayBuilder(HighwayChoices::Neon(h))
+        }
+
         #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
         {
             HighwayBuilder(HighwayChoices::Wasm(WasmHash::new(key)))
         }
 
-        #[cfg(not(all(target_family = "wasm", target_feature = "simd128")))]
+        #[cfg(not(any(
+            all(target_family = "wasm", target_feature = "simd128"),
+            target_arch = "aarch64"
+        )))]
         {
             HighwayBuilder(HighwayChoices::Portable(PortableHash::new(key)))
         }
