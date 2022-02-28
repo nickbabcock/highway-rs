@@ -1,9 +1,8 @@
+use super::{v2x64u::V2x64U, v4x64u::V4x64U};
 use crate::internal::unordered_load3;
 use crate::internal::{Filled, HashPacket, PACKET_SIZE};
 use crate::key::Key;
 use crate::traits::HighwayHash;
-use crate::v2x64u::V2x64U;
-use crate::v4x64u::V4x64U;
 use core::arch::x86_64::*;
 
 /// AVX empowered implementation that will only work on `x86_64` with avx2 enabled at the CPU
