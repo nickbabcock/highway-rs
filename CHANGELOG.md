@@ -2,6 +2,7 @@
 
 - The `HighwayBuilder` type has been removed in favor of the former alias `HighwayHasher`
 - Add Neon SIMD implementation for aarch64 targets which enabled throughput improvements of over 4x. The downside with this implementation is that all aarch64 environments are assumed to support NEON SIMD. Thus, aarch64 environments without NEON SIMD are not supported.
+- Minimum supported rust version updated to 1.59 for aarch64 targets
 
 ## v0.7.0 - 2021-12-12
 
