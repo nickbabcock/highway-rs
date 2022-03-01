@@ -123,6 +123,15 @@ let hash256 = hasher.finalize256(); // HighwayHash API
 # }
 ```
 
+## Use Cases
+
+HighwayHash can be used against untrusted user input where weak hashes can't be used due to exploitation, verified cryptographic hashes are too slow, and a strong hash function meets requirements. Some specific scenarios given by the authors of HighwayHash:
+
+- Use 64bit hashes to for authenticating short lived messages
+- Use 256bit hashes for checksums. Think file storage (S3) or any longer lived data where there is a need for strong guarantees against collisions.
+
+HighwayHash may not be a good fit if the payloads trend small (< 100 bytes) and speed is up of the utmost importance, as HighwayHash hits its stride at larger payloads.
+
 ## Wasm SIMD
 
 When deploying HighwayHash to a Wasm environment, one can opt into using the Wasm SIMD instructions by adding a Rust flag:
@@ -134,15 +143,6 @@ RUSTFLAGS="-C target-feature=+simd128" wasm-pack build
 Then `HighwayHasher` will automatically defer to the Wasm SIMD implementation via `WasmHash`.
 
 Once opted in, the execution environment must support Wasm SIMD instructions, which Chrome, Firefox, and Node LTS have stabilized since mid-2021. The opt in is required as there is not a way for Wasm to detect SIMD capabilities at runtime. The mere presence of Wasm SIMD instructions will cause incompatible environments to fail to compile, so it is recommended to provide two Wasm payloads to downstream users: one with SIMD enabled and one without.
-
-## Use Cases
-
-HighwayHash can be used against untrusted user input where weak hashes can't be used due to exploitation, verified cryptographic hashes are too slow, and a strong hash function meets requirements. Some specific scenarios given by the authors of HighwayHash:
-
-- Use 64bit hashes to for authenticating short lived messages
-- Use 256bit hashes for checksums. Think file storage (S3) or any longer lived data where there is a need for strong guarantees against collisions.
-
-HighwayHash may not be a good fit if the payloads trend small (< 100 bytes) and speed is up of the utmost importance, as HighwayHash hits its stride at larger payloads.
 
 ### `no_std` crates
 
