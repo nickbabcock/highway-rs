@@ -15,7 +15,7 @@ pub fn unordered_load3(from: &[u8]) -> u64 {
         + (u64::from(from[size_mod4 - 1]) << 16)
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub enum Filled<'a> {
     Consumed,
     Full(&'a [u8]),
