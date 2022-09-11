@@ -45,6 +45,7 @@ impl AvxHash {
     /// If called on a machine without avx2, a segfault will occur. Only use if you have
     /// control over the deployment environment and have either benchmarked that the runtime
     /// check is significant or are unable to check for avx2 capabilities
+    #[must_use]
     pub unsafe fn force_new(key: Key) -> Self {
         let mut h = AvxHash {
             key,
@@ -55,6 +56,7 @@ impl AvxHash {
     }
 
     /// Creates a new `AvxHash` if the avx2 feature is detected.
+    #[must_use]
     pub fn new(key: Key) -> Option<Self> {
         #[cfg(feature = "std")]
         {
@@ -88,7 +90,7 @@ impl AvxHash {
         let hash = sum0 + sum1;
         let mut result: u64 = 0;
         // Each lane is sufficiently mixed, so just truncate to 64 bits.
-        _mm_storel_epi64(&mut result as *mut u64 as *mut __m128i, hash.0);
+        _mm_storel_epi64(core::ptr::addr_of_mut!(result).cast::<__m128i>(), hash.0);
         result
     }
 
@@ -107,7 +109,7 @@ impl AvxHash {
         let sum1 = V2x64U::from(_mm256_extracti128_si256((self.v1 + self.mul1).0, 1));
         let hash = sum0 + sum1;
         let mut result: [u64; 2] = [0; 2];
-        _mm_storeu_si128(result.as_mut_ptr() as *mut __m128i, hash.0);
+        _mm_storeu_si128(result.as_mut_ptr().cast::<__m128i>(), hash.0);
         result
     }
 
@@ -126,7 +128,7 @@ impl AvxHash {
         let sum1 = self.v1 + self.mul1;
         let hash = AvxHash::modular_reduction(&sum1, &sum0);
         let mut result: [u64; 4] = [0; 4];
-        _mm256_storeu_si256(result.as_mut_ptr() as *mut __m256i, hash.0);
+        _mm256_storeu_si256(result.as_mut_ptr().cast::<__m256i>(), hash.0);
         result
     }
 
@@ -145,7 +147,7 @@ impl AvxHash {
             0x3bd3_9e10_cb0e_f593,
         );
 
-        let key = V4x64U::from(_mm256_load_si256(self.key.0.as_ptr() as *const __m256i));
+        let key = V4x64U::from(_mm256_load_si256(self.key.0.as_ptr().cast::<__m256i>()));
         self.v0 = key ^ init0;
         self.v1 = key.rotate_by_32() ^ init1;
         self.mul0 = init0;
@@ -155,7 +157,7 @@ impl AvxHash {
     #[inline]
     #[target_feature(enable = "avx2")]
     unsafe fn data_to_lanes(packet: &[u8]) -> V4x64U {
-        V4x64U::from(_mm256_loadu_si256(packet.as_ptr() as *const __m256i))
+        V4x64U::from(_mm256_loadu_si256(packet.as_ptr().cast::<__m256i>()))
     }
 
     #[target_feature(enable = "avx2")]
@@ -165,9 +167,9 @@ impl AvxHash {
         let size_mod4 = size_mod32 & 3;
         let size = _mm256_castsi256_si128(size256);
         if size_mod32 & 16 != 0 {
-            let packetL = _mm_load_si128(bytes.as_ptr() as *const __m128i);
+            let packetL = _mm_load_si128(bytes.as_ptr().cast::<__m128i>());
             let int_mask = _mm_cmpgt_epi32(size, _mm_set_epi32(31, 27, 23, 19));
-            let int_lanes = _mm_maskload_epi32(bytes.as_ptr().offset(16) as *const i32, int_mask);
+            let int_lanes = _mm_maskload_epi32(bytes.as_ptr().offset(16).cast::<i32>(), int_mask);
             let remainder = &bytes[(size_mod32 & !3) + size_mod4 - 4..];
             let last4 =
                 i32::from_le_bytes([remainder[0], remainder[1], remainder[2], remainder[3]]);
@@ -177,7 +179,7 @@ impl AvxHash {
             V4x64U::from(packet)
         } else {
             let int_mask = _mm_cmpgt_epi32(size, _mm_set_epi32(15, 11, 7, 3));
-            let packetL = _mm_maskload_epi32(bytes.as_ptr() as *const i32, int_mask);
+            let packetL = _mm_maskload_epi32(bytes.as_ptr().cast::<i32>(), int_mask);
             let remainder = &bytes[size_mod32 & !3..];
             let last3 = unordered_load3(remainder);
             let packetH = _mm_cvtsi64_si128(last3 as i64);

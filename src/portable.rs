@@ -33,6 +33,7 @@ impl HighwayHash for PortableHash {
 
 impl PortableHash {
     /// Create a new `PortableHash` from a `Key`
+    #[must_use]
     pub fn new(key: Key) -> Self {
         let mut h = PortableHash {
             key,
@@ -141,7 +142,7 @@ impl PortableHash {
 
     fn permute_and_update(&mut self) {
         let permuted: [u64; 4] = PortableHash::permute(&self.v0);
-        self.update(permuted)
+        self.update(permuted);
     }
 
     fn update(&mut self, lanes: [u64; 4]) {

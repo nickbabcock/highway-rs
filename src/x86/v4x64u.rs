@@ -43,7 +43,7 @@ impl V4x64U {
     #[target_feature(enable = "avx2")]
     unsafe fn as_arr(&self) -> [u64; 4] {
         let mut arr: [u64; 4] = [0; 4];
-        _mm256_storeu_si256(arr.as_mut_ptr() as *mut __m256i, self.0);
+        _mm256_storeu_si256(arr.as_mut_ptr().cast::<__m256i>(), self.0);
         arr
     }
 
@@ -74,27 +74,27 @@ impl V4x64U {
 
     #[target_feature(enable = "avx2")]
     unsafe fn add_assign(&mut self, other: Self) {
-        self.0 = _mm256_add_epi64(self.0, other.0)
+        self.0 = _mm256_add_epi64(self.0, other.0);
     }
 
     #[target_feature(enable = "avx2")]
     unsafe fn sub_assign(&mut self, other: Self) {
-        self.0 = _mm256_sub_epi64(self.0, other.0)
+        self.0 = _mm256_sub_epi64(self.0, other.0);
     }
 
     #[target_feature(enable = "avx2")]
     unsafe fn bitand_assign(&mut self, other: Self) {
-        self.0 = _mm256_and_si256(self.0, other.0)
+        self.0 = _mm256_and_si256(self.0, other.0);
     }
 
     #[target_feature(enable = "avx2")]
     unsafe fn bitor_assign(&mut self, other: Self) {
-        self.0 = _mm256_or_si256(self.0, other.0)
+        self.0 = _mm256_or_si256(self.0, other.0);
     }
 
     #[target_feature(enable = "avx2")]
     unsafe fn bitxor_assign(&mut self, other: Self) {
-        self.0 = _mm256_xor_si256(self.0, other.0)
+        self.0 = _mm256_xor_si256(self.0, other.0);
     }
 }
 

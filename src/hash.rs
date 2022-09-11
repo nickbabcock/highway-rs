@@ -10,6 +10,7 @@ pub struct HighwayBuildHasher {
 
 impl HighwayBuildHasher {
     /// Creates a new hash builder with a given key
+    #[must_use]
     pub fn new(key: Key) -> Self {
         HighwayBuildHasher { key }
     }

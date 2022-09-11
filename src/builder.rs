@@ -111,6 +111,7 @@ impl HighwayHash for HighwayHasher {
 
 impl HighwayHasher {
     /// Creates a new hasher based on compilation and runtime capabilities
+    #[must_use]
     pub fn new(key: Key) -> Self {
         #[cfg(target_arch = "x86_64")]
         {

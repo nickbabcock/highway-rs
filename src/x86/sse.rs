@@ -49,6 +49,7 @@ impl SseHash {
     /// If called on a machine without sse4.1, a segfault will occur. Only use if you have
     /// control over the deployment environment and have either benchmarked that the runtime
     /// check is significant or are unable to check for sse4.1 capabilities
+    #[must_use]
     pub unsafe fn force_new(key: Key) -> Self {
         let mut h = SseHash {
             key,
@@ -59,6 +60,7 @@ impl SseHash {
     }
 
     /// Create a new `SseHash` if the sse4.1 feature is detected
+    #[must_use]
     pub fn new(key: Key) -> Option<Self> {
         #[cfg(feature = "std")]
         {
@@ -82,10 +84,9 @@ impl SseHash {
         let init0H = V2x64U::new(0x243f_6a88_85a3_08d3, 0x1319_8a2e_0370_7344);
         let init1L = V2x64U::new(0xc0ac_f169_b5f1_8a8c, 0x3bd3_9e10_cb0e_f593);
         let init1H = V2x64U::new(0x4528_21e6_38d0_1377, 0xbe54_66cf_34e9_0c6c);
-        let keyL = V2x64U::from(_mm_loadu_si128(self.key.0.as_ptr() as *const __m128i));
-        let keyH = V2x64U::from(_mm_loadu_si128(
-            self.key.0.as_ptr().offset(2) as *const __m128i
-        ));
+        let key_ptr = self.key.0.as_ptr().cast::<__m128i>();
+        let keyL = V2x64U::from(_mm_loadu_si128(key_ptr));
+        let keyH = V2x64U::from(_mm_loadu_si128(key_ptr.add(1)));
         self.v0L = keyL ^ init0L;
         self.v0H = keyH ^ init0H;
         self.v1L = keyL.rotate_by_32() ^ init1L;
@@ -140,7 +141,7 @@ impl SseHash {
         let sum1 = self.v1L + self.mul1L;
         let hash = sum0 + sum1;
         let mut result: u64 = 0;
-        _mm_storel_epi64((&mut result as *mut u64) as *mut __m128i, hash.0);
+        _mm_storel_epi64(core::ptr::addr_of_mut!(result).cast::<__m128i>(), hash.0);
         result
     }
 
@@ -158,7 +159,7 @@ impl SseHash {
         let sum1 = self.v1H + self.mul1H;
         let hash = sum0 + sum1;
         let mut result: [u64; 2] = [0; 2];
-        _mm_storeu_si128(result.as_mut_ptr() as *mut __m128i, hash.0);
+        _mm_storeu_si128(result.as_mut_ptr().cast::<__m128i>(), hash.0);
         result
     }
 
@@ -179,8 +180,9 @@ impl SseHash {
         let hashL = SseHash::modular_reduction(&sum1L, &sum0L);
         let hashH = SseHash::modular_reduction(&sum1H, &sum0H);
         let mut result: [u64; 4] = [0; 4];
-        _mm_storeu_si128(result.as_mut_ptr() as *mut __m128i, hashL.0);
-        _mm_storeu_si128(result.as_mut_ptr().offset(2) as *mut __m128i, hashH.0);
+        let ptr = result.as_mut_ptr().cast::<__m128i>();
+        _mm_storeu_si128(ptr, hashL.0);
+        _mm_storeu_si128(ptr.add(1), hashH.0);
         result
     }
 
@@ -205,7 +207,7 @@ impl SseHash {
         let mut ret = if size & 8 != 0 {
             mask4 = V2x64U::from(_mm_slli_si128(mask4.0, 8));
             data = &bytes[8..];
-            V2x64U::from(_mm_loadl_epi64(bytes.as_ptr() as *const __m128i))
+            V2x64U::from(_mm_loadl_epi64(bytes.as_ptr().cast::<__m128i>()))
         } else {
             V2x64U::new(0, 0)
         };
@@ -225,7 +227,7 @@ impl SseHash {
         let size_mod32 = bytes.len();
         let size_mod4 = size_mod32 & 3;
         if size_mod32 & 16 != 0 {
-            let packetL = V2x64U::from(_mm_loadu_si128(bytes.as_ptr() as *const __m128i));
+            let packetL = V2x64U::from(_mm_loadu_si128(bytes.as_ptr().cast::<__m128i>()));
             let packett = SseHash::load_multiple_of_four(&bytes[16..], size_mod32 as u64);
             let remainder = &bytes[(size_mod32 & !3) + size_mod4 - 4..];
             let last4 =
@@ -269,8 +271,9 @@ impl SseHash {
     #[inline]
     #[target_feature(enable = "sse4.1")]
     unsafe fn data_to_lanes(packet: &[u8]) -> (V2x64U, V2x64U) {
-        let packetL = V2x64U::from(_mm_loadu_si128(packet.as_ptr() as *const __m128i));
-        let packetH = V2x64U::from(_mm_loadu_si128(packet.as_ptr().offset(16) as *const __m128i));
+        let ptr = packet.as_ptr().cast::<__m128i>();
+        let packetL = V2x64U::from(_mm_loadu_si128(ptr));
+        let packetH = V2x64U::from(_mm_loadu_si128(ptr.add(1)));
 
         (packetH, packetL)
     }

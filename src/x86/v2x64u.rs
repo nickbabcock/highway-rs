@@ -33,7 +33,7 @@ impl V2x64U {
     #[target_feature(enable = "sse4.1")]
     pub unsafe fn as_arr(&self) -> [u64; 2] {
         let mut arr: [u64; 2] = [0, 0];
-        _mm_storeu_si128(arr.as_mut_ptr() as *mut __m128i, self.0);
+        _mm_storeu_si128(arr.as_mut_ptr().cast::<__m128i>(), self.0);
         arr
     }
 
@@ -54,37 +54,37 @@ impl V2x64U {
 
     #[target_feature(enable = "sse4.1")]
     unsafe fn add_assign(&mut self, other: Self) {
-        self.0 = _mm_add_epi64(self.0, other.0)
+        self.0 = _mm_add_epi64(self.0, other.0);
     }
 
     #[target_feature(enable = "sse4.1")]
     unsafe fn sub_assign(&mut self, other: Self) {
-        self.0 = _mm_sub_epi64(self.0, other.0)
+        self.0 = _mm_sub_epi64(self.0, other.0);
     }
 
     #[target_feature(enable = "sse4.1")]
     unsafe fn bitand_assign(&mut self, other: Self) {
-        self.0 = _mm_and_si128(self.0, other.0)
+        self.0 = _mm_and_si128(self.0, other.0);
     }
 
     #[target_feature(enable = "sse4.1")]
     unsafe fn bitor_assign(&mut self, other: Self) {
-        self.0 = _mm_or_si128(self.0, other.0)
+        self.0 = _mm_or_si128(self.0, other.0);
     }
 
     #[target_feature(enable = "sse4.1")]
     unsafe fn bitxor_assign(&mut self, other: Self) {
-        self.0 = _mm_xor_si128(self.0, other.0)
+        self.0 = _mm_xor_si128(self.0, other.0);
     }
 
     #[target_feature(enable = "sse4.1")]
     unsafe fn shl_assign(&mut self, count: __m128i) {
-        self.0 = _mm_sll_epi64(self.0, count)
+        self.0 = _mm_sll_epi64(self.0, count);
     }
 
     #[target_feature(enable = "sse4.1")]
     unsafe fn shr_assign(&mut self, count: __m128i) {
-        self.0 = _mm_srl_epi64(self.0, count)
+        self.0 = _mm_srl_epi64(self.0, count);
     }
 }
 
