@@ -1,4 +1,4 @@
-use crate::internal::{Filled, HashPacket, PACKET_SIZE};
+use crate::internal::{HashPacket, PACKET_SIZE};
 use crate::key::Key;
 use crate::traits::HighwayHash;
 
@@ -233,17 +233,14 @@ impl PortableHash {
     }
 
     fn append(&mut self, data: &[u8]) {
-        match self.buffer.fill(data) {
-            Filled::Consumed => {}
-            Filled::Full(new_data) => {
-                self.update(PortableHash::data_to_lanes(self.buffer.as_slice()));
-                let mut chunks = new_data.chunks_exact(PACKET_SIZE);
-                for chunk in chunks.by_ref() {
-                    self.update(PortableHash::data_to_lanes(chunk));
-                }
-
-                self.buffer.set_to(chunks.remainder());
+        if let Some(tail) = self.buffer.fill(data) {
+            self.update(Self::data_to_lanes(self.buffer.as_slice()));
+            let mut chunks = tail.chunks_exact(PACKET_SIZE);
+            for chunk in chunks.by_ref() {
+                self.update(Self::data_to_lanes(chunk));
             }
+
+            self.buffer.set_to(chunks.remainder());
         }
     }
 }

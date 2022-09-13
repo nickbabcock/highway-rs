@@ -1,4 +1,4 @@
-use crate::internal::{unordered_load3, Filled, HashPacket, PACKET_SIZE};
+use crate::internal::{unordered_load3, HashPacket, PACKET_SIZE};
 use crate::{HighwayHash, Key};
 use core::arch::aarch64::*;
 use core::ops::{
@@ -75,7 +75,7 @@ impl NeonHash {
         V2x64U::from(lookup)
     }
 
-    unsafe fn update(&mut self, packetH: V2x64U, packetL: V2x64U) {
+    unsafe fn update(&mut self, (packetH, packetL): (V2x64U, V2x64U)) {
         self.v1L += packetL;
         self.v1H += packetH;
         self.v1L += self.mul0L;
@@ -107,7 +107,7 @@ impl NeonHash {
     unsafe fn permute_and_update(&mut self) {
         let low = self.v0L.rotate_by_32();
         let high = self.v0H.rotate_by_32();
-        self.update(low, high);
+        self.update((low, high));
     }
 
     unsafe fn finalize64(&mut self) -> u64 {
@@ -220,8 +220,8 @@ impl NeonHash {
         self.v0L += vsize_mod32;
         self.v0H += vsize_mod32;
         self.rotate_32_by(size);
-        let (packetH, packetL) = NeonHash::remainder(self.buffer.as_slice());
-        self.update(packetH, packetL);
+        let packet = NeonHash::remainder(self.buffer.as_slice());
+        self.update(packet);
     }
 
     unsafe fn rotate_32_by(&mut self, count: i32) {
@@ -248,20 +248,14 @@ impl NeonHash {
     }
 
     unsafe fn append(&mut self, data: &[u8]) {
-        match self.buffer.fill(data) {
-            Filled::Consumed => {}
-            Filled::Full(new_data) => {
-                let (packetH, packetL) = NeonHash::data_to_lanes(self.buffer.as_slice());
-                self.update(packetH, packetL);
-
-                let mut chunks = new_data.chunks_exact(PACKET_SIZE);
-                for chunk in chunks.by_ref() {
-                    let (packetH, packetL) = NeonHash::data_to_lanes(chunk);
-                    self.update(packetH, packetL);
-                }
-
-                self.buffer.set_to(chunks.remainder());
+        if let Some(tail) = self.buffer.fill(data) {
+            self.update(Self::data_to_lanes(self.buffer.as_slice()));
+            let mut chunks = tail.chunks_exact(PACKET_SIZE);
+            for chunk in chunks.by_ref() {
+                self.update(Self::data_to_lanes(chunk));
             }
+
+            self.buffer.set_to(chunks.remainder());
         }
     }
 }
