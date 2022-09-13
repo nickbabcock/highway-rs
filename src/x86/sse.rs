@@ -1,6 +1,6 @@
 use super::v2x64u::V2x64U;
 use crate::internal::unordered_load3;
-use crate::internal::{Filled, HashPacket, PACKET_SIZE};
+use crate::internal::{HashPacket, PACKET_SIZE};
 use crate::key::Key;
 use crate::traits::HighwayHash;
 use core::arch::x86_64::*;
@@ -103,7 +103,7 @@ impl SseHash {
     }
 
     #[target_feature(enable = "sse4.1")]
-    unsafe fn update(&mut self, packetH: V2x64U, packetL: V2x64U) {
+    unsafe fn update(&mut self, (packetH, packetL): (V2x64U, V2x64U)) {
         self.v1L += packetL;
         self.v1H += packetH;
         self.v1L += self.mul0L;
@@ -124,7 +124,7 @@ impl SseHash {
     unsafe fn permute_and_update(&mut self) {
         let low = self.v0L.rotate_by_32();
         let high = self.v0H.rotate_by_32();
-        self.update(low, high);
+        self.update((low, high));
     }
 
     #[target_feature(enable = "sse4.1")]
@@ -250,8 +250,8 @@ impl SseHash {
         self.v0L += V2x64U::from(vsize_mod32);
         self.v0H += V2x64U::from(vsize_mod32);
         self.rotate_32_by(size as i64);
-        let (packetH, packetL) = SseHash::remainder(self.buffer.as_slice());
-        self.update(packetH, packetL);
+        let packet = SseHash::remainder(self.buffer.as_slice());
+        self.update(packet);
     }
 
     #[target_feature(enable = "sse4.1")]
@@ -280,20 +280,14 @@ impl SseHash {
 
     #[target_feature(enable = "sse4.1")]
     unsafe fn append(&mut self, data: &[u8]) {
-        match self.buffer.fill(data) {
-            Filled::Consumed => {}
-            Filled::Full(new_data) => {
-                let (packetH, packetL) = SseHash::data_to_lanes(self.buffer.as_slice());
-                self.update(packetH, packetL);
-
-                let mut chunks = new_data.chunks_exact(PACKET_SIZE);
-                for chunk in chunks.by_ref() {
-                    let (packetH, packetL) = SseHash::data_to_lanes(chunk);
-                    self.update(packetH, packetL);
-                }
-
-                self.buffer.set_to(chunks.remainder());
+        if let Some(tail) = self.buffer.fill(data) {
+            self.update(Self::data_to_lanes(self.buffer.as_slice()));
+            let mut chunks = tail.chunks_exact(PACKET_SIZE);
+            for chunk in chunks.by_ref() {
+                self.update(Self::data_to_lanes(chunk));
             }
+
+            self.buffer.set_to(chunks.remainder());
         }
     }
 }

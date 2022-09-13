@@ -15,12 +15,6 @@ pub fn unordered_load3(from: &[u8]) -> u64 {
         + (u64::from(from[size_mod4 - 1]) << 16)
 }
 
-#[derive(PartialEq, Eq, Debug, Clone)]
-pub enum Filled<'a> {
-    Consumed,
-    Full(&'a [u8]),
-}
-
 pub const PACKET_SIZE: usize = 32;
 
 /// The c layout is needed as we'll be interpretting the buffer as different types and passing it
@@ -34,32 +28,37 @@ pub struct HashPacket {
 }
 
 impl HashPacket {
+    #[inline]
     pub fn len(&self) -> usize {
         self.buf_index
     }
 
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.buf_index == 0
     }
 
+    #[inline]
     pub fn as_slice(&self) -> &[u8] {
         &self.buf[..self.buf_index]
     }
 
-    pub fn fill<'a>(&mut self, data: &'a [u8]) -> Filled<'a> {
+    #[inline]
+    pub fn fill<'a>(&mut self, data: &'a [u8]) -> Option<&'a [u8]> {
         if data.len() < PACKET_SIZE - self.buf_index {
             let new_ind = self.buf_index + data.len();
             self.buf[self.buf_index..new_ind].copy_from_slice(data);
             self.buf_index = new_ind;
-            Filled::Consumed
+            None
         } else {
-            let (begin, end) = data.split_at(PACKET_SIZE - self.buf_index);
-            self.buf[self.buf_index..].copy_from_slice(begin);
+            let (head, tail) = data.split_at(PACKET_SIZE - self.buf_index);
+            self.buf[self.buf_index..].copy_from_slice(head);
             self.buf_index = PACKET_SIZE;
-            Filled::Full(end)
+            Some(tail)
         }
     }
 
+    #[inline]
     pub fn set_to(&mut self, data: &[u8]) {
         self.buf_index = data.len();
         self.buf[..data.len()].copy_from_slice(data);
@@ -75,7 +74,7 @@ mod tests {
         let mut packet: HashPacket = Default::default();
         for i in 0..31 {
             assert_eq!(&vec![0; i as usize][..], packet.as_slice());
-            if let Filled::Full(_) = packet.fill(&[0]) {
+            if let Some(_) = packet.fill(&[0]) {
                 assert!(false);
             }
 
@@ -87,7 +86,7 @@ mod tests {
     #[test]
     fn test_hash_cusp_full_packet() {
         let mut packet: HashPacket = Default::default();
-        assert_eq!(Filled::Full(&[]), packet.fill(&[0; 32]));
+        assert_eq!(Some(&[][..]), packet.fill(&[0; 32]));
         assert_eq!(32, packet.len());
     }
 
