@@ -254,7 +254,7 @@ impl AvxHash {
     #[target_feature(enable = "avx2")]
     unsafe fn append(&mut self, data: &[u8]) {
         if let Some(tail) = self.buffer.fill(data) {
-            self.update(Self::data_to_lanes(self.buffer.as_slice()));
+            self.update(Self::data_to_lanes(self.buffer.inner()));
             let mut chunks = tail.chunks_exact(PACKET_SIZE);
             for chunk in chunks.by_ref() {
                 self.update(Self::data_to_lanes(chunk));
