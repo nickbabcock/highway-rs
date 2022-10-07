@@ -174,7 +174,7 @@ impl WasmHash {
     fn load_multiple_of_four(bytes: &[u8], size: u64) -> V2x64U {
         let mut data = bytes;
         let mut mask4 = V2x64U::new(0, 0xFFFF_FFFF);
-        let mut ret = if size & 8 != 0 {
+        let mut ret = if bytes.len() >= 8 {
             mask4 = V2x64U::from(_mm_slli_si128_8(mask4.0));
             data = &bytes[8..];
             let lo = u64::from_le_bytes(take::<8>(bytes));
@@ -184,7 +184,7 @@ impl WasmHash {
         };
 
         if size & 4 != 0 {
-            let last4 = u32::from_le_bytes([data[0], data[1], data[2], data[3]]);
+            let last4 = u32::from_le_bytes(take::<4>(data));
             let broadcast = V2x64U::from(wasm32::u32x4(last4, last4, last4, last4));
             ret |= broadcast & mask4;
         }
@@ -195,6 +195,11 @@ impl WasmHash {
     fn remainder(bytes: &[u8]) -> (V2x64U, V2x64U) {
         let size_mod32 = bytes.len();
         let size_mod4 = size_mod32 & 3;
+        if bytes.len() > 32 {
+            debug_assert!(false, "remainder bytes must be less than 32");
+            return (V2x64U::zeroed(), V2x64U::zeroed());
+        }
+
         if size_mod32 & 16 != 0 {
             let packetLL = u64::from_le_bytes(take::<8>(bytes));
             let packetLH = u64::from_le_bytes(take::<8>(&bytes[8..]));
@@ -255,7 +260,7 @@ impl WasmHash {
 
     fn append(&mut self, data: &[u8]) {
         if let Some(tail) = self.buffer.fill(data) {
-            self.update(Self::data_to_lanes(self.buffer.as_slice()));
+            self.update(Self::data_to_lanes(self.buffer.inner()));
             let mut chunks = tail.chunks_exact(PACKET_SIZE);
             for chunk in chunks.by_ref() {
                 self.update(Self::data_to_lanes(chunk));

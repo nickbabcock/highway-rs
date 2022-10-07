@@ -146,11 +146,18 @@ impl PortableHash {
     }
 
     fn update(&mut self, lanes: [u64; 4]) {
-        for (i, lane) in lanes.iter().enumerate() {
-            self.v1[i] = self.v1[i].wrapping_add(self.mul0[i].wrapping_add(*lane));
-            self.mul0[i] ^= (self.v1[i] & 0xffff_ffff).wrapping_mul(self.v0[i] >> 32);
-            self.v0[i] = self.v0[i].wrapping_add(self.mul1[i]);
-            self.mul1[i] ^= (self.v0[i] & 0xffff_ffff).wrapping_mul(self.v1[i] >> 32);
+        let muxed = lanes
+            .iter()
+            .zip(self.v1.iter_mut())
+            .zip(self.mul0.iter_mut())
+            .zip(self.v0.iter_mut())
+            .zip(self.mul1.iter_mut());
+
+        for ((((lane, v1), mul0), v0), mul1) in muxed {
+            *v1 = (*v1).wrapping_add((*mul0).wrapping_add(*lane));
+            *mul0 ^= (*v1 & 0xffff_ffff).wrapping_mul(*v0 >> 32);
+            *v0 = (*v0).wrapping_add(*mul1);
+            *mul1 ^= (*v0 & 0xffff_ffff).wrapping_mul(*v1 >> 32);
         }
 
         PortableHash::zipper_merge_and_add(self.v1[1], self.v1[0], &mut self.v0, 1, 0);
@@ -205,16 +212,25 @@ impl PortableHash {
     }
 
     fn remainder(bytes: &[u8]) -> [u8; 32] {
+        let mut packet: [u8; 32] = [0u8; 32];
+        if bytes.len() > packet.len() {
+            debug_assert!(false, "remainder bytes must be less than 32");
+            return packet;
+        }
+
         let size_mod4 = bytes.len() & 3;
         let remainder_jump = bytes.len() & !3;
         let remainder = &bytes[remainder_jump..];
         let size = bytes.len() as u64;
-        let mut packet: [u8; 32] = Default::default();
 
         packet[..remainder_jump].clone_from_slice(&bytes[..remainder_jump]);
         if size & 16 != 0 {
-            for i in 0..4 {
-                packet[28 + i] = bytes[remainder_jump + i + size_mod4 - 4];
+            let muxed = packet[28..]
+                .iter_mut()
+                .zip(&bytes[remainder_jump + size_mod4 - 4..]);
+
+            for (p, b) in muxed {
+                *p = *b;
             }
         } else if size_mod4 != 0 {
             packet[16] = remainder[0];
@@ -234,7 +250,7 @@ impl PortableHash {
 
     fn append(&mut self, data: &[u8]) {
         if let Some(tail) = self.buffer.fill(data) {
-            self.update(Self::data_to_lanes(self.buffer.as_slice()));
+            self.update(Self::data_to_lanes(self.buffer.inner()));
             let mut chunks = tail.chunks_exact(PACKET_SIZE);
             for chunk in chunks.by_ref() {
                 self.update(Self::data_to_lanes(chunk));

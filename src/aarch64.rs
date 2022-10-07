@@ -176,7 +176,7 @@ impl NeonHash {
     unsafe fn load_multiple_of_four(bytes: &[u8], size: u64) -> V2x64U {
         let mut data = bytes;
         let mut mask4 = V2x64U::new(0, 0xFFFF_FFFF);
-        let mut ret = if size & 8 != 0 {
+        let mut ret = if bytes.len() >= 8 {
             mask4 = V2x64U::from(_mm_slli_si128_8(mask4.0));
             data = &bytes[8..];
             let lo = u64::from_le_bytes(take::<8>(bytes));
@@ -186,7 +186,7 @@ impl NeonHash {
         };
 
         if size & 4 != 0 {
-            let last4 = u32::from_le_bytes([data[0], data[1], data[2], data[3]]);
+            let last4 = u32::from_le_bytes(take::<4>(data));
             let broadcast = V2x64U::from(vdupq_n_u32(last4));
             ret |= broadcast & mask4;
         }
@@ -249,7 +249,7 @@ impl NeonHash {
 
     unsafe fn append(&mut self, data: &[u8]) {
         if let Some(tail) = self.buffer.fill(data) {
-            self.update(Self::data_to_lanes(self.buffer.as_slice()));
+            self.update(Self::data_to_lanes(self.buffer.inner()));
             let mut chunks = tail.chunks_exact(PACKET_SIZE);
             for chunk in chunks.by_ref() {
                 self.update(Self::data_to_lanes(chunk));

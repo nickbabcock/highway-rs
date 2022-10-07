@@ -204,7 +204,7 @@ impl SseHash {
     unsafe fn load_multiple_of_four(bytes: &[u8], size: u64) -> V2x64U {
         let mut data = bytes;
         let mut mask4 = V2x64U::from(_mm_cvtsi64_si128(0xFFFF_FFFF));
-        let mut ret = if size & 8 != 0 {
+        let mut ret = if bytes.len() >= 8 {
             mask4 = V2x64U::from(_mm_slli_si128(mask4.0, 8));
             data = &bytes[8..];
             V2x64U::from(_mm_loadl_epi64(bytes.as_ptr().cast::<__m128i>()))
@@ -281,7 +281,7 @@ impl SseHash {
     #[target_feature(enable = "sse4.1")]
     unsafe fn append(&mut self, data: &[u8]) {
         if let Some(tail) = self.buffer.fill(data) {
-            self.update(Self::data_to_lanes(self.buffer.as_slice()));
+            self.update(Self::data_to_lanes(self.buffer.inner()));
             let mut chunks = tail.chunks_exact(PACKET_SIZE);
             for chunk in chunks.by_ref() {
                 self.update(Self::data_to_lanes(chunk));
