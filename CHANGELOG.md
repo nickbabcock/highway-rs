@@ -1,3 +1,9 @@
+## v0.8.1 - 2022-10-11
+
+- Annotate hashing constructors with `#[must_use]`
+- A small performance increase, mainly for the portable implementation (other hashers may benefited as well), by eliminating all emitted panics
+- Minor pedantic clippy lints applied
+
 ## v0.8.0 - 2022-02-28
 
 - The `HighwayBuilder` type has been removed in favor of the former alias `HighwayHasher`
