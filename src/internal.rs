@@ -42,7 +42,7 @@ impl HashPacket {
     pub fn as_slice(&self) -> &[u8] {
         if self.buf_index > self.buf.len() {
             debug_assert!(false, "buf index can't exceed buf length");
-            return &self.buf;
+            &self.buf
         } else {
             &self.buf[..self.buf_index]
         }
