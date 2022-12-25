@@ -16,7 +16,7 @@ default = ["std"]
 std = []
 
 [dev-dependencies]
-criterion = "0.3.0"
+criterion = "0.4.0"
 quickcheck = "1"
 quickcheck_macros = "1"
 doc-comment = "0.3"
