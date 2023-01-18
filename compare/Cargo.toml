@@ -13,7 +13,7 @@ publish = false
 members = ["."]
 
 [dev-dependencies]
-criterion = "0.4"
+criterion = "< 0.4"
 sha2 = "0.10"
 fnv = "1"
 farmhash = "1"
