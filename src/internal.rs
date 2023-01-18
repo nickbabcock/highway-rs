@@ -40,12 +40,8 @@ impl HashPacket {
 
     #[inline]
     pub fn as_slice(&self) -> &[u8] {
-        if self.buf_index > self.buf.len() {
-            debug_assert!(false, "buf index can't exceed buf length");
-            &self.buf
-        } else {
-            &self.buf[..self.buf_index]
-        }
+        debug_assert!(self.buf_index <= self.buf.len(), "buf index too long");
+        self.buf.get(..self.buf_index).unwrap_or(&self.buf)
     }
 
     #[inline]
@@ -55,48 +51,16 @@ impl HashPacket {
 
     #[inline]
     pub fn fill<'a>(&mut self, data: &'a [u8]) -> Option<&'a [u8]> {
-        // This function is a lot longer than it should be as it's the only way
-        // I could get 100% safe code that the compiler knew wouldn't panic.
-
-        let filled_len = PACKET_SIZE - self.buf_index;
-        if data.len() >= filled_len {
-            let (head, tail) = data.split_at(PACKET_SIZE - self.buf_index);
-
-            let buf_tail = match self.buf.get_mut(self.buf_index..) {
-                Some(x) => x,
-                None => {
-                    debug_assert!(false, "buf index should never exceed buffer");
-                    return None;
-                }
-            };
-
-            self.buf_index = PACKET_SIZE;
-            if buf_tail.len() == head.len() {
-                buf_tail.copy_from_slice(head);
-                Some(tail)
-            } else {
-                debug_assert!(false, "expected tail of buffer to equal head of data");
-                None
-            }
+        let dest = self.buf.get_mut(self.buf_index..).unwrap_or_default();
+        if dest.len() > data.len() {
+            dest[..data.len()].copy_from_slice(data);
+            self.buf_index += data.len();
+            None
         } else {
-            let new_ind = self.buf_index + data.len();
-
-            let buf_tail = match self.buf.get_mut(self.buf_index..new_ind) {
-                Some(x) => x,
-                None => {
-                    debug_assert!(false, "buf index should never exceed buffer");
-                    return None;
-                }
-            };
-
-            self.buf_index = new_ind;
-            if buf_tail.len() == data.len() {
-                buf_tail.copy_from_slice(data);
-                None
-            } else {
-                debug_assert!(false, "expected tail of buffer to equal head of data");
-                None
-            }
+            let (head, tail) = data.split_at(dest.len());
+            dest.copy_from_slice(head);
+            self.buf_index = PACKET_SIZE;
+            Some(tail)
         }
     }
 
