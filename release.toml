@@ -1,2 +1,2 @@
 tag-message = "Release {{version}}"
-post-release-commit-message = "Bump to {{next_version}}"
+pre-release-commit-message = "Release {{version}}"
