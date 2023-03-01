@@ -1,3 +1,10 @@
+## v1.0.0 - 2023-02-28
+
+v1.0 is a re-release of v0.8.1 with the following changes that should have no observable effect
+
+- Update to 2021 edition
+- Simplify buffer filling logic
+
 ## v0.8.1 - 2022-10-11
 
 - Annotate hashing constructors with `#[must_use]`
