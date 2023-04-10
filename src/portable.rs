@@ -146,18 +146,24 @@ impl PortableHash {
     }
 
     fn update(&mut self, lanes: [u64; 4]) {
-        let muxed = lanes
-            .iter()
-            .zip(self.v1.iter_mut())
-            .zip(self.mul0.iter_mut())
-            .zip(self.v0.iter_mut())
-            .zip(self.mul1.iter_mut());
+        for (i, lane) in lanes.iter().enumerate() {
+            self.v1[i] = self.v1[i].wrapping_add(*lane);
+        }
 
-        for ((((lane, v1), mul0), v0), mul1) in muxed {
-            *v1 = (*v1).wrapping_add((*mul0).wrapping_add(*lane));
-            *mul0 ^= (*v1 & 0xffff_ffff).wrapping_mul(*v0 >> 32);
-            *v0 = (*v0).wrapping_add(*mul1);
-            *mul1 ^= (*v0 & 0xffff_ffff).wrapping_mul(*v1 >> 32);
+        for i in 0..4 {
+            self.v1[i] = self.v1[i].wrapping_add(self.mul0[i]);
+        }
+
+        for i in 0..4 {
+            self.mul0[i] ^= (self.v1[i] & 0xffff_ffff).wrapping_mul(self.v0[i] >> 32);
+        }
+
+        for i in 0..4 {
+            self.v0[i] = self.v0[i].wrapping_add(self.mul1[i]);
+        }
+
+        for i in 0..4 {
+            self.mul1[i] ^= (self.v0[i] & 0xffff_ffff).wrapping_mul(self.v1[i] >> 32);
         }
 
         PortableHash::zipper_merge_and_add(self.v1[1], self.v1[0], &mut self.v0, 1, 0);
@@ -188,8 +194,8 @@ impl PortableHash {
 
     fn data_to_lanes(d: &[u8]) -> [u64; 4] {
         let mut result = [0u64; 4];
-        for (i, x) in d.chunks_exact(8).take(result.len()).enumerate() {
-            result[i] = u64::from_le_bytes([x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7]]);
+        for (x, dest) in d.chunks_exact(8).zip(result.iter_mut()) {
+            *dest = u64::from_le_bytes([x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7]])
         }
         result
     }
