@@ -1,8 +1,14 @@
 #![no_main]
 
-use highway::{AvxHash, HighwayHash, HighwayHasher, Key, PortableHash, SseHash};
+use highway::{HighwayHash, HighwayHasher, Key, PortableHash};
 use libc::size_t;
 use libfuzzer_sys::arbitrary;
+
+#[cfg(target_arch = "x86_64")]
+use highway::{AvxHash, SseHash};
+
+#[cfg(target_arch = "aarch64")]
+use highway::NeonHash;
 
 extern "C" {
     fn HighwayHash64(data: *const u8, size: size_t, key: *const u64) -> u64;
@@ -35,28 +41,43 @@ libfuzzer_sys::fuzz_target!(|input: FuzzKey| {
         assert_eq!(builder128, portable128);
         assert_eq!(builder256, portable256);
 
-        if let Some(hash) = AvxHash::new(key).map(|x| x.hash64(data)) {
-            assert_eq!(hash, portable64)
+        #[cfg(target_arch = "x86_64")]
+        {
+            if let Some(hash) = AvxHash::new(key).map(|x| x.hash64(data)) {
+                assert_eq!(hash, portable64)
+            }
+
+            if let Some(hash) = AvxHash::new(key).map(|x| x.hash128(data)) {
+                assert_eq!(hash, portable128)
+            }
+
+            if let Some(hash) = AvxHash::new(key).map(|x| x.hash256(data)) {
+                assert_eq!(hash, portable256)
+            }
+
+            if let Some(hash) = SseHash::new(key).map(|x| x.hash64(data)) {
+                assert_eq!(hash, portable64)
+            }
+
+            if let Some(hash) = SseHash::new(key).map(|x| x.hash128(data)) {
+                assert_eq!(hash, portable128)
+            }
+
+            if let Some(hash) = SseHash::new(key).map(|x| x.hash256(data)) {
+                assert_eq!(hash, portable256)
+            }
         }
 
-        if let Some(hash) = AvxHash::new(key).map(|x| x.hash128(data)) {
-            assert_eq!(hash, portable128)
-        }
+        #[cfg(target_arch = "aarch64")]
+        {
+            let h = unsafe { NeonHash::force_new(key) };
+            assert_eq!(h.hash64(data), portable64);
 
-        if let Some(hash) = AvxHash::new(key).map(|x| x.hash256(data)) {
-            assert_eq!(hash, portable256)
-        }
+            let h = unsafe { NeonHash::force_new(key) };
+            assert_eq!(h.hash128(data), portable128);
 
-        if let Some(hash) = SseHash::new(key).map(|x| x.hash64(data)) {
-            assert_eq!(hash, portable64)
-        }
-
-        if let Some(hash) = SseHash::new(key).map(|x| x.hash128(data)) {
-            assert_eq!(hash, portable128)
-        }
-
-        if let Some(hash) = SseHash::new(key).map(|x| x.hash256(data)) {
-            assert_eq!(hash, portable256)
+            let h = unsafe { NeonHash::force_new(key) };
+            assert_eq!(h.hash256(data), portable256);
         }
     }
 
