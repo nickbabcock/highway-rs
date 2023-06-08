@@ -7,6 +7,7 @@ use core::ops::{
 pub struct V4x64U(pub __m256i);
 
 impl Default for V4x64U {
+    #[inline]
     fn default() -> Self {
         unsafe { V4x64U::zeroed() }
     }
@@ -25,11 +26,13 @@ macro_rules! _mm_shuffle {
 }
 
 impl V4x64U {
+    #[inline]
     #[target_feature(enable = "avx2")]
-    unsafe fn zeroed() -> Self {
+    pub unsafe fn zeroed() -> Self {
         V4x64U(_mm256_setzero_si256())
     }
 
+    #[inline]
     #[target_feature(enable = "avx2")]
     pub unsafe fn new(highest: u64, high: u64, low: u64, lowest: u64) -> Self {
         V4x64U(_mm256_set_epi64x(
@@ -47,51 +50,61 @@ impl V4x64U {
         arr
     }
 
+    #[inline]
     #[target_feature(enable = "avx2")]
     pub unsafe fn rotate_by_32(&self) -> Self {
         V4x64U(_mm256_shuffle_epi32(self.0, _mm_shuffle!(2, 3, 0, 1)))
     }
 
+    #[inline]
     #[target_feature(enable = "avx2")]
     pub unsafe fn shr_by_32(&self) -> Self {
         V4x64U(_mm256_srli_epi64(self.0, 32))
     }
 
+    #[inline]
     #[target_feature(enable = "avx2")]
     pub unsafe fn shuffle(&self, mask: &V4x64U) -> Self {
         V4x64U::from(_mm256_shuffle_epi8(self.0, mask.0))
     }
 
+    #[inline]
     #[target_feature(enable = "avx2")]
     pub unsafe fn mul_low32(&self, x: &V4x64U) -> Self {
         V4x64U::from(_mm256_mul_epu32(self.0, x.0))
     }
 
+    #[inline]
     #[target_feature(enable = "avx2")]
     pub unsafe fn and_not(&self, neg_mask: &V4x64U) -> Self {
         V4x64U::from(_mm256_andnot_si256(neg_mask.0, self.0))
     }
 
+    #[inline]
     #[target_feature(enable = "avx2")]
     unsafe fn add_assign(&mut self, other: Self) {
         self.0 = _mm256_add_epi64(self.0, other.0);
     }
 
+    #[inline]
     #[target_feature(enable = "avx2")]
     unsafe fn sub_assign(&mut self, other: Self) {
         self.0 = _mm256_sub_epi64(self.0, other.0);
     }
 
+    #[inline]
     #[target_feature(enable = "avx2")]
     unsafe fn bitand_assign(&mut self, other: Self) {
         self.0 = _mm256_and_si256(self.0, other.0);
     }
 
+    #[inline]
     #[target_feature(enable = "avx2")]
     unsafe fn bitor_assign(&mut self, other: Self) {
         self.0 = _mm256_or_si256(self.0, other.0);
     }
 
+    #[inline]
     #[target_feature(enable = "avx2")]
     unsafe fn bitxor_assign(&mut self, other: Self) {
         self.0 = _mm256_xor_si256(self.0, other.0);
@@ -99,24 +112,28 @@ impl V4x64U {
 }
 
 impl From<__m256i> for V4x64U {
+    #[inline]
     fn from(v: __m256i) -> Self {
         V4x64U(v)
     }
 }
 
 impl AddAssign for V4x64U {
+    #[inline]
     fn add_assign(&mut self, other: Self) {
         unsafe { self.add_assign(other) }
     }
 }
 
 impl SubAssign for V4x64U {
+    #[inline]
     fn sub_assign(&mut self, other: Self) {
         unsafe { self.sub_assign(other) }
     }
 }
 
 impl BitAndAssign for V4x64U {
+    #[inline]
     fn bitand_assign(&mut self, other: Self) {
         unsafe { self.bitand_assign(other) }
     }
@@ -124,6 +141,7 @@ impl BitAndAssign for V4x64U {
 
 impl BitAnd for V4x64U {
     type Output = Self;
+    #[inline]
     fn bitand(self, other: Self) -> Self {
         let mut new = V4x64U(self.0);
         new &= other;
@@ -132,6 +150,7 @@ impl BitAnd for V4x64U {
 }
 
 impl BitOrAssign for V4x64U {
+    #[inline]
     fn bitor_assign(&mut self, other: Self) {
         unsafe { self.bitor_assign(other) }
     }
@@ -139,6 +158,7 @@ impl BitOrAssign for V4x64U {
 
 impl BitOr for V4x64U {
     type Output = Self;
+    #[inline]
     fn bitor(self, other: Self) -> Self {
         let mut new = V4x64U(self.0);
         new |= other;
@@ -147,6 +167,7 @@ impl BitOr for V4x64U {
 }
 
 impl BitXorAssign for V4x64U {
+    #[inline]
     fn bitxor_assign(&mut self, other: Self) {
         unsafe { self.bitxor_assign(other) }
     }
@@ -155,6 +176,7 @@ impl BitXorAssign for V4x64U {
 impl Add for V4x64U {
     type Output = Self;
 
+    #[inline]
     fn add(self, other: Self) -> Self {
         let mut new = V4x64U(self.0);
         new += other;
@@ -165,6 +187,7 @@ impl Add for V4x64U {
 impl BitXor for V4x64U {
     type Output = Self;
 
+    #[inline]
     fn bitxor(self, other: Self) -> Self {
         let mut new = V4x64U(self.0);
         new ^= other;
