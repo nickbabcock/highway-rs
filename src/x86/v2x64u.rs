@@ -8,6 +8,7 @@ use core::ops::{
 pub struct V2x64U(pub __m128i);
 
 impl Default for V2x64U {
+    #[inline]
     fn default() -> Self {
         unsafe { V2x64U::zeroed() }
     }
@@ -20,11 +21,13 @@ impl core::fmt::Debug for V2x64U {
 }
 
 impl V2x64U {
+    #[inline]
     #[target_feature(enable = "sse4.1")]
     unsafe fn zeroed() -> Self {
         V2x64U(_mm_setzero_si128())
     }
 
+    #[inline]
     #[target_feature(enable = "sse4.1")]
     pub unsafe fn new(hi: u64, low: u64) -> Self {
         V2x64U(_mm_set_epi64x(hi as i64, low as i64))
@@ -37,51 +40,61 @@ impl V2x64U {
         arr
     }
 
+    #[inline]
     #[target_feature(enable = "sse4.1")]
     pub unsafe fn rotate_by_32(&self) -> Self {
         V2x64U(_mm_shuffle_epi32(self.0, _mm_shuffle!(2, 3, 0, 1)))
     }
 
+    #[inline]
     #[target_feature(enable = "sse4.1")]
     pub unsafe fn shuffle(&self, mask: &V2x64U) -> Self {
         V2x64U::from(_mm_shuffle_epi8(self.0, mask.0))
     }
 
+    #[inline]
     #[target_feature(enable = "sse4.1")]
     pub unsafe fn and_not(&self, neg_mask: &V2x64U) -> Self {
         V2x64U::from(_mm_andnot_si128(neg_mask.0, self.0))
     }
 
+    #[inline]
     #[target_feature(enable = "sse4.1")]
     unsafe fn add_assign(&mut self, other: Self) {
         self.0 = _mm_add_epi64(self.0, other.0);
     }
 
+    #[inline]
     #[target_feature(enable = "sse4.1")]
     unsafe fn sub_assign(&mut self, other: Self) {
         self.0 = _mm_sub_epi64(self.0, other.0);
     }
 
+    #[inline]
     #[target_feature(enable = "sse4.1")]
     unsafe fn bitand_assign(&mut self, other: Self) {
         self.0 = _mm_and_si128(self.0, other.0);
     }
 
+    #[inline]
     #[target_feature(enable = "sse4.1")]
     unsafe fn bitor_assign(&mut self, other: Self) {
         self.0 = _mm_or_si128(self.0, other.0);
     }
 
+    #[inline]
     #[target_feature(enable = "sse4.1")]
     unsafe fn bitxor_assign(&mut self, other: Self) {
         self.0 = _mm_xor_si128(self.0, other.0);
     }
 
+    #[inline]
     #[target_feature(enable = "sse4.1")]
     unsafe fn shl_assign(&mut self, count: __m128i) {
         self.0 = _mm_sll_epi64(self.0, count);
     }
 
+    #[inline]
     #[target_feature(enable = "sse4.1")]
     unsafe fn shr_assign(&mut self, count: __m128i) {
         self.0 = _mm_srl_epi64(self.0, count);
@@ -89,24 +102,28 @@ impl V2x64U {
 }
 
 impl From<__m128i> for V2x64U {
+    #[inline]
     fn from(v: __m128i) -> Self {
         V2x64U(v)
     }
 }
 
 impl AddAssign for V2x64U {
+    #[inline]
     fn add_assign(&mut self, other: Self) {
         unsafe { self.add_assign(other) }
     }
 }
 
 impl SubAssign for V2x64U {
+    #[inline]
     fn sub_assign(&mut self, other: Self) {
         unsafe { self.sub_assign(other) }
     }
 }
 
 impl BitAndAssign for V2x64U {
+    #[inline]
     fn bitand_assign(&mut self, other: Self) {
         unsafe { self.bitand_assign(other) }
     }
@@ -114,6 +131,7 @@ impl BitAndAssign for V2x64U {
 
 impl BitAnd for V2x64U {
     type Output = Self;
+    #[inline]
     fn bitand(self, other: Self) -> Self {
         let mut new = V2x64U(self.0);
         new &= other;
@@ -122,6 +140,7 @@ impl BitAnd for V2x64U {
 }
 
 impl BitOrAssign for V2x64U {
+    #[inline]
     fn bitor_assign(&mut self, other: Self) {
         unsafe { self.bitor_assign(other) }
     }
@@ -129,6 +148,7 @@ impl BitOrAssign for V2x64U {
 
 impl BitOr for V2x64U {
     type Output = Self;
+    #[inline]
     fn bitor(self, other: Self) -> Self {
         let mut new = V2x64U(self.0);
         new |= other;
@@ -137,6 +157,7 @@ impl BitOr for V2x64U {
 }
 
 impl BitXorAssign for V2x64U {
+    #[inline]
     fn bitxor_assign(&mut self, other: Self) {
         unsafe { self.bitxor_assign(other) }
     }
@@ -145,6 +166,7 @@ impl BitXorAssign for V2x64U {
 impl Add for V2x64U {
     type Output = Self;
 
+    #[inline]
     fn add(self, other: Self) -> Self {
         let mut new = V2x64U(self.0);
         new += other;
@@ -155,6 +177,7 @@ impl Add for V2x64U {
 impl BitXor for V2x64U {
     type Output = Self;
 
+    #[inline]
     fn bitxor(self, other: Self) -> Self {
         let mut new = V2x64U(self.0);
         new ^= other;
@@ -163,12 +186,14 @@ impl BitXor for V2x64U {
 }
 
 impl ShlAssign<__m128i> for V2x64U {
+    #[inline]
     fn shl_assign(&mut self, count: __m128i) {
         unsafe { self.shl_assign(count) }
     }
 }
 
 impl ShrAssign<__m128i> for V2x64U {
+    #[inline]
     fn shr_assign(&mut self, count: __m128i) {
         unsafe { self.shr_assign(count) }
     }

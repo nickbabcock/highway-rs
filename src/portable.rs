@@ -5,27 +5,30 @@ use crate::traits::HighwayHash;
 /// Portable HighwayHash implementation. Will run on any platform Rust will run on.
 #[derive(Debug, Default, Clone)]
 pub struct PortableHash {
-    key: Key,
-    buffer: HashPacket,
     v0: [u64; 4],
     v1: [u64; 4],
     mul0: [u64; 4],
     mul1: [u64; 4],
+    buffer: HashPacket,
 }
 
 impl HighwayHash for PortableHash {
+    #[inline]
     fn append(&mut self, data: &[u8]) {
         self.append(data);
     }
 
+    #[inline]
     fn finalize64(mut self) -> u64 {
         Self::finalize64(&mut self)
     }
 
+    #[inline]
     fn finalize128(mut self) -> [u64; 2] {
         Self::finalize128(&mut self)
     }
 
+    #[inline]
     fn finalize256(mut self) -> [u64; 4] {
         Self::finalize256(&mut self)
     }
@@ -35,31 +38,36 @@ impl PortableHash {
     /// Create a new `PortableHash` from a `Key`
     #[must_use]
     pub fn new(key: Key) -> Self {
-        let mut h = PortableHash {
-            key,
-            ..Default::default()
-        };
-        h.reset();
-        h
-    }
+        let mul0 = [
+            0xdbe6_d5d5_fe4c_ce2f,
+            0xa409_3822_299f_31d0,
+            0x1319_8a2e_0370_7344,
+            0x243f_6a88_85a3_08d3,
+        ];
+        let mul1 = [
+            0x3bd3_9e10_cb0e_f593,
+            0xc0ac_f169_b5f1_8a8c,
+            0xbe54_66cf_34e9_0c6c,
+            0x4528_21e6_38d0_1377,
+        ];
 
-    fn reset(&mut self) {
-        self.mul0[0] = 0xdbe6_d5d5_fe4c_ce2f;
-        self.mul0[1] = 0xa409_3822_299f_31d0;
-        self.mul0[2] = 0x1319_8a2e_0370_7344;
-        self.mul0[3] = 0x243f_6a88_85a3_08d3;
-        self.mul1[0] = 0x3bd3_9e10_cb0e_f593;
-        self.mul1[1] = 0xc0ac_f169_b5f1_8a8c;
-        self.mul1[2] = 0xbe54_66cf_34e9_0c6c;
-        self.mul1[3] = 0x4528_21e6_38d0_1377;
-        self.v0[0] = self.mul0[0] ^ self.key[0];
-        self.v0[1] = self.mul0[1] ^ self.key[1];
-        self.v0[2] = self.mul0[2] ^ self.key[2];
-        self.v0[3] = self.mul0[3] ^ self.key[3];
-        self.v1[0] = self.mul1[0] ^ ((self.key[0] >> 32) | (self.key[0] << 32));
-        self.v1[1] = self.mul1[1] ^ ((self.key[1] >> 32) | (self.key[1] << 32));
-        self.v1[2] = self.mul1[2] ^ ((self.key[2] >> 32) | (self.key[2] << 32));
-        self.v1[3] = self.mul1[3] ^ ((self.key[3] >> 32) | (self.key[3] << 32));
+        PortableHash {
+            v0: [
+                mul0[0] ^ key[0],
+                mul0[1] ^ key[1],
+                mul0[2] ^ key[2],
+                mul0[3] ^ key[3],
+            ],
+            v1: [
+                mul1[0] ^ ((key[0] >> 32) | (key[0] << 32)),
+                mul1[1] ^ ((key[1] >> 32) | (key[1] << 32)),
+                mul1[2] ^ ((key[2] >> 32) | (key[2] << 32)),
+                mul1[3] ^ ((key[3] >> 32) | (key[3] << 32)),
+            ],
+            mul0,
+            mul1,
+            buffer: HashPacket::default(),
+        }
     }
 
     fn finalize64(&mut self) -> u64 {
@@ -255,7 +263,13 @@ impl PortableHash {
     }
 
     fn append(&mut self, data: &[u8]) {
-        if let Some(tail) = self.buffer.fill(data) {
+        if self.buffer.is_empty() {
+            let mut chunks = data.chunks_exact(PACKET_SIZE);
+            for chunk in chunks.by_ref() {
+                self.update(Self::data_to_lanes(chunk));
+            }
+            self.buffer.set_to(chunks.remainder());
+        } else if let Some(tail) = self.buffer.fill(data) {
             self.update(Self::data_to_lanes(self.buffer.inner()));
             let mut chunks = tail.chunks_exact(PACKET_SIZE);
             for chunk in chunks.by_ref() {

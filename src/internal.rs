@@ -67,7 +67,9 @@ impl HashPacket {
     #[inline]
     pub fn set_to(&mut self, data: &[u8]) {
         self.buf_index = data.len();
-        self.buf[..data.len()].copy_from_slice(data);
+        if !data.is_empty() {
+            self.buf[..data.len()].copy_from_slice(data);
+        }
     }
 }
 

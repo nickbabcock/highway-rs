@@ -9,29 +9,32 @@ use core::arch::x86_64::*;
 /// level.
 #[derive(Debug, Default, Clone)]
 pub struct AvxHash {
-    key: Key,
-    buffer: HashPacket,
     v0: V4x64U,
     v1: V4x64U,
     mul0: V4x64U,
     mul1: V4x64U,
+    buffer: HashPacket,
 }
 
 impl HighwayHash for AvxHash {
+    #[inline]
     fn append(&mut self, data: &[u8]) {
         unsafe {
             self.append(data);
         }
     }
 
+    #[inline]
     fn finalize64(mut self) -> u64 {
         unsafe { Self::finalize64(&mut self) }
     }
 
+    #[inline]
     fn finalize128(mut self) -> [u64; 2] {
         unsafe { Self::finalize128(&mut self) }
     }
 
+    #[inline]
     fn finalize256(mut self) -> [u64; 4] {
         unsafe { Self::finalize256(&mut self) }
     }
@@ -46,13 +49,30 @@ impl AvxHash {
     /// control over the deployment environment and have either benchmarked that the runtime
     /// check is significant or are unable to check for avx2 capabilities
     #[must_use]
+    #[target_feature(enable = "avx2")]
     pub unsafe fn force_new(key: Key) -> Self {
-        let mut h = AvxHash {
-            key,
-            ..Default::default()
-        };
-        h.reset();
-        h
+        let mul0 = V4x64U::new(
+            0x243f_6a88_85a3_08d3,
+            0x1319_8a2e_0370_7344,
+            0xa409_3822_299f_31d0,
+            0xdbe6_d5d5_fe4c_ce2f,
+        );
+        let mul1 = V4x64U::new(
+            0x4528_21e6_38d0_1377,
+            0xbe54_66cf_34e9_0c6c,
+            0xc0ac_f169_b5f1_8a8c,
+            0x3bd3_9e10_cb0e_f593,
+        );
+
+        let key = V4x64U::from(_mm256_load_si256(key.0.as_ptr().cast::<__m256i>()));
+
+        AvxHash {
+            v0: key ^ mul0,
+            v1: key.rotate_by_32() ^ mul1,
+            mul0,
+            mul1,
+            buffer: HashPacket::default(),
+        }
     }
 
     /// Creates a new `AvxHash` if the avx2 feature is detected.
@@ -130,28 +150,6 @@ impl AvxHash {
         let mut result: [u64; 4] = [0; 4];
         _mm256_storeu_si256(result.as_mut_ptr().cast::<__m256i>(), hash.0);
         result
-    }
-
-    #[target_feature(enable = "avx2")]
-    unsafe fn reset(&mut self) {
-        let init0 = V4x64U::new(
-            0x243f_6a88_85a3_08d3,
-            0x1319_8a2e_0370_7344,
-            0xa409_3822_299f_31d0,
-            0xdbe6_d5d5_fe4c_ce2f,
-        );
-        let init1 = V4x64U::new(
-            0x4528_21e6_38d0_1377,
-            0xbe54_66cf_34e9_0c6c,
-            0xc0ac_f169_b5f1_8a8c,
-            0x3bd3_9e10_cb0e_f593,
-        );
-
-        let key = V4x64U::from(_mm256_load_si256(self.key.0.as_ptr().cast::<__m256i>()));
-        self.v0 = key ^ init0;
-        self.v1 = key.rotate_by_32() ^ init1;
-        self.mul0 = init0;
-        self.mul1 = init1;
     }
 
     #[inline]
@@ -243,7 +241,7 @@ impl AvxHash {
         let upper_8bytes = V4x64U::from(_mm256_slli_si256(ones.0, 8));
         let shifted2 = shifted1_unmasked + shifted1_unmasked;
         let upper_bit_of_128 = V4x64U::from(_mm256_slli_epi64(upper_8bytes.0, 63));
-        let zero = V4x64U::default();
+        let zero = V4x64U::from(_mm256_setzero_si256());
         let new_low_bits2 = V4x64U::from(_mm256_unpacklo_epi64(zero.0, top_bits2.0));
         let shifted1 = shifted1_unmasked.and_not(&upper_bit_of_128);
         let new_low_bits1 = V4x64U::from(_mm256_unpacklo_epi64(zero.0, top_bits1.0));
@@ -253,7 +251,13 @@ impl AvxHash {
 
     #[target_feature(enable = "avx2")]
     unsafe fn append(&mut self, data: &[u8]) {
-        if let Some(tail) = self.buffer.fill(data) {
+        if self.buffer.is_empty() {
+            let mut chunks = data.chunks_exact(PACKET_SIZE);
+            for chunk in chunks.by_ref() {
+                self.update(Self::data_to_lanes(chunk));
+            }
+            self.buffer.set_to(chunks.remainder());
+        } else if let Some(tail) = self.buffer.fill(data) {
             self.update(Self::data_to_lanes(self.buffer.inner()));
             let mut chunks = tail.chunks_exact(PACKET_SIZE);
             for chunk in chunks.by_ref() {
