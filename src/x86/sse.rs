@@ -126,7 +126,7 @@ impl SseHash {
     }
 
     #[target_feature(enable = "sse4.1")]
-    unsafe fn finalize64(&mut self) -> u64 {
+    pub(crate) unsafe fn finalize64(&mut self) -> u64 {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
@@ -144,7 +144,7 @@ impl SseHash {
     }
 
     #[target_feature(enable = "sse4.1")]
-    unsafe fn finalize128(&mut self) -> [u64; 2] {
+    pub(crate) unsafe fn finalize128(&mut self) -> [u64; 2] {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
@@ -162,7 +162,7 @@ impl SseHash {
     }
 
     #[target_feature(enable = "sse4.1")]
-    unsafe fn finalize256(&mut self) -> [u64; 4] {
+    pub(crate) unsafe fn finalize256(&mut self) -> [u64; 4] {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }

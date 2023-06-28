@@ -70,7 +70,7 @@ impl PortableHash {
         }
     }
 
-    fn finalize64(&mut self) -> u64 {
+    pub(crate) fn finalize64(&mut self) -> u64 {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
@@ -85,7 +85,7 @@ impl PortableHash {
             .wrapping_add(self.mul1[0])
     }
 
-    fn finalize128(&mut self) -> [u64; 2] {
+    pub(crate) fn finalize128(&mut self) -> [u64; 2] {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
@@ -107,7 +107,7 @@ impl PortableHash {
         [low, high]
     }
 
-    fn finalize256(&mut self) -> [u64; 4] {
+    pub(crate) fn finalize256(&mut self) -> [u64; 4] {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }

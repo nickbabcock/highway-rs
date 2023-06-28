@@ -3,21 +3,6 @@ use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Through
 use highway::{AvxHash, SseHash};
 use highway::{HighwayHash, HighwayHasher, Key, PortableHash};
 
-fn builder(c: &mut Criterion) {
-    let mut group = c.benchmark_group("highway-builder");
-
-    for size in [1, 4, 16, 64, 256, 1024, 4096, 16384, 65536].iter() {
-        group.throughput(Throughput::Bytes(*size as u64));
-        group.bench_with_input(BenchmarkId::from_parameter(size), size, |b, size| {
-            let data = vec![0u8; *size];
-            let key = Key([0, 0, 0, 0]);
-            b.iter(|| HighwayHasher::new(key).hash64(&data));
-        });
-    }
-
-    group.finish();
-}
-
 fn bit64_hash(c: &mut Criterion) {
     let parameters = vec![1, 4, 16, 64, 256, 1024, 4096, 16384, 65536];
     let key = Key([0, 0, 0, 0]);
@@ -25,6 +10,11 @@ fn bit64_hash(c: &mut Criterion) {
     let mut group = c.benchmark_group("64bit");
     for i in parameters.iter() {
         group.throughput(Throughput::Bytes(*i as u64));
+        group.bench_with_input(BenchmarkId::new("builder", i), i, |b, param| {
+            let data = vec![0u8; *param];
+            b.iter(|| HighwayHasher::new(key).hash64(&data))
+        });
+
         group.bench_with_input(BenchmarkId::new("portable", i), i, |b, param| {
             let data = vec![0u8; *param];
             b.iter(|| PortableHash::new(key).hash64(&data))
@@ -83,5 +73,5 @@ fn bit256_hash(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, builder, bit64_hash, bit256_hash);
+criterion_group!(benches, bit64_hash, bit256_hash);
 criterion_main!(benches);

@@ -97,7 +97,7 @@ impl WasmHash {
         self.update((low, high));
     }
 
-    fn finalize64(&mut self) -> u64 {
+    pub(crate) fn finalize64(&mut self) -> u64 {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
@@ -113,7 +113,7 @@ impl WasmHash {
         wasm32::u64x2_extract_lane::<1>(hash.0)
     }
 
-    fn finalize128(&mut self) -> [u64; 2] {
+    pub(crate) fn finalize128(&mut self) -> [u64; 2] {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
@@ -131,7 +131,7 @@ impl WasmHash {
         ]
     }
 
-    fn finalize256(&mut self) -> [u64; 4] {
+    pub(crate) fn finalize256(&mut self) -> [u64; 4] {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
