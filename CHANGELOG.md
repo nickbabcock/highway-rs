@@ -1,3 +1,11 @@
+## v1.1.0 - 2023-06-30
+
+This release contains only performance optimizations:
+
+- `PortableHash` throughput increases by 10-15% for all input
+- `HighwayHasher` throughput increases by 20-60% for inputs under 1KB
+- All hashing implementations received size efficiency improvements
+
 ## v1.0.0 - 2023-02-28
 
 v1.0 is a re-release of v0.8.1 with the following changes that should have no observable effect
