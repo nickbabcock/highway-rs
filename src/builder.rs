@@ -33,7 +33,7 @@ union HighwayChoices {
     wasm: ManuallyDrop<WasmHash>,
 }
 
-/// HighwayHash implementation that selects best hash implementation at runtime.
+/// `HighwayHash` implementation that selects best hash implementation at runtime.
 pub struct HighwayHasher {
     tag: u8,
     inner: HighwayChoices,
