@@ -3,7 +3,8 @@ use crate::traits::HighwayHash;
 use core::{default::Default, fmt::Debug, mem::ManuallyDrop};
 
 #[cfg(target_arch = "aarch64")]
-use crate::aarch64::NeonHash;
+use {crate::aarch64::NeonHash, std::arch::is_aarch64_feature_detected};
+
 #[cfg(not(any(
     all(target_family = "wasm", target_feature = "simd128"),
     target_arch = "aarch64"
@@ -172,10 +173,23 @@ impl HighwayHasher {
             // The good news is that it seems reasonable to assume the
             // aarch64 environment is neon capable. If a use case is found
             // where neon is not available, we can patch that in later.
-            let neon = ManuallyDrop::new(unsafe { NeonHash::force_new(key) });
-            HighwayHasher {
-                tag: 3,
-                inner: HighwayChoices { neon },
+            if cfg!(target_feature = "neon") {
+                if is_aarch64_feature_detected!("neon") {
+                    let neon = ManuallyDrop::new(unsafe { NeonHash::force_new(key) });
+                    HighwayHasher {
+                        tag: 3,
+                        inner: HighwayChoices { neon },
+                    }
+                } else {
+                    #[cfg(feature = "std")]
+                    if is_aarch64_feature_detected!("neon") {
+                        let neon = ManuallyDrop::new(unsafe { NeonHash::force_new(key) });
+                        HighwayHasher {
+                            tag: 3,
+                            inner: HighwayChoices { neon },
+                        }
+                    }
+                }
             }
         }
 
