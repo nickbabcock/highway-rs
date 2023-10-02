@@ -176,18 +176,18 @@ impl HighwayHasher {
             if cfg!(target_feature = "neon") {
                 if is_aarch64_feature_detected!("neon") {
                     let neon = ManuallyDrop::new(unsafe { NeonHash::force_new(key) });
-                    HighwayHasher {
+                    return HighwayHasher {
                         tag: 3,
                         inner: HighwayChoices { neon },
-                    }
+                    };
                 } else {
                     #[cfg(feature = "std")]
                     if is_aarch64_feature_detected!("neon") {
                         let neon = ManuallyDrop::new(unsafe { NeonHash::force_new(key) });
-                        HighwayHasher {
+                        return HighwayHasher {
                             tag: 3,
                             inner: HighwayChoices { neon },
-                        }
+                        };
                     }
                 }
             }
