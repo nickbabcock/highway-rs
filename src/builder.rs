@@ -3,11 +3,10 @@ use crate::traits::HighwayHash;
 use core::{default::Default, fmt::Debug, mem::ManuallyDrop};
 
 #[cfg(target_arch = "aarch64")]
-use {crate::aarch64::NeonHash, std::arch::is_aarch64_feature_detected};
+use crate::aarch64::NeonHash;
 
 #[cfg(not(any(
     all(target_family = "wasm", target_feature = "simd128"),
-    target_arch = "aarch64"
 )))]
 use crate::portable::PortableHash;
 #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
@@ -20,8 +19,7 @@ use crate::{AvxHash, SseHash};
 /// dominate profiles.
 union HighwayChoices {
     #[cfg(not(any(
-        all(target_family = "wasm", target_feature = "simd128"),
-        target_arch = "aarch64"
+        all(target_family = "wasm", target_feature = "simd128")
     )))]
     portable: ManuallyDrop<PortableHash>,
     #[cfg(target_arch = "x86_64")]
@@ -76,7 +74,7 @@ impl Clone for HighwayHasher {
                     sse: unsafe { self.inner.sse.clone() },
                 },
             },
-            #[cfg(target_arch = "aarch64")]
+            #[cfg(all(target_arch = "aarch64", target_feature = "neon"))] 
             3 => HighwayHasher {
                 tag,
                 inner: HighwayChoices {
@@ -160,35 +158,17 @@ impl HighwayHasher {
 
         #[cfg(target_arch = "aarch64")]
         {
-            // Based on discussions here:
-            // https://github.com/nickbabcock/highway-rs/pull/51#discussion_r815247129
-            //
-            // The following aren't stable:
-            //  - std::is_aarch64_feature_detected
-            //  - aarch64 target features
-            //
-            // We're not really able to detect at runtime or compile time
-            // if neon support is available
-            //
-            // The good news is that it seems reasonable to assume the
-            // aarch64 environment is neon capable. If a use case is found
-            // where neon is not available, we can patch that in later.
             if cfg!(target_feature = "neon") {
-                if is_aarch64_feature_detected!("neon") {
-                    let neon = ManuallyDrop::new(unsafe { NeonHash::force_new(key) });
-                    return HighwayHasher {
-                        tag: 3,
-                        inner: HighwayChoices { neon },
-                    };
+                let neon = ManuallyDrop::new(unsafe { NeonHash::force_new(key) });
+                HighwayHasher {
+                    tag: 3,
+                    inner: HighwayChoices { neon },
                 }
             } else {
-                #[cfg(feature = "std")]
-                if is_aarch64_feature_detected!("neon") {
-                    let neon = ManuallyDrop::new(unsafe { NeonHash::force_new(key) });
-                    return HighwayHasher {
-                        tag: 3,
-                        inner: HighwayChoices { neon },
-                    };
+                let portable = ManuallyDrop::new(PortableHash::new(key));
+                HighwayHasher {
+                    tag: 0,
+                    inner: HighwayChoices { portable },
                 }
             }
         }
