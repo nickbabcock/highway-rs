@@ -3,10 +3,13 @@ use crate::traits::HighwayHash;
 use core::{default::Default, fmt::Debug, mem::ManuallyDrop};
 
 #[cfg(target_arch = "aarch64")]
-use crate::aarch64::NeonHash;
+use crate::{aarch64::NeonHash, portable::PortableHash};
+#[cfg(all(target_arch = "aarch64", feature = "std"))]
+use std::arch::is_aarch64_feature_detected;
 
 #[cfg(not(any(
     all(target_family = "wasm", target_feature = "simd128"),
+    target_arch = "aarch64"
 )))]
 use crate::portable::PortableHash;
 #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
@@ -19,7 +22,8 @@ use crate::{AvxHash, SseHash};
 /// dominate profiles.
 union HighwayChoices {
     #[cfg(not(any(
-        all(target_family = "wasm", target_feature = "simd128")
+        all(target_family = "wasm", target_feature = "simd128"),
+        target_arch = "aarch64"
     )))]
     portable: ManuallyDrop<PortableHash>,
     #[cfg(target_arch = "x86_64")]
@@ -28,6 +32,8 @@ union HighwayChoices {
     sse: ManuallyDrop<SseHash>,
     #[cfg(target_arch = "aarch64")]
     neon: ManuallyDrop<NeonHash>,
+    #[cfg(target_arch = "aarch64")]
+    portable: ManuallyDrop<PortableHash>,
     #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
     wasm: ManuallyDrop<WasmHash>,
 }
@@ -74,7 +80,14 @@ impl Clone for HighwayHasher {
                     sse: unsafe { self.inner.sse.clone() },
                 },
             },
-            #[cfg(all(target_arch = "aarch64", target_feature = "neon"))] 
+            #[cfg(target_arch = "aarch64")]
+            0 => HighwayHasher {
+                tag,
+                inner: HighwayChoices {
+                    portable: unsafe { self.inner.portable.clone() },
+                },
+            },
+            #[cfg(target_arch = "aarch64")]
             3 => HighwayHasher {
                 tag,
                 inner: HighwayChoices {
@@ -138,7 +151,7 @@ impl HighwayHasher {
                 // duplicate the same logic to know if hasher can be enabled.
                 #[cfg(feature = "std")]
                 if is_x86_feature_detected!("avx2") {
-                    let avx = ManuallyDrop::new(unsafe { AvxHash::force_new(key) });
+                    let avx: ManuallyDrop<AvxHash> = ManuallyDrop::new(unsafe { AvxHash::force_new(key) });
                     return HighwayHasher {
                         tag: 1,
                         inner: HighwayChoices { avx },
@@ -165,6 +178,14 @@ impl HighwayHasher {
                     inner: HighwayChoices { neon },
                 }
             } else {
+                #[cfg(feature = "std")]
+                if is_aarch64_feature_detected!("neon") {
+                    let neon = ManuallyDrop::new(unsafe { NeonHash::force_new(key) });
+                    return HighwayHasher {
+                        tag: 3,
+                        inner: HighwayChoices { neon },
+                    };
+                }
                 let portable = ManuallyDrop::new(PortableHash::new(key));
                 HighwayHasher {
                     tag: 0,

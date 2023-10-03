@@ -173,14 +173,14 @@ pub use crate::key::Key;
 pub use crate::portable::PortableHash;
 pub use crate::traits::HighwayHash;
 
-#[cfg(all(target_arch = "aarch64",target_feature="neon"))]
+#[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
 mod aarch64;
 #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
 mod wasm;
 #[cfg(target_arch = "x86_64")]
 mod x86;
 
-#[cfg(all(target_arch = "aarch64",target_feature="neon"))]
+#[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
 pub use crate::aarch64::NeonHash;
 #[cfg(target_arch = "x86_64")]
 pub use crate::x86::{AvxHash, SseHash};
