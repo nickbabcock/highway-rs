@@ -80,14 +80,14 @@ impl Clone for HighwayHasher {
                     sse: unsafe { self.inner.sse.clone() },
                 },
             },
-            #[cfg(target_arch = "aarch64")]
-            0 => HighwayHasher {
+            #[cfg(all(target_arch = "aarch64", feature = "std"))]
+            3 if is_aarch64_feature_detected!("neon") => HighwayHasher {
                 tag,
                 inner: HighwayChoices {
-                    portable: unsafe { self.inner.portable.clone() },
+                    neon: unsafe { self.inner.neon.clone() },
                 },
             },
-            #[cfg(target_arch = "aarch64")]
+            #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
             3 => HighwayHasher {
                 tag,
                 inner: HighwayChoices {
@@ -151,7 +151,8 @@ impl HighwayHasher {
                 // duplicate the same logic to know if hasher can be enabled.
                 #[cfg(feature = "std")]
                 if is_x86_feature_detected!("avx2") {
-                    let avx: ManuallyDrop<AvxHash> = ManuallyDrop::new(unsafe { AvxHash::force_new(key) });
+                    let avx: ManuallyDrop<AvxHash> =
+                        ManuallyDrop::new(unsafe { AvxHash::force_new(key) });
                     return HighwayHasher {
                         tag: 1,
                         inner: HighwayChoices { avx },
@@ -171,26 +172,26 @@ impl HighwayHasher {
 
         #[cfg(target_arch = "aarch64")]
         {
+            #[cfg(target_feature = "neon")]
             if cfg!(target_feature = "neon") {
                 let neon = ManuallyDrop::new(unsafe { NeonHash::force_new(key) });
                 HighwayHasher {
                     tag: 3,
                     inner: HighwayChoices { neon },
                 }
-            } else {
-                #[cfg(feature = "std")]
-                if is_aarch64_feature_detected!("neon") {
-                    let neon = ManuallyDrop::new(unsafe { NeonHash::force_new(key) });
-                    return HighwayHasher {
-                        tag: 3,
-                        inner: HighwayChoices { neon },
-                    };
-                }
-                let portable = ManuallyDrop::new(PortableHash::new(key));
-                HighwayHasher {
-                    tag: 0,
-                    inner: HighwayChoices { portable },
-                }
+            }
+            #[cfg(feature = "std")]
+            if is_aarch64_feature_detected!("neon") {
+                let neon = ManuallyDrop::new(unsafe { NeonHash::force_new(key) });
+                return HighwayHasher {
+                    tag: 3,
+                    inner: HighwayChoices { neon },
+                };
+            }
+            let portable = ManuallyDrop::new(PortableHash::new(key));
+            HighwayHasher {
+                tag: 0,
+                inner: HighwayChoices { portable },
             }
         }
 
@@ -246,8 +247,12 @@ impl HighwayHasher {
             1 => unsafe { AvxHash::finalize64(&mut self.inner.avx) },
             #[cfg(target_arch = "x86_64")]
             2 => unsafe { SseHash::finalize64(&mut self.inner.sse) },
-            #[cfg(target_arch = "aarch64")]
+            #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
             3 => unsafe { NeonHash::finalize64(&mut self.inner.neon) },
+            #[cfg(all(target_arch = "aarch64", feature = "std"))]
+            3 if is_aarch64_feature_detected!("neon") => unsafe {
+                NeonHash::finalize64(&mut self.inner.neon)
+            },
             #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
             4 => unsafe { WasmHash::finalize64(&mut self.inner.wasm) },
             _ => unsafe { core::hint::unreachable_unchecked() },
@@ -265,8 +270,12 @@ impl HighwayHasher {
             1 => unsafe { AvxHash::finalize128(&mut self.inner.avx) },
             #[cfg(target_arch = "x86_64")]
             2 => unsafe { SseHash::finalize128(&mut self.inner.sse) },
-            #[cfg(target_arch = "aarch64")]
+            #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
             3 => unsafe { NeonHash::finalize128(&mut self.inner.neon) },
+            #[cfg(all(target_arch = "aarch64", feature = "std"))]
+            3 if is_aarch64_feature_detected!("neon") => unsafe {
+                NeonHash::finalize128(&mut self.inner.neon)
+            },
             #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
             4 => unsafe { WasmHash::finalize128(&mut self.inner.wasm) },
             _ => unsafe { core::hint::unreachable_unchecked() },
@@ -284,8 +293,12 @@ impl HighwayHasher {
             1 => unsafe { AvxHash::finalize256(&mut self.inner.avx) },
             #[cfg(target_arch = "x86_64")]
             2 => unsafe { SseHash::finalize256(&mut self.inner.sse) },
-            #[cfg(target_arch = "aarch64")]
+            #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
             3 => unsafe { NeonHash::finalize256(&mut self.inner.neon) },
+            #[cfg(all(target_arch = "aarch64", feature = "std"))]
+            3 if is_aarch64_feature_detected!("neon") => unsafe {
+                NeonHash::finalize256(&mut self.inner.neon)
+            },
             #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
             4 => unsafe { WasmHash::finalize256(&mut self.inner.wasm) },
             _ => unsafe { core::hint::unreachable_unchecked() },
