@@ -162,16 +162,8 @@ impl HighwayHasher {
             // Based on discussions here:
             // https://github.com/nickbabcock/highway-rs/pull/51#discussion_r815247129
             //
-            // The following aren't stable:
-            //  - std::is_aarch64_feature_detected
-            //  - aarch64 target features
-            //
-            // We're not really able to detect at runtime or compile time
-            // if neon support is available
-            //
-            // The good news is that it seems reasonable to assume the
-            // aarch64 environment is neon capable. If a use case is found
-            // where neon is not available, we can patch that in later.
+            // It seems reasonable to assume the aarch64 is neon capable.
+            // If a case is found where that is not true, we can patch later.
             let neon = ManuallyDrop::new(unsafe { NeonHash::force_new(key) });
             HighwayHasher {
                 tag: 3,
