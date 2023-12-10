@@ -109,17 +109,18 @@ assert_eq!(map.get(&1), Some(&2));
 Hashing a file, or anything implementing `Read`
 
 ```rust
+# #[cfg(not(feature = "std"))] fn main() { }
 # #[cfg(feature = "std")]
-# {
-use std::fs::File;
+# fn main() -> std::io::Result<()> {
 use std::hash::Hasher;
 use highway::{PortableHash, HighwayHash};
 
-let mut file = File::open("./README.md").unwrap();
+let mut file = &b"hello world"[..];
 let mut hasher = PortableHash::default();
-std::io::copy(&mut file, &mut hasher).unwrap();
+std::io::copy(&mut file, &mut hasher)?;
 let hash64 = hasher.finish(); // core Hasher API
 let hash256 = hasher.finalize256(); // HighwayHash API
+# Ok(())
 # }
 ```
 
@@ -187,7 +188,3 @@ pub use crate::x86::{AvxHash, SseHash};
 
 #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
 pub use crate::wasm::WasmHash;
-
-#[cfg(feature = "std")]
-#[cfg(doctest)]
-doc_comment::doctest!("../README.md");

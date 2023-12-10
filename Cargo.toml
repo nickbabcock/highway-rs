@@ -18,7 +18,6 @@ std = []
 [dev-dependencies]
 quickcheck = "1"
 quickcheck_macros = "1"
-doc-comment = "0.3"
 
 [target.'cfg(target_family = "wasm")'.dev-dependencies]
 criterion = { version = "< 0.4.0", default-features = false }

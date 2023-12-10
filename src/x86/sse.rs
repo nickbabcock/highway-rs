@@ -303,6 +303,7 @@ impl_hasher!(SseHash);
 mod tests {
     use super::*;
 
+    #[cfg_attr(miri, ignore)]
     #[test]
     fn test_zipper_merge() {
         unsafe {
