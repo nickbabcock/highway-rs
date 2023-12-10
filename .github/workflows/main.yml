@@ -108,6 +108,13 @@ jobs:
       if: matrix.build == 'stable'
       run: cargo bench --verbose --no-run $TARGET
 
+    - name: Run miri
+      if: matrix.build == 'nightly'
+      run: |
+        rustup toolchain install nightly --component miri
+        cargo miri setup
+        cargo miri test
+
     - name: Compile fuzz
       if: matrix.build == 'nightly'
       run: |

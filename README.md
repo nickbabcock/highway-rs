@@ -118,13 +118,12 @@ assert_eq!(map.get(&1), Some(&2));
 Hashing a file, or anything implementing `Read`
 
 ```rust
-use std::fs::File;
 use std::hash::Hasher;
 use highway::{PortableHash, HighwayHash};
 
-let mut file = File::open("./README.md").unwrap();
+let mut file = &b"hello world"[..];
 let mut hasher = PortableHash::default();
-std::io::copy(&mut file, &mut hasher).unwrap();
+std::io::copy(&mut file, &mut hasher)?;
 let hash64 = hasher.finish(); // core Hasher API
 let hash256 = hasher.finalize256(); // HighwayHash API
 ```

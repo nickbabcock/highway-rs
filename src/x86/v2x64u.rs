@@ -203,6 +203,7 @@ impl ShrAssign<__m128i> for V2x64U {
 pub mod tests {
     use super::*;
 
+    #[cfg_attr(miri, ignore)]
     #[test]
     fn test_as_arr() {
         unsafe {
@@ -212,6 +213,7 @@ pub mod tests {
         }
     }
 
+    #[cfg_attr(miri, ignore)]
     #[test]
     fn test_rotate_by_32() {
         unsafe {
@@ -222,6 +224,7 @@ pub mod tests {
         }
     }
 
+    #[cfg_attr(miri, ignore)]
     #[test]
     fn test_add() {
         unsafe {
@@ -232,6 +235,7 @@ pub mod tests {
         }
     }
 
+    #[cfg_attr(miri, ignore)]
     #[test]
     fn test_mm_srli_epi64() {
         unsafe {
@@ -241,6 +245,7 @@ pub mod tests {
         }
     }
 
+    #[cfg_attr(miri, ignore)]
     #[test]
     fn test_mm_mul_epu32() {
         unsafe {
@@ -251,6 +256,7 @@ pub mod tests {
         }
     }
 
+    #[cfg_attr(miri, ignore)]
     #[test]
     fn test_mm_slli_si128_8() {
         unsafe {
