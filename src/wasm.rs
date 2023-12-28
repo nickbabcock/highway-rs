@@ -1,3 +1,4 @@
+#![allow(unsafe_code)]
 use crate::internal::{unordered_load3, HashPacket, PACKET_SIZE};
 use crate::{HighwayHash, Key};
 use core::arch::wasm32::{self, v128};
