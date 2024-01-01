@@ -1,3 +1,5 @@
+#![allow(unsafe_code)]
+
 use crate::key::Key;
 use crate::traits::HighwayHash;
 use core::{default::Default, fmt::Debug, mem::ManuallyDrop};

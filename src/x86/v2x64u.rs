@@ -1,3 +1,4 @@
+#![allow(unsafe_code)]
 use core::arch::x86_64::*;
 use core::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, ShlAssign,

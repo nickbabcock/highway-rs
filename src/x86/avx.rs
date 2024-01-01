@@ -1,3 +1,4 @@
+#![allow(unsafe_code)]
 use super::{v2x64u::V2x64U, v4x64u::V4x64U};
 use crate::internal::unordered_load3;
 use crate::internal::{HashPacket, PACKET_SIZE};
