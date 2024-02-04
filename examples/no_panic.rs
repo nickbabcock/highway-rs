@@ -22,5 +22,9 @@ fn main() {
         if let Some(hasher) = highway::AvxHash::new(highway::Key::default()) {
             println!("{}", hash_data(hasher, &data));
         }
+
+        if let Some(hasher) = highway::SseHash::new(highway::Key::default()) {
+            println!("{}", hash_data(hasher, &data));
+        }
     }
 }
