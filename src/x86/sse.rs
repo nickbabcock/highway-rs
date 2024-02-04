@@ -200,7 +200,7 @@ impl SseHash {
     }
 
     #[target_feature(enable = "sse4.1")]
-    unsafe fn load_multiple_of_four(bytes: &[u8], size: u64) -> V2x64U {
+    unsafe fn load_multiple_of_four(bytes: &[u8]) -> V2x64U {
         let mut data = bytes;
         let mut mask4 = V2x64U::from(_mm_cvtsi64_si128(0xFFFF_FFFF));
         let mut ret = if bytes.len() >= 8 {
@@ -211,8 +211,8 @@ impl SseHash {
             V2x64U::new(0, 0)
         };
 
-        if size & 4 != 0 {
-            let last4 = i32::from_le_bytes([data[0], data[1], data[2], data[3]]);
+        if let Some(d) = data.get(..4) {
+            let last4 = i32::from_le_bytes([d[0], d[1], d[2], d[3]]);
             let word2 = _mm_cvtsi32_si128(last4);
             let broadcast = V2x64U::from(_mm_shuffle_epi32(word2, 0));
             ret |= broadcast & mask4;
@@ -227,7 +227,7 @@ impl SseHash {
         let size_mod4 = size_mod32 & 3;
         if size_mod32 & 16 != 0 {
             let packetL = V2x64U::from(_mm_loadu_si128(bytes.as_ptr().cast::<__m128i>()));
-            let packett = SseHash::load_multiple_of_four(&bytes[16..], size_mod32 as u64);
+            let packett = SseHash::load_multiple_of_four(&bytes[16..]);
             let remainder = &bytes[(size_mod32 & !3) + size_mod4 - 4..];
             let last4 =
                 i32::from_le_bytes([remainder[0], remainder[1], remainder[2], remainder[3]]);
@@ -235,7 +235,7 @@ impl SseHash {
             (packetH, packetL)
         } else {
             let remainder = &bytes[size_mod32 & !3..];
-            let packetL = SseHash::load_multiple_of_four(bytes, size_mod32 as u64);
+            let packetL = SseHash::load_multiple_of_four(bytes);
             let last4 = unordered_load3(remainder);
             let packetH = V2x64U::from(_mm_cvtsi64_si128(last4 as i64));
             (packetH, packetL)
