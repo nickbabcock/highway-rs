@@ -27,4 +27,10 @@ fn main() {
             println!("{}", hash_data(hasher, &data));
         }
     }
+
+    #[cfg(target_arch = "aarch64")]
+    {
+        let hasher = unsafe { highway::NeonHash::force_new(highway::Key::default()) };
+        println!("{}", hash_data(hasher, &data));
+    }
 }
