@@ -1,6 +1,13 @@
 #!/bin/bash
 set -euxo pipefail
 
+if [[ -z "$AWS_ACCESS_KEY_ID" || -z "$AWS_SECRET_ACCESS_KEY"  ]]; then
+    echo "Must provide AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY"
+    exit 1
+fi
+
+cd "$(dirname "$0")"
+
 terraform plan
 terraform apply -auto-approve
 public_ip=$(terraform output --raw public_ip)
