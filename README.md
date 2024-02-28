@@ -2,18 +2,16 @@
 
 # Highway-rs
 
-This crate is a native Rust port of [Google's
-HighwayHash](https://github.com/google/highwayhash), which is a fast, keyed,
-portable (output is hardware independent) and strong hash function.
+This crate is a native Rust port of [Google's HighwayHash](https://github.com/google/highwayhash), which is a fast, keyed, and strong hash function, whose output is hardware independent.
 
 ## Features
 
  - ✔ pure / stable rust
  - ✔ zero dependencies
- - ✔ generate 64, 128, and 256bit hashes
+ - ✔ generate consistent 64, 128, and 256bit hashes across all hardware
  - ✔ > 10 GB/s with SIMD (SSE 4.1 AVX 2, NEON) aware instructions on x86 and aarch64 architectures
  - ✔ > 3 GB/s on Wasm with the Wasm SIMD extension
- - ✔ > 1 GB/s portable implementation with zero unsafe code
+ - ✔ > 1 GB/s hardware agnostic implementation with zero unsafe code
  - ✔ incremental / streaming hashes
  - ✔ zero heap allocations
  - ✔ `no_std` compatible
@@ -122,6 +120,11 @@ use std::hash::Hasher;
 use highway::{PortableHash, HighwayHash};
 
 let mut file = &b"hello world"[..];
+
+// We're using the `PortableHash` to show importing a specific hashing
+// implementation (all hash outputs are already portable / hardware agnostic).
+// The main reason for directly using `PortableHash` would be if avoiding
+// `unsafe` code blocks is a top priority.
 let mut hasher = PortableHash::default();
 std::io::copy(&mut file, &mut hasher)?;
 let hash64 = hasher.finish(); // core Hasher API

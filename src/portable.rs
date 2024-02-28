@@ -2,7 +2,14 @@ use crate::internal::{HashPacket, PACKET_SIZE};
 use crate::key::Key;
 use crate::traits::HighwayHash;
 
-/// Portable HighwayHash implementation. Will run on any platform Rust will run on.
+/// Hardware agnostic HighwayHash implementation.
+///
+/// "Portable" refers to being able to run on any platform Rust will run on, and
+/// is not referring to the output, as the HighwayHash is already hardware
+/// agnostic across all implementations.
+///
+/// The main reason for directly using `PortableHash` would be if avoiding
+/// `unsafe` code blocks is a top priority.
 #[derive(Debug, Default, Clone)]
 pub struct PortableHash {
     v0: [u64; 4],
