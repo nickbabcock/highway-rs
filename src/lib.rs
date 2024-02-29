@@ -1,8 +1,6 @@
 /*!
 
-This crate is a native Rust port of [Google's
-HighwayHash](https://github.com/google/highwayhash), which is a fast, keyed,
-portable (output is hardware independent) and strong hash function.
+This crate is a native Rust port of [Google's HighwayHash](https://github.com/google/highwayhash), which is a fast, keyed, and strong hash function, whose output is hardware independent.
 
 ## Caution
 
@@ -116,6 +114,11 @@ use std::hash::Hasher;
 use highway::{PortableHash, HighwayHash};
 
 let mut file = &b"hello world"[..];
+
+// We're using the `PortableHash` to show importing a specific hashing
+// implementation (all hash outputs are already portable / hardware agnostic).
+// The main reason for directly using `PortableHash` would be if avoiding
+// `unsafe` code blocks is a top priority.
 let mut hasher = PortableHash::default();
 std::io::copy(&mut file, &mut hasher)?;
 let hash64 = hasher.finish(); // core Hasher API
