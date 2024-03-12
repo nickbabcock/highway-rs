@@ -43,9 +43,27 @@ pub struct HighwayHasher {
 
 impl Debug for HighwayHasher {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.debug_struct("HighwayHasher")
-            .field("tag", &self.tag)
-            .finish()
+        let mut debug = f.debug_struct("HighwayHasher");
+        debug.field("tag", &self.tag);
+
+        match self.tag {
+            #[cfg(not(any(
+                all(target_family = "wasm", target_feature = "simd128"),
+                target_arch = "aarch64"
+            )))]
+            0 => debug.field("hasher", unsafe { &self.inner.portable }),
+            #[cfg(target_arch = "x86_64")]
+            1 => debug.field("hasher", unsafe { &self.inner.avx }),
+            #[cfg(target_arch = "x86_64")]
+            2 => debug.field("hasher", unsafe { &self.inner.sse }),
+            #[cfg(target_arch = "aarch64")]
+            3 => debug.field("hasher", unsafe { &self.inner.neon }),
+            #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
+            4 => debug.field("hasher", unsafe { &self.inner.wasm }),
+            _ => unsafe { core::hint::unreachable_unchecked() },
+        };
+
+        debug.finish()
     }
 }
 
@@ -280,3 +298,15 @@ impl Default for HighwayHasher {
 
 impl_write!(HighwayHasher);
 impl_hasher!(HighwayHasher);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_has_debug_representation_with_data() {
+        let hasher = HighwayHasher::new(Key::default());
+        let output = format!("{:?}", &hasher);
+        assert!(output.contains("hasher: "));
+    }
+}
