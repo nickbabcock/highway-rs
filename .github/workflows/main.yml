@@ -67,7 +67,7 @@ jobs:
           target: aarch64-unknown-linux-gnu
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: true
 
@@ -129,7 +129,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
@@ -152,7 +152,7 @@ jobs:
       matrix:
         feature: ["-sse4.1,-avx2", "-sse4.1,+avx2", "+sse4.1,+avx2", "+sse4.1,-avx2"]
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Test
       run: RUSTFLAGS="-C target-feature=${{matrix.feature}}" cargo test --verbose
     - name: No Std Tests
