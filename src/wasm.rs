@@ -1,4 +1,3 @@
-#![allow(unsafe_code)]
 use crate::internal::{unordered_load3, HashPacket, PACKET_SIZE};
 use crate::{HighwayHash, Key};
 use core::arch::wasm32::{self, v128};
@@ -170,20 +169,20 @@ impl WasmHash {
         *init ^ shifted2 ^ new_low_bits2 ^ shifted1 ^ new_low_bits1
     }
 
-    fn load_multiple_of_four(bytes: &[u8], size: u64) -> V2x64U {
+    fn load_multiple_of_four(bytes: &[u8]) -> V2x64U {
         let mut data = bytes;
         let mut mask4 = V2x64U::new(0, 0xFFFF_FFFF);
         let mut ret = if bytes.len() >= 8 {
+            let lo = le_u64(bytes);
             mask4 = V2x64U::from(_mm_slli_si128_8(mask4.0));
             data = &bytes[8..];
-            let lo = u64::from_le_bytes(take::<8>(bytes));
             V2x64U::new(0, lo)
         } else {
             V2x64U::new(0, 0)
         };
 
-        if size & 4 != 0 {
-            let last4 = u32::from_le_bytes(take::<4>(data));
+        if let Some(d) = data.get(..4) {
+            let last4 = u32::from_le_bytes([d[0], d[1], d[2], d[3]]);
             let broadcast = V2x64U::from(wasm32::u32x4(last4, last4, last4, last4));
             ret |= broadcast & mask4;
         }
@@ -199,11 +198,11 @@ impl WasmHash {
             return (V2x64U::zeroed(), V2x64U::zeroed());
         }
 
-        if size_mod32 & 16 != 0 {
-            let packetLL = u64::from_le_bytes(take::<8>(bytes));
-            let packetLH = u64::from_le_bytes(take::<8>(&bytes[8..]));
+        if bytes.len() >= 16 {
+            let packetLL = le_u64(bytes);
+            let packetLH = le_u64(&bytes[8..]);
             let packetL = V2x64U::new(packetLH, packetLL);
-            let packett = WasmHash::load_multiple_of_four(&bytes[16..], size_mod32 as u64);
+            let packett = WasmHash::load_multiple_of_four(&bytes[16..]);
             let remainder = &bytes[(size_mod32 & !3) + size_mod4 - 4..];
             let last4 =
                 i32::from_le_bytes([remainder[0], remainder[1], remainder[2], remainder[3]]);
@@ -212,7 +211,7 @@ impl WasmHash {
             (packetH, packetL)
         } else {
             let remainder = &bytes[size_mod32 & !3..];
-            let packetL = WasmHash::load_multiple_of_four(bytes, size_mod32 as u64);
+            let packetL = WasmHash::load_multiple_of_four(bytes);
 
             let last4 = unordered_load3(remainder);
             let packetH = V2x64U::new(0, last4);
@@ -246,15 +245,14 @@ impl WasmHash {
 
     #[inline]
     fn data_to_lanes(packet: &[u8]) -> (V2x64U, V2x64U) {
-        let ll = u64::from_le_bytes(take::<8>(packet));
-        let lh = u64::from_le_bytes(take::<8>(&packet[8..]));
-        let hl = u64::from_le_bytes(take::<8>(&packet[16..]));
-        let hh = u64::from_le_bytes(take::<8>(&packet[24..]));
+        let mut lanes = [0u64; 4];
+        for (x, dest) in packet.chunks_exact(8).zip(lanes.iter_mut()) {
+            *dest = le_u64(x);
+        }
 
-        let packetL = V2x64U::new(lh, ll);
-        let packetH = V2x64U::new(hh, hl);
-
-        (packetH, packetL)
+        let hi = V2x64U::new(lanes[3], lanes[2]);
+        let lo = V2x64U::new(lanes[1], lanes[0]);
+        (hi, lo)
     }
 
     fn append(&mut self, data: &[u8]) {
@@ -280,9 +278,8 @@ impl_write!(WasmHash);
 impl_hasher!(WasmHash);
 
 #[inline]
-fn take<const N: usize>(data: &[u8]) -> [u8; N] {
-    debug_assert!(data.len() >= N);
-    unsafe { *(data.as_ptr() as *const [u8; N]) }
+fn le_u64(x: &[u8]) -> u64 {
+    u64::from_le_bytes([x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7]])
 }
 
 #[inline]
