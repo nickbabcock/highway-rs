@@ -117,7 +117,7 @@ impl Clone for HighwayHasher {
 impl HighwayHash for HighwayHasher {
     #[inline]
     fn append(&mut self, data: &[u8]) {
-        self.append(data)
+        self.append(data);
     }
 
     #[inline]

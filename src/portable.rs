@@ -210,7 +210,7 @@ impl PortableHash {
     fn data_to_lanes(d: &[u8]) -> [u64; 4] {
         let mut result = [0u64; 4];
         for (x, dest) in d.chunks_exact(8).zip(result.iter_mut()) {
-            *dest = u64::from_le_bytes([x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7]])
+            *dest = u64::from_le_bytes([x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7]]);
         }
         result
     }
