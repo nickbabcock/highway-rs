@@ -1,3 +1,9 @@
+## v1.2.0 - 2024-06-21
+
+- x86 SSE implementation now provably can't panic
+- `HighwayHasher` debug representation now exhaustive
+- Removed all `unsafe` Wasm SIMD implementation at no cost
+
 ## v1.1.0 - 2023-06-30
 
 This release contains only performance optimizations:
