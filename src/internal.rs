@@ -29,12 +29,12 @@ pub struct HashPacket {
 
 impl HashPacket {
     #[inline]
-    pub fn len(&self) -> usize {
+    pub const fn len(&self) -> usize {
         self.buf_index
     }
 
     #[inline]
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.buf_index == 0
     }
 
@@ -45,7 +45,7 @@ impl HashPacket {
     }
 
     #[inline]
-    pub fn inner(&self) -> &[u8; PACKET_SIZE] {
+    pub const fn inner(&self) -> &[u8; PACKET_SIZE] {
         &self.buf
     }
 

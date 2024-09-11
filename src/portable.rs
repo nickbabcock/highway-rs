@@ -139,14 +139,14 @@ impl PortableHash {
         [lowest, low, high, highest]
     }
 
-    fn module_reduction(a3_unmasked: u64, a2: u64, a1: u64, a0: u64) -> (u64, u64) {
+    const fn module_reduction(a3_unmasked: u64, a2: u64, a1: u64, a0: u64) -> (u64, u64) {
         let a3 = a3_unmasked & 0x3FFF_FFFF_FFFF_FFFF;
         let high = a1 ^ ((a3 << 1) | (a2 >> 63)) ^ ((a3 << 2) | (a2 >> 62));
         let low = a0 ^ (a2 << 1) ^ (a2 << 2);
         (low, high)
     }
 
-    fn permute(v: &[u64; 4]) -> [u64; 4] {
+    const fn permute(v: &[u64; 4]) -> [u64; 4] {
         [
             (v[2] >> 32) | (v[2] << 32),
             (v[3] >> 32) | (v[3] << 32),
