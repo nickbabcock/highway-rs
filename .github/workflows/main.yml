@@ -137,7 +137,7 @@ jobs:
         targets: wasm32-unknown-unknown
 
     - name: Install wasm-pack
-      run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+      run:  npm install -g wasm-pack@0.12.1
 
     - name: Build (no SIMD)
       run: RUSTFLAGS="-C target-feature=-simd128" cargo build --target wasm32-unknown-unknown
