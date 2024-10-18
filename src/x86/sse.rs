@@ -213,8 +213,7 @@ impl SseHash {
 
         if let Some(d) = data.get(..4) {
             let last4 = i32::from_le_bytes([d[0], d[1], d[2], d[3]]);
-            let word2 = _mm_cvtsi32_si128(last4);
-            let broadcast = V2x64U::from(_mm_shuffle_epi32(word2, 0));
+            let broadcast = V2x64U::from(_mm_set1_epi32(last4));
             ret |= broadcast & mask4;
         }
 
