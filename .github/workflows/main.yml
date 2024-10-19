@@ -131,8 +131,12 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
     - name: Install Rust
-      uses: dtolnay/rust-toolchain@1.81.0
+      uses: dtolnay/rust-toolchain@stable
       with:
         targets: wasm32-unknown-unknown
 
