@@ -66,6 +66,7 @@ impl HashPacket {
 
     #[inline]
     pub fn set_to(&mut self, data: &[u8]) {
+        debug_assert!(data.len() < PACKET_SIZE, "data large enough to process packet");
         self.buf_index = data.len();
         if !data.is_empty() {
             self.buf[..data.len()].copy_from_slice(data);
