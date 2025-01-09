@@ -66,10 +66,10 @@ impl PortableHash {
                 mul0[3] ^ key[3],
             ],
             v1: [
-                mul1[0] ^ ((key[0] >> 32) | (key[0] << 32)),
-                mul1[1] ^ ((key[1] >> 32) | (key[1] << 32)),
-                mul1[2] ^ ((key[2] >> 32) | (key[2] << 32)),
-                mul1[3] ^ ((key[3] >> 32) | (key[3] << 32)),
+                mul1[0] ^ key[0].rotate_left(32),
+                mul1[1] ^ key[1].rotate_left(32),
+                mul1[2] ^ key[2].rotate_left(32),
+                mul1[3] ^ key[3].rotate_left(32),
             ],
             mul0,
             mul1,
@@ -148,10 +148,10 @@ impl PortableHash {
 
     const fn permute(v: &[u64; 4]) -> [u64; 4] {
         [
-            (v[2] >> 32) | (v[2] << 32),
-            (v[3] >> 32) | (v[3] << 32),
-            (v[0] >> 32) | (v[0] << 32),
-            (v[1] >> 32) | (v[1] << 32),
+            v[2].rotate_left(32),
+            v[3].rotate_left(32),
+            v[0].rotate_left(32),
+            v[1].rotate_left(32),
         ]
     }
 
