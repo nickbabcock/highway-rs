@@ -4,6 +4,7 @@ use crate::internal::unordered_load3;
 use crate::internal::{HashPacket, PACKET_SIZE};
 use crate::key::Key;
 use crate::traits::HighwayHash;
+use crate::PortableHash;
 use core::arch::x86_64::*;
 
 /// SSE empowered implementation that will only work on `x86_64` with sse 4.1 enabled at the CPU
@@ -42,6 +43,34 @@ impl HighwayHash for SseHash {
     #[inline]
     fn finalize256(mut self) -> [u64; 4] {
         unsafe { Self::finalize256(&mut self) }
+    }
+
+    #[inline]
+    fn checkpoint(&self) -> [u8; 164] {
+        let mut v0 = [0u64; 4];
+        v0[..2].copy_from_slice(unsafe { &self.v0L.as_arr() });
+        v0[2..].copy_from_slice(unsafe { &self.v0H.as_arr() });
+
+        let mut v1 = [0u64; 4];
+        v1[..2].copy_from_slice(unsafe { &self.v1L.as_arr() });
+        v1[2..].copy_from_slice(unsafe { &self.v1H.as_arr() });
+
+        let mut mul0 = [0u64; 4];
+        mul0[..2].copy_from_slice(unsafe { &self.mul0L.as_arr() });
+        mul0[2..].copy_from_slice(unsafe { &self.mul0H.as_arr() });
+
+        let mut mul1 = [0u64; 4];
+        mul1[..2].copy_from_slice(unsafe { &self.mul1L.as_arr() });
+        mul1[2..].copy_from_slice(unsafe { &self.mul1H.as_arr() });
+
+        PortableHash {
+            v0,
+            v1,
+            mul0,
+            mul1,
+            buffer: self.buffer,
+        }
+        .checkpoint()
     }
 }
 
@@ -92,6 +121,47 @@ impl SseHash {
         #[cfg(not(feature = "std"))]
         {
             let _key = key;
+            None
+        }
+    }
+
+    /// Creates a new `SseHash` from a checkpoint while circumventing the runtime check for sse4.1.
+    ///
+    /// # Safety
+    ///
+    /// See [`Self::force_new`] for safety concerns.
+    #[must_use]
+    #[target_feature(enable = "sse4.1")]
+    pub unsafe fn force_from_checkpoint(data: [u8; 164]) -> Self {
+        let portable = PortableHash::from_checkpoint(data);
+        SseHash {
+            v0L: V2x64U::new(portable.v0[1], portable.v0[0]),
+            v0H: V2x64U::new(portable.v0[3], portable.v0[2]),
+            v1L: V2x64U::new(portable.v1[1], portable.v1[0]),
+            v1H: V2x64U::new(portable.v1[3], portable.v1[2]),
+            mul0L: V2x64U::new(portable.mul0[1], portable.mul0[0]),
+            mul0H: V2x64U::new(portable.mul0[3], portable.mul0[2]),
+            mul1L: V2x64U::new(portable.mul1[1], portable.mul1[0]),
+            mul1H: V2x64U::new(portable.mul1[3], portable.mul1[2]),
+            buffer: portable.buffer,
+        }
+    }
+
+    /// Create a new `SseHash` from a checkpoint if the sse4.1 feature is detected
+    #[must_use]
+    pub fn from_checkpoint(data: [u8; 164]) -> Option<Self> {
+        #[cfg(feature = "std")]
+        {
+            if is_x86_feature_detected!("sse4.1") {
+                Some(unsafe { Self::force_from_checkpoint(data) })
+            } else {
+                None
+            }
+        }
+
+        #[cfg(not(feature = "std"))]
+        {
+            let _ = data;
             None
         }
     }

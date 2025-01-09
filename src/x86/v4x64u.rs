@@ -45,7 +45,7 @@ impl V4x64U {
     }
 
     #[target_feature(enable = "avx2")]
-    unsafe fn as_arr(&self) -> [u64; 4] {
+    pub unsafe fn as_arr(&self) -> [u64; 4] {
         let mut arr: [u64; 4] = [0; 4];
         _mm256_storeu_si256(arr.as_mut_ptr().cast::<__m256i>(), self.0);
         arr

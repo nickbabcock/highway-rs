@@ -23,7 +23,7 @@ pub const PACKET_SIZE: usize = 32;
 #[repr(C)]
 #[derive(Default, Debug, Clone, Copy)]
 pub struct HashPacket {
-    buf: [u8; PACKET_SIZE],
+    pub(crate) buf: [u8; PACKET_SIZE],
     buf_index: usize,
 }
 

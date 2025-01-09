@@ -12,7 +12,7 @@ This crate is a native Rust port of [Google's HighwayHash](https://github.com/go
  - ✔ > 10 GB/s with SIMD (SSE 4.1 AVX 2, NEON) aware instructions on x86 and aarch64 architectures
  - ✔ > 3 GB/s on Wasm with the Wasm SIMD extension
  - ✔ > 1 GB/s hardware agnostic implementation with zero unsafe code
- - ✔ incremental / streaming hashes
+ - ✔ incremental / streaming hashes that can be checkpointed and restored
  - ✔ zero heap allocations
  - ✔ `no_std` compatible
  - ✔ fuzzed against reference implementation to ensure stability and compatibility

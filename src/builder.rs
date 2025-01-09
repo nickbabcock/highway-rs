@@ -134,6 +134,11 @@ impl HighwayHash for HighwayHasher {
     fn finalize256(mut self) -> [u64; 4] {
         Self::finalize256(&mut self)
     }
+
+    #[inline]
+    fn checkpoint(&self) -> [u8; 164] {
+        Self::checkpoint(self)
+    }
 }
 
 impl HighwayHasher {
@@ -213,6 +218,82 @@ impl HighwayHasher {
         }
     }
 
+    /// Creates a new hasher based on compilation and runtime capabilities
+    #[must_use]
+    pub fn from_checkpoint(data: [u8; 164]) -> Self {
+        #[cfg(target_arch = "x86_64")]
+        {
+            if cfg!(target_feature = "avx2") {
+                let avx = ManuallyDrop::new(unsafe { AvxHash::force_from_checkpoint(data) });
+                return HighwayHasher {
+                    tag: 1,
+                    inner: HighwayChoices { avx },
+                };
+            } else if cfg!(target_feature = "sse4.1") {
+                let sse = ManuallyDrop::new(unsafe { SseHash::force_from_checkpoint(data) });
+                return HighwayHasher {
+                    tag: 2,
+                    inner: HighwayChoices { sse },
+                };
+            } else {
+                // Ideally we'd use `AvxHash::new` here, but it triggers a memcpy, so we
+                // duplicate the same logic to know if hasher can be enabled.
+                #[cfg(feature = "std")]
+                if is_x86_feature_detected!("avx2") {
+                    let avx = ManuallyDrop::new(unsafe { AvxHash::force_from_checkpoint(data) });
+                    return HighwayHasher {
+                        tag: 1,
+                        inner: HighwayChoices { avx },
+                    };
+                }
+
+                #[cfg(feature = "std")]
+                if is_x86_feature_detected!("sse4.1") {
+                    let sse = ManuallyDrop::new(unsafe { SseHash::force_from_checkpoint(data) });
+                    return HighwayHasher {
+                        tag: 2,
+                        inner: HighwayChoices { sse },
+                    };
+                }
+            }
+        }
+
+        #[cfg(target_arch = "aarch64")]
+        {
+            // Based on discussions here:
+            // https://github.com/nickbabcock/highway-rs/pull/51#discussion_r815247129
+            //
+            // It seems reasonable to assume the aarch64 is neon capable.
+            // If a case is found where that is not true, we can patch later.
+            let neon = ManuallyDrop::new(unsafe { NeonHash::force_from_checkpoint(data) });
+            HighwayHasher {
+                tag: 3,
+                inner: HighwayChoices { neon },
+            }
+        }
+
+        #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
+        {
+            let wasm = ManuallyDrop::new(WasmHash::from_checkpoint(data));
+            HighwayHasher {
+                tag: 4,
+                inner: HighwayChoices { wasm },
+            }
+        }
+
+        #[cfg(not(any(
+            all(target_family = "wasm", target_feature = "simd128"),
+            target_arch = "aarch64"
+        )))]
+        {
+            let portable = ManuallyDrop::new(PortableHash::from_checkpoint(data));
+            HighwayHasher {
+                tag: 0,
+                inner: HighwayChoices { portable },
+            }
+        }
+    }
+
     fn append(&mut self, data: &[u8]) {
         match self.tag {
             #[cfg(not(any(
@@ -285,6 +366,25 @@ impl HighwayHasher {
             3 => unsafe { NeonHash::finalize256(&mut self.inner.neon) },
             #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
             4 => unsafe { WasmHash::finalize256(&mut self.inner.wasm) },
+            _ => unsafe { core::hint::unreachable_unchecked() },
+        }
+    }
+
+    fn checkpoint(&self) -> [u8; 164] {
+        match self.tag {
+            #[cfg(not(any(
+                all(target_family = "wasm", target_feature = "simd128"),
+                target_arch = "aarch64"
+            )))]
+            0 => unsafe { PortableHash::checkpoint(&self.inner.portable) },
+            #[cfg(target_arch = "x86_64")]
+            1 => unsafe { AvxHash::checkpoint(&self.inner.avx) },
+            #[cfg(target_arch = "x86_64")]
+            2 => unsafe { SseHash::checkpoint(&self.inner.sse) },
+            #[cfg(target_arch = "aarch64")]
+            3 => unsafe { NeonHash::checkpoint(&self.inner.neon) },
+            #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
+            4 => unsafe { WasmHash::checkpoint(&self.inner.wasm) },
             _ => unsafe { core::hint::unreachable_unchecked() },
         }
     }

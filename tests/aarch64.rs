@@ -27,10 +27,18 @@ fn neon_eq_portable() {
     ]);
 
     for i in 0..data.len() {
+        let hash64 = PortableHash::new(key).hash64(&data[..i]);
         assert_eq!(
             unsafe { NeonHash::force_new(key) }.hash64(&data[..i]),
-            PortableHash::new(key).hash64(&data[..i])
+            hash64
         );
+
+        let (head, tail) = &data[..i].split_at(i / 2);
+        let mut hasher = unsafe { NeonHash::force_new(key) };
+        hasher.append(head);
+        let mut snd = unsafe { NeonHash::force_from_checkpoint(hasher.checkpoint()) };
+        snd.append(tail);
+        assert_eq!(hash64, snd.finalize64());
 
         assert_eq!(
             unsafe { NeonHash::force_new(key) }.hash128(&data[..i]),

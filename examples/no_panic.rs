@@ -7,7 +7,8 @@ use std::io::Read;
 #[inline(never)]
 fn hash_data<H: HighwayHash>(mut hasher: H, data: &[u8]) -> u64 {
     hasher.append(data);
-    hasher.finalize64()
+    let snd = PortableHash::from_checkpoint(hasher.checkpoint());
+    hasher.finalize64() + snd.finalize64()
 }
 
 fn main() {
