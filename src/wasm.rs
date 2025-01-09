@@ -277,7 +277,8 @@ impl WasmHash {
 impl_write!(WasmHash);
 impl_hasher!(WasmHash);
 
-#[inline]
+// This occassionally doesn't get inlined, which causes panic code to get emitted
+#[inline(always)]
 fn le_u64(x: &[u8]) -> u64 {
     u64::from_le_bytes([x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7]])
 }
