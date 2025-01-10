@@ -518,24 +518,30 @@ fn sse_hash_eq_portable() {
         0x1F1E_1D1C_1B1A_1918,
     ]);
 
-    for i in 0..100 {
+    for i in 0..data.len() {
         println!("{}", i);
-        unsafe {
-            assert_eq!(
-                PortableHash::new(key).hash64(&data[..i]),
-                SseHash::force_new(key).hash64(&data[..i])
-            );
+        let hash64 = PortableHash::new(key).hash64(&data[..i]);
+        assert_eq!(
+            unsafe { SseHash::force_new(key) }.hash64(&data[..i]),
+            hash64
+        );
 
-            assert_eq!(
-                PortableHash::new(key).hash128(&data[..i]),
-                SseHash::force_new(key).hash128(&data[..i])
-            );
+        let (head, tail) = &data[..i].split_at(i / 2);
+        let mut hasher = unsafe { SseHash::force_new(key) };
+        hasher.append(head);
+        let mut snd = unsafe { SseHash::force_from_checkpoint(hasher.checkpoint()) };
+        snd.append(tail);
+        assert_eq!(hash64, snd.finalize64());
 
-            assert_eq!(
-                PortableHash::new(key).hash256(&data[..i]),
-                SseHash::force_new(key).hash256(&data[..i])
-            );
-        }
+        assert_eq!(
+            unsafe { SseHash::force_new(key) }.hash128(&data[..i]),
+            PortableHash::new(key).hash128(&data[..i])
+        );
+
+        assert_eq!(
+            unsafe { SseHash::force_new(key) }.hash256(&data[..i]),
+            PortableHash::new(key).hash256(&data[..i])
+        );
     }
 }
 

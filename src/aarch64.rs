@@ -1,6 +1,6 @@
 #![allow(unsafe_code)]
 use crate::internal::{unordered_load3, HashPacket, PACKET_SIZE};
-use crate::{HighwayHash, Key};
+use crate::{HighwayHash, Key, PortableHash};
 use core::arch::aarch64::*;
 use core::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, SubAssign,
@@ -42,10 +42,39 @@ impl HighwayHash for NeonHash {
     fn finalize256(mut self) -> [u64; 4] {
         unsafe { Self::finalize256(&mut self) }
     }
+
+    #[inline]
+    fn checkpoint(&self) -> [u8; 164] {
+        let mut v0 = [0u64; 4];
+        v0[..2].copy_from_slice(unsafe { &self.v0L.as_arr() });
+        v0[2..].copy_from_slice(unsafe { &self.v0H.as_arr() });
+
+        let mut v1 = [0u64; 4];
+        v1[..2].copy_from_slice(unsafe { &self.v1L.as_arr() });
+        v1[2..].copy_from_slice(unsafe { &self.v1H.as_arr() });
+
+        let mut mul0 = [0u64; 4];
+        mul0[..2].copy_from_slice(unsafe { &self.mul0L.as_arr() });
+        mul0[2..].copy_from_slice(unsafe { &self.mul0H.as_arr() });
+
+        let mut mul1 = [0u64; 4];
+        mul1[..2].copy_from_slice(unsafe { &self.mul1L.as_arr() });
+        mul1[2..].copy_from_slice(unsafe { &self.mul1H.as_arr() });
+
+        PortableHash {
+            v0,
+            v1,
+            mul0,
+            mul1,
+            buffer: self.buffer,
+        }
+        .checkpoint()
+    }
 }
 
 impl NeonHash {
     /// Creates a new `NeonHash` while circumventing any runtime checks.
+    #[must_use]
     pub unsafe fn force_new(key: Key) -> Self {
         let init0L = V2x64U::new(0xa409_3822_299f_31d0, 0xdbe6_d5d5_fe4c_ce2f);
         let init0H = V2x64U::new(0x243f_6a88_85a3_08d3, 0x1319_8a2e_0370_7344);
@@ -64,6 +93,23 @@ impl NeonHash {
             mul1L: init1L,
             mul1H: init1H,
             buffer: HashPacket::default(),
+        }
+    }
+
+    /// Creates a new `NeonHash` from a checkpoint
+    #[must_use]
+    pub unsafe fn force_from_checkpoint(data: [u8; 164]) -> Self {
+        let portable = PortableHash::from_checkpoint(data);
+        NeonHash {
+            v0L: V2x64U::new(portable.v0[1], portable.v0[0]),
+            v0H: V2x64U::new(portable.v0[3], portable.v0[2]),
+            v1L: V2x64U::new(portable.v1[1], portable.v1[0]),
+            v1H: V2x64U::new(portable.v1[3], portable.v1[2]),
+            mul0L: V2x64U::new(portable.mul0[1], portable.mul0[0]),
+            mul0H: V2x64U::new(portable.mul0[3], portable.mul0[2]),
+            mul1L: V2x64U::new(portable.mul1[1], portable.mul1[0]),
+            mul1H: V2x64U::new(portable.mul1[3], portable.mul1[2]),
+            buffer: portable.buffer,
         }
     }
 

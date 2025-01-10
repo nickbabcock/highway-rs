@@ -12,11 +12,11 @@ use crate::traits::HighwayHash;
 /// `unsafe` code blocks is a top priority.
 #[derive(Debug, Default, Clone)]
 pub struct PortableHash {
-    v0: [u64; 4],
-    v1: [u64; 4],
-    mul0: [u64; 4],
-    mul1: [u64; 4],
-    buffer: HashPacket,
+    pub(crate) v0: [u64; 4],
+    pub(crate) v1: [u64; 4],
+    pub(crate) mul0: [u64; 4],
+    pub(crate) mul1: [u64; 4],
+    pub(crate) buffer: HashPacket,
 }
 
 impl HighwayHash for PortableHash {
@@ -38,6 +38,26 @@ impl HighwayHash for PortableHash {
     #[inline]
     fn finalize256(mut self) -> [u64; 4] {
         Self::finalize256(&mut self)
+    }
+
+    #[inline]
+    fn checkpoint(&self) -> [u8; 164] {
+        let mut result = [0u8; 164];
+        let mut cursor = &mut result[..];
+
+        // Write out the state in 8 * 4 * 4 bytes = 128 bytes
+        for array in [&self.v0, &self.v1, &self.mul0, &self.mul1] {
+            for &x in array {
+                let (bucket, rest) = cursor.split_at_mut(core::mem::size_of::<u64>());
+                bucket.copy_from_slice(&x.to_le_bytes());
+                cursor = rest;
+            }
+        }
+
+        let (buffered, rest) = cursor.split_at_mut(PACKET_SIZE);
+        buffered.copy_from_slice(&self.buffer.buf);
+        rest.copy_from_slice(&(self.buffer.len() as u32).to_le_bytes());
+        result
     }
 }
 
@@ -74,6 +94,39 @@ impl PortableHash {
             mul0,
             mul1,
             buffer: HashPacket::default(),
+        }
+    }
+
+    /// Create hasher from checkpointed state
+    #[must_use]
+    pub fn from_checkpoint(data: [u8; 164]) -> Self {
+        let mut cursor = &data[..];
+        let mut v0 = [0u64; 4];
+        let mut v1 = [0u64; 4];
+        let mut mul0 = [0u64; 4];
+        let mut mul1 = [0u64; 4];
+
+        for array in [&mut v0, &mut v1, &mut mul0, &mut mul1] {
+            for state in array.iter_mut() {
+                let (x, rest) = cursor.split_at(core::mem::size_of::<u64>());
+                *state = u64::from_le_bytes([x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7]]);
+                cursor = rest;
+            }
+        }
+
+        let (buffered, rest) = cursor.split_at(PACKET_SIZE);
+        let mut buffer = HashPacket::default();
+
+        let (len, _) = rest.split_at(core::mem::size_of::<u32>());
+        let len = u32::from_le_bytes([len[0], len[1], len[2], len[3]]);
+        buffer.fill(&buffered[..(len as usize).min(buffered.len())]);
+
+        PortableHash {
+            v0,
+            v1,
+            mul0,
+            mul1,
+            buffer,
         }
     }
 

@@ -129,6 +129,37 @@ mod quick_tests {
             hash1 == hash2
         }
     }
+
+    #[quickcheck]
+    fn checkpoint_eq(k1: u64, k2: u64, k3: u64, k4: u64, data: Vec<u8>) {
+        let key = Key([k1, k2, k3, k4]);
+        let (head, tail) = data.split_at(data.len() / 2);
+
+        let hash1 = PortableHash::new(key).hash256(data.as_slice());
+
+        let mut hasher = PortableHash::new(key);
+        hasher.append(head);
+        let mut snd = PortableHash::from_checkpoint(hasher.checkpoint());
+        snd.append(tail);
+        assert_eq!(hash1.as_slice(), snd.finalize256().as_slice());
+
+        let mut hasher = HighwayHasher::new(key);
+        hasher.append(head);
+        let mut snd = HighwayHasher::from_checkpoint(hasher.checkpoint());
+        snd.append(tail);
+        assert_eq!(hash1.as_slice(), snd.finalize256().as_slice());
+
+        #[cfg(target_arch = "x86_64")]
+        {
+            use highway::SseHash;
+            if let Some(mut hasher) = SseHash::new(key) {
+                hasher.append(head);
+                let mut snd = unsafe { SseHash::force_from_checkpoint(hasher.checkpoint()) };
+                snd.append(tail);
+                assert_eq!(hash1.as_slice(), snd.finalize256().as_slice());
+            }
+        }
+    }
 }
 
 #[cfg(target_arch = "x86_64")]

@@ -4,6 +4,7 @@ use crate::internal::unordered_load3;
 use crate::internal::{HashPacket, PACKET_SIZE};
 use crate::key::Key;
 use crate::traits::HighwayHash;
+use crate::PortableHash;
 use core::arch::x86_64::*;
 
 /// AVX empowered implementation that will only work on `x86_64` with avx2 enabled at the CPU
@@ -38,6 +39,18 @@ impl HighwayHash for AvxHash {
     #[inline]
     fn finalize256(mut self) -> [u64; 4] {
         unsafe { Self::finalize256(&mut self) }
+    }
+
+    #[inline]
+    fn checkpoint(&self) -> [u8; 164] {
+        PortableHash {
+            v0: unsafe { self.v0.as_arr() },
+            v1: unsafe { self.v1.as_arr() },
+            mul0: unsafe { self.mul0.as_arr() },
+            mul1: unsafe { self.mul1.as_arr() },
+            buffer: self.buffer,
+        }
+        .checkpoint()
     }
 }
 
@@ -91,6 +104,63 @@ impl AvxHash {
         #[cfg(not(feature = "std"))]
         {
             let _key = key;
+            None
+        }
+    }
+
+    /// Creates a new `AvxHash` from a checkpoint while circumventing the runtime check for avx2.
+    ///
+    /// # Safety
+    ///
+    /// See [`Self::force_new`] for safety concerns.
+    #[must_use]
+    #[target_feature(enable = "avx2")]
+    pub unsafe fn force_from_checkpoint(data: [u8; 164]) -> Self {
+        let portable = PortableHash::from_checkpoint(data);
+        AvxHash {
+            v0: V4x64U::new(
+                portable.v0[3],
+                portable.v0[2],
+                portable.v0[1],
+                portable.v0[0],
+            ),
+            v1: V4x64U::new(
+                portable.v1[3],
+                portable.v1[2],
+                portable.v1[1],
+                portable.v1[0],
+            ),
+            mul0: V4x64U::new(
+                portable.mul0[3],
+                portable.mul0[2],
+                portable.mul0[1],
+                portable.mul0[0],
+            ),
+            mul1: V4x64U::new(
+                portable.mul1[3],
+                portable.mul1[2],
+                portable.mul1[1],
+                portable.mul1[0],
+            ),
+            buffer: portable.buffer,
+        }
+    }
+
+    /// Creates a new `AvxHash` from a checkpoint if the avx2 feature is detected.
+    #[must_use]
+    pub fn from_checkpoint(data: [u8; 164]) -> Option<Self> {
+        #[cfg(feature = "std")]
+        {
+            if is_x86_feature_detected!("avx2") {
+                Some(unsafe { Self::force_from_checkpoint(data) })
+            } else {
+                None
+            }
+        }
+
+        #[cfg(not(feature = "std"))]
+        {
+            let _ = data;
             None
         }
     }

@@ -30,10 +30,15 @@ fn wasm_eq_portable() {
     ]);
 
     for i in 0..data.len() {
-        assert_eq!(
-            WasmHash::new(key).hash64(&data[..i]),
-            PortableHash::new(key).hash64(&data[..i])
-        );
+        let hash64 = PortableHash::new(key).hash64(&data[..i]);
+        assert_eq!(WasmHash::new(key).hash64(&data[..i]), hash64);
+
+        let (head, tail) = &data[..i].split_at(i / 2);
+        let mut hasher = WasmHash::new(key);
+        hasher.append(head);
+        let mut snd = WasmHash::from_checkpoint(hasher.checkpoint());
+        snd.append(tail);
+        assert_eq!(hash64, snd.finalize64());
 
         assert_eq!(
             WasmHash::new(key).hash128(&data[..i]),
