@@ -1,3 +1,8 @@
+## v1.3.0 - 2025-01-11
+
+- Add the ability to checkpoint hashing state and resume it with another hasher. This feature is designated as experimental until more feedback is gathered.
+- Fix Wasm SIMD, provably does not panic anymore
+
 ## v1.2.0 - 2024-06-21
 
 - x86 SSE implementation now provably can't panic
