@@ -37,7 +37,7 @@ pub trait HighwayHash: Sized {
     fn finalize256(self) -> [u64; 4];
 
     /// Serialize the hasher state to be persisted or resumed by another hasher
-    /// 
+    ///
     /// Note: At this time, the checkpoint format and API should be considered experimental.
     /// The format may change in future versions.
     fn checkpoint(&self) -> [u8; 164];
