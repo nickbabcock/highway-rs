@@ -6,7 +6,6 @@ use highway::HighwayHash;
 // ```bash
 // cargo run --release --example hwysum < README.md
 // ```
-#[cfg(feature = "std")]
 fn main() {
     let stdin = std::io::stdin();
     let mut lock = stdin.lock();
@@ -17,9 +16,4 @@ fn main() {
         "{:016x}{:016x}{:016x}{:016x}",
         hash[0], hash[1], hash[2], hash[3]
     );
-}
-
-#[cfg(not(feature = "std"))]
-fn main() {
-    println!("This example requires the 'std' feature to be enabled.");
 }
