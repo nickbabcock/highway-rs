@@ -36,3 +36,7 @@ harness = false
 [profile.release]
 lto = "fat"
 codegen-units = 1
+
+[[example]]
+name = "hwysum"
+required-features = ["std"]
