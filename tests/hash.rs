@@ -28,7 +28,7 @@ fn portable_hash_append() {
 #[test]
 fn portable_hash_simple2() {
     let key = Key([1, 2, 3, 4]);
-    let hash = PortableHash::new(key).hash64(&[(-1 as i8) as u8]);
+    let hash = PortableHash::new(key).hash64(&[-1_i8 as u8]);
     assert_eq!(0x7858_f24d_2d79_b2b2, hash);
 }
 
@@ -36,7 +36,7 @@ fn portable_hash_simple2() {
 fn portable_hash_append2() {
     let key = Key([1, 2, 3, 4]);
     let mut hasher = PortableHash::new(key);
-    hasher.append(&[(-1 as i8) as u8]);
+    hasher.append(&[-1_i8 as u8]);
     let hash = hasher.finalize64();
     assert_eq!(0x7858_f24d_2d79_b2b2, hash);
 }
