@@ -86,10 +86,8 @@ mod tests {
         let mut packet: HashPacket = Default::default();
         for i in 0..31 {
             assert_eq!(&vec![0; i as usize][..], packet.as_slice());
-            if let Some(_) = packet.fill(&[0]) {
-                assert!(false);
-            }
-
+            let leftovers = packet.fill(&[0]);
+            assert_eq!(leftovers, None);
             assert_eq!(i + 1, packet.len() as u8);
             assert_eq!(&vec![0; (i + 1) as usize][..], packet.as_slice());
         }

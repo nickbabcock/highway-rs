@@ -74,6 +74,12 @@ impl HighwayHash for NeonHash {
 
 impl NeonHash {
     /// Creates a new `NeonHash` while circumventing any runtime checks.
+    ///
+    /// # Safety
+    ///
+    /// This function is unsafe as it does not perform any runtime checks to
+    /// ensure that neon capabilities are actually present. In practice, all
+    /// aarch64 devices should support neon, but you never know.
     #[must_use]
     pub unsafe fn force_new(key: Key) -> Self {
         let init0L = V2x64U::new(0xa409_3822_299f_31d0, 0xdbe6_d5d5_fe4c_ce2f);
@@ -97,6 +103,10 @@ impl NeonHash {
     }
 
     /// Creates a new `NeonHash` from a checkpoint
+    ///
+    /// # Safety
+    ///
+    /// See [`Self::force_new`] for safety concerns.
     #[must_use]
     pub unsafe fn force_from_checkpoint(data: [u8; 164]) -> Self {
         let portable = PortableHash::from_checkpoint(data);

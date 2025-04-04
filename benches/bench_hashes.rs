@@ -4,7 +4,7 @@ use highway::{AvxHash, SseHash};
 use highway::{HighwayHash, HighwayHasher, Key, PortableHash};
 
 fn bit64_hash(c: &mut Criterion) {
-    let parameters = vec![1, 4, 16, 64, 256, 1024, 4096, 16384, 65536];
+    let parameters = [1, 4, 16, 64, 256, 1024, 4096, 16384, 65536];
     let key = Key([0, 0, 0, 0]);
 
     let mut group = c.benchmark_group("64bit");
@@ -42,7 +42,7 @@ fn bit64_hash(c: &mut Criterion) {
 }
 
 fn bit256_hash(c: &mut Criterion) {
-    let parameters = vec![1, 4, 16, 64, 256, 1024, 4096, 16384, 65536];
+    let parameters = [1, 4, 16, 64, 256, 1024, 4096, 16384, 65536];
     let key = Key([0, 0, 0, 0]);
 
     let mut group = c.benchmark_group("256bit");
