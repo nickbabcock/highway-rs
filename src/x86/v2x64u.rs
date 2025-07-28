@@ -230,9 +230,9 @@ pub mod tests {
     fn test_add() {
         unsafe {
             let x = V2x64U::new(55, 1);
-            let y = V2x64U::new(0x0264_432C_CD8A_70E0, 0x0B28E_3EFE_BB3_172D);
+            let y = V2x64U::new(0x0264_432C_CD8A_70E0, 0x0B28_E3EF_EBB3_172D);
             let z = x + y;
-            assert_eq!(z.as_arr(), [0x0B28_E3EF_EBB3_172E, 0x2644_32CC_D8A7_117]);
+            assert_eq!(z.as_arr(), [0x0B28_E3EF_EBB3_172E, 0x0264_432C_CD8A_7117]);
         }
     }
 
@@ -240,7 +240,7 @@ pub mod tests {
     #[test]
     fn test_mm_srli_epi64() {
         unsafe {
-            let x = V2x64U::new(0x0264_432C_CD8A_70E0, 0x0B28E_3EFE_BB3_172D);
+            let x = V2x64U::new(0x0264_432C_CD8A_70E0, 0x0B28_E3EF_EBB3_172D);
             let y = V2x64U::from(_mm_srli_epi64(x.0, 33));
             assert_eq!(y.as_arr(), [0x0000_0000_0594_71F7, 0x0000_0000_0132_2196]);
         }
