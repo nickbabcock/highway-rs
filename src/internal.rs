@@ -16,6 +16,7 @@ pub fn unordered_load3(from: &[u8]) -> u64 {
 }
 
 pub const PACKET_SIZE: usize = 32;
+pub const UNROLL_FACTOR: usize = 4;
 
 /// The c layout is needed as we'll be interpretting the buffer as different types and passing it
 /// to simd instructions, so we need to subscribe to the whole "do what C does", else we will

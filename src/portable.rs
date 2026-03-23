@@ -1,4 +1,4 @@
-use crate::internal::{HashPacket, PACKET_SIZE};
+use crate::internal::{HashPacket, PACKET_SIZE, UNROLL_FACTOR};
 use crate::key::Key;
 use crate::traits::HighwayHash;
 
@@ -324,20 +324,26 @@ impl PortableHash {
 
     fn append(&mut self, data: &[u8]) {
         if self.buffer.is_empty() {
-            let mut chunks = data.chunks_exact(PACKET_SIZE);
-            for chunk in chunks.by_ref() {
-                self.update(Self::data_to_lanes(chunk));
-            }
-            self.buffer.set_to(chunks.remainder());
+            Self::process_all(self, data);
         } else if let Some(tail) = self.buffer.fill(data) {
             self.update(Self::data_to_lanes(self.buffer.inner()));
-            let mut chunks = tail.chunks_exact(PACKET_SIZE);
-            for chunk in chunks.by_ref() {
-                self.update(Self::data_to_lanes(chunk));
-            }
-
-            self.buffer.set_to(chunks.remainder());
+            Self::process_all(self, tail);
         }
+    }
+
+    #[inline]
+    fn process_all(&mut self, data: &[u8]) {
+        let mut chunks = data.chunks_exact(PACKET_SIZE * UNROLL_FACTOR);
+        for chunk in chunks.by_ref() {
+            for packet in chunk.chunks_exact(PACKET_SIZE) {
+                self.update(Self::data_to_lanes(packet));
+            }
+        }
+        let mut single = chunks.remainder().chunks_exact(PACKET_SIZE);
+        for chunk in single.by_ref() {
+            self.update(Self::data_to_lanes(chunk));
+        }
+        self.buffer.set_to(single.remainder());
     }
 }
 
