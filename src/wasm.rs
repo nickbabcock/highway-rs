@@ -1,6 +1,10 @@
 use crate::internal::{unordered_load3, HashPacket, PACKET_SIZE};
 use crate::{HighwayHash, Key, PortableHash};
-use core::arch::wasm32::{self, v128};
+#[cfg(target_arch = "wasm32")]
+use core::arch::wasm32 as wasm;
+#[cfg(target_arch = "wasm64")]
+use core::arch::wasm64 as wasm;
+use self::wasm::v128;
 use core::ops::{
     Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, ShlAssign,
     ShrAssign, SubAssign,
@@ -114,7 +118,7 @@ impl WasmHash {
     fn zipper_merge(v: &V2x64U) -> V2x64U {
         let ignored = v.0;
 
-        let res = wasm32::u8x16_shuffle::<3, 12, 2, 5, 1, 14, 0, 15, 11, 4, 10, 13, 6, 9, 7, 8>(
+        let res = wasm::u8x16_shuffle::<3, 12, 2, 5, 1, 14, 0, 15, 11, 4, 10, 13, 6, 9, 7, 8>(
             v.0, ignored,
         );
         V2x64U::from(res)
@@ -156,7 +160,7 @@ impl WasmHash {
         let sum1 = self.v1L + self.mul1L;
         let hash = sum0 + sum1;
 
-        wasm32::u64x2_extract_lane::<1>(hash.0)
+        wasm::u64x2_extract_lane::<1>(hash.0)
     }
 
     pub(crate) fn finalize128(&mut self) -> [u64; 2] {
@@ -172,8 +176,8 @@ impl WasmHash {
         let sum1 = self.v1H + self.mul1H;
         let hash = sum0 + sum1;
         [
-            wasm32::u64x2_extract_lane::<1>(hash.0),
-            wasm32::u64x2_extract_lane::<0>(hash.0),
+            wasm::u64x2_extract_lane::<1>(hash.0),
+            wasm::u64x2_extract_lane::<0>(hash.0),
         ]
     }
 
@@ -194,16 +198,16 @@ impl WasmHash {
         let hashH = WasmHash::modular_reduction(&sum1H, &sum0H);
 
         [
-            wasm32::u64x2_extract_lane::<1>(hashL.0),
-            wasm32::u64x2_extract_lane::<0>(hashL.0),
-            wasm32::u64x2_extract_lane::<1>(hashH.0),
-            wasm32::u64x2_extract_lane::<0>(hashH.0),
+            wasm::u64x2_extract_lane::<1>(hashL.0),
+            wasm::u64x2_extract_lane::<0>(hashL.0),
+            wasm::u64x2_extract_lane::<1>(hashH.0),
+            wasm::u64x2_extract_lane::<0>(hashH.0),
         ]
     }
 
     fn modular_reduction(x: &V2x64U, init: &V2x64U) -> V2x64U {
         let zero = V2x64U::default();
-        let repl = wasm32::i32x4_replace_lane::<1>(zero.0, 0x8000_0000_u32 as i32);
+        let repl = wasm::i32x4_replace_lane::<1>(zero.0, 0x8000_0000_u32 as i32);
         let sign_bit128 = V2x64U::from(repl);
         let top_bits2 = V2x64U::from(_mm_srli_epi64(x.0, 62));
         let shifted1_unmasked = *x + *x;
@@ -229,7 +233,7 @@ impl WasmHash {
 
         if let Some(d) = data.get(..4) {
             let last4 = u32::from_le_bytes([d[0], d[1], d[2], d[3]]);
-            let broadcast = V2x64U::from(wasm32::u32x4(last4, last4, last4, last4));
+            let broadcast = V2x64U::from(wasm::u32x4(last4, last4, last4, last4));
             ret |= broadcast & mask4;
         }
 
@@ -253,7 +257,7 @@ impl WasmHash {
             let last4 =
                 i32::from_le_bytes([remainder[0], remainder[1], remainder[2], remainder[3]]);
 
-            let packetH = V2x64U::from(wasm32::i32x4_replace_lane::<1>(packett.0, last4));
+            let packetH = V2x64U::from(wasm::i32x4_replace_lane::<1>(packett.0, last4));
             (packetH, packetL)
         } else {
             let remainder = &bytes[size_mod32 & !3..];
@@ -267,7 +271,7 @@ impl WasmHash {
 
     fn update_remainder(&mut self) {
         let size = self.buffer.len() as i32;
-        let vsize_mod32 = wasm32::i32x4(size, size, size, size);
+        let vsize_mod32 = wasm::i32x4(size, size, size, size);
         self.v0L += V2x64U::from(vsize_mod32);
         self.v0H += V2x64U::from(vsize_mod32);
         self.rotate_32_by(size as u32);
@@ -330,33 +334,33 @@ fn le_u64(x: &[u8]) -> u64 {
 }
 
 #[inline]
-fn _mm_mul_epu32(a: wasm32::v128, b: wasm32::v128) -> wasm32::v128 {
-    let mask = wasm32::u32x4(0xFFFF_FFFF, 0, 0xFFFF_FFFF, 0);
-    let lo_a_0 = wasm32::v128_and(a, mask);
-    let lo_b_0 = wasm32::v128_and(b, mask);
-    wasm32::u64x2_mul(lo_a_0, lo_b_0)
+fn _mm_mul_epu32(a: wasm::v128, b: wasm::v128) -> wasm::v128 {
+    let mask = wasm::u32x4(0xFFFF_FFFF, 0, 0xFFFF_FFFF, 0);
+    let lo_a_0 = wasm::v128_and(a, mask);
+    let lo_b_0 = wasm::v128_and(b, mask);
+    wasm::u64x2_mul(lo_a_0, lo_b_0)
 }
 
 #[inline]
-fn _mm_srli_epi64(a: wasm32::v128, amt: u32) -> wasm32::v128 {
-    wasm32::u64x2_shr(a, amt)
+fn _mm_srli_epi64(a: wasm::v128, amt: u32) -> wasm::v128 {
+    wasm::u64x2_shr(a, amt)
 }
 
 #[inline]
-fn _mm_srl_epi32(a: wasm32::v128, amt: u32) -> wasm32::v128 {
-    wasm32::u32x4_shr(a, amt)
+fn _mm_srl_epi32(a: wasm::v128, amt: u32) -> wasm::v128 {
+    wasm::u32x4_shr(a, amt)
 }
 
 #[inline]
-fn _mm_sll_epi32(a: wasm32::v128, amt: u32) -> wasm32::v128 {
-    wasm32::u32x4_shl(a, amt)
+fn _mm_sll_epi32(a: wasm::v128, amt: u32) -> wasm::v128 {
+    wasm::u32x4_shl(a, amt)
 }
 
 #[inline]
-fn _mm_slli_si128_8(a: wasm32::v128) -> wasm32::v128 {
+fn _mm_slli_si128_8(a: wasm::v128) -> wasm::v128 {
     // aka _mm_bslli_si128_8
-    let zero = wasm32::u64x2(0, 0);
-    wasm32::u64x2_shuffle::<1, 2>(a, zero)
+    let zero = wasm::u64x2(0, 0);
+    wasm::u64x2_shuffle::<1, 2>(a, zero)
 }
 
 #[derive(Clone, Copy)]
@@ -382,60 +386,60 @@ impl V2x64U {
 
     #[inline]
     pub fn new(hi: u64, low: u64) -> Self {
-        V2x64U(wasm32::u64x2(hi, low))
+        V2x64U(wasm::u64x2(hi, low))
     }
 
     fn as_arr(&self) -> [u64; 2] {
-        let hi = wasm32::u64x2_extract_lane::<0>(self.0);
-        let lo = wasm32::u64x2_extract_lane::<1>(self.0);
+        let hi = wasm::u64x2_extract_lane::<0>(self.0);
+        let lo = wasm::u64x2_extract_lane::<1>(self.0);
         [lo, hi]
     }
 
     #[inline]
     pub fn rotate_by_32(&self) -> Self {
         let ignored = self.0;
-        let res = wasm32::u32x4_shuffle::<1, 0, 3, 2>(self.0, ignored);
+        let res = wasm::u32x4_shuffle::<1, 0, 3, 2>(self.0, ignored);
         V2x64U::from(res)
     }
 
     #[inline]
     pub fn and_not(&self, neg_mask: &V2x64U) -> Self {
-        V2x64U::from(wasm32::v128_andnot(self.0, neg_mask.0))
+        V2x64U::from(wasm::v128_andnot(self.0, neg_mask.0))
     }
 
     #[inline]
     fn add_assign(&mut self, other: Self) {
-        self.0 = wasm32::u64x2_add(self.0, other.0)
+        self.0 = wasm::u64x2_add(self.0, other.0)
     }
 
     #[inline]
     fn sub_assign(&mut self, other: Self) {
-        self.0 = wasm32::u64x2_sub(self.0, other.0)
+        self.0 = wasm::u64x2_sub(self.0, other.0)
     }
 
     #[inline]
     fn bitand_assign(&mut self, other: Self) {
-        self.0 = wasm32::v128_and(self.0, other.0)
+        self.0 = wasm::v128_and(self.0, other.0)
     }
 
     #[inline]
     fn bitor_assign(&mut self, other: Self) {
-        self.0 = wasm32::v128_or(self.0, other.0)
+        self.0 = wasm::v128_or(self.0, other.0)
     }
 
     #[inline]
     fn bitxor_assign(&mut self, other: Self) {
-        self.0 = wasm32::v128_xor(self.0, other.0)
+        self.0 = wasm::v128_xor(self.0, other.0)
     }
 
     #[inline]
     fn shl_assign(&mut self, count: u32) {
-        self.0 = wasm32::u64x2_shl(self.0, count)
+        self.0 = wasm::u64x2_shl(self.0, count)
     }
 
     #[inline]
     fn shr_assign(&mut self, count: u32) {
-        self.0 = wasm32::u64x2_shr(self.0, count)
+        self.0 = wasm::u64x2_shr(self.0, count)
     }
 }
 
