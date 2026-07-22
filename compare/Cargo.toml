@@ -13,11 +13,11 @@ publish = false
 members = ["."]
 
 [dev-dependencies]
-criterion = "< 0.4"
-sha2 = "0.10"
+criterion = { version = "0.8", features = ["csv_output"] }
+sha2 = "0.11"
 fnv = "1"
 farmhash = "1"
-blake3 = "1.3"
+blake3 = "1.8"
 blake2b_simd = "1.0"
 fxhash = "0.2"
 t1ha = "0.1"

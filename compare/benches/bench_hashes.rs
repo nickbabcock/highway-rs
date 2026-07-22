@@ -2,7 +2,7 @@ use blake2b_simd::Params;
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 #[cfg(target_arch = "x86_64")]
 use highway::{AvxHash, SseHash};
-use highway::{HighwayHash, Key, PortableHash};
+use highway::{HighwayHash, HighwayHasher, Key, PortableHash};
 use sha2::{Digest, Sha256};
 use std::collections::hash_map::DefaultHasher;
 use std::hash::Hasher;
@@ -67,7 +67,6 @@ fn bit64_hash(c: &mut Criterion) {
                 hasher.finish()
             })
         });
-
 
         #[cfg(target_arch = "x86_64")]
         {
@@ -148,5 +147,28 @@ fn bit256_hash(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bit64_hash, bit256_hash);
+// The runtime dispatching hasher, kept in its own group to avoid polluting analysis.R
+fn builder_hash(c: &mut Criterion) {
+    let parameters = vec![1, 4, 16, 64, 256, 1024, 4096, 16384, 65536];
+
+    let mut group = c.benchmark_group("builder");
+    for i in parameters.iter() {
+        group.throughput(Throughput::Bytes(*i as u64));
+        group.bench_with_input(BenchmarkId::new("64bit", i), i, |b, param| {
+            let data = vec![0u8; *param];
+            let key = Key([0, 0, 0, 0]);
+            b.iter(|| HighwayHasher::new(key).hash64(&data))
+        });
+
+        group.bench_with_input(BenchmarkId::new("256bit", i), i, |b, param| {
+            let data = vec![0u8; *param];
+            let key = Key([0, 0, 0, 0]);
+            b.iter(|| HighwayHasher::new(key).hash256(&data))
+        });
+    }
+    group.finish();
+}
+
+criterion_group!(benches, bit64_hash, bit256_hash, builder_hash);
 criterion_main!(benches);
+

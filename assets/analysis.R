@@ -1,157 +1,206 @@
-library(scales)
+# Analysis of the HighwayHash comparison benchmarks.
+#
+# Regenerate the input data with (see the README for details):
+
 library(tidyverse)
-library(readr)
+library(scales)
 library(ggnewscale)
+library(RColorBrewer)
 
-is_highwayhash <- Vectorize(function(fn) {
-  switch(fn,
-         "avx" = TRUE,
-         "sse" = TRUE,
-         "portable" = TRUE,
-         FALSE)
-})
+# The SIMD (and portable) HighwayHash implementations we want to visually
+# distinguish from the other hash functions we benchmark against.
+highway_fns <- c("avx", "sse", "portable")
 
-get_line_type <- Vectorize(function(fn) {
-  switch(fn,
-         "avx" = "highwayhash",
-         "sse" = "highwayhash",
-         "portable" = "highwayhash",
-         "other")
-})
+df <- read_csv("./highway.csv", show_col_types = FALSE) |>
+  rename(fn = `function`) |>
+  mutate(
+    highwayhash = fn %in% highway_fns,
+    line = if_else(highwayhash, "highwayhash", "other"),
+    family = factor(
+      if_else(highwayhash, "HighwayHash", "Other hashes"),
+      levels = c("HighwayHash", "Other hashes")
+    ),
+    # sample_measured_value is the total nanoseconds spent hashing
+    # `iteration_count` payloads of `value` bytes each.
+    throughput = value * iteration_count * 1e9 / sample_measured_value,
+    hashes_per_ms = iteration_count * 1e6 / sample_measured_value
+  )
 
-df <- read_csv("./highway.csv")
-df <- mutate(
-  df,
-  fn = `function`,
-  highwayhash = is_highwayhash(fn),
-  line = get_line_type(fn),
-  throughput = value * iteration_count * 10 ^ 9 / sample_measured_value,
-  hashes_per_ms = iteration_count * 10 ^ 6 / sample_measured_value,
-)
+df64 <- filter(df, group == "64bit")
+df256 <- filter(df, group == "256bit")
 
-df64 <- df %>% filter(group == '64bit')
-df64highway <- df64 %>% filter(highwayhash == TRUE)
-df64other <- df64 %>% filter(highwayhash == FALSE)
+# We build a custom palette so that hashes producing both a 64bit and a 256bit
+# result keep a consistent color across graphs. Hashes unique to one output size
+# are free to reuse colors, which keeps each individual palette small and the
+# graphs easier to read.
+names64 <- sort(unique(df64$fn))
+names256 <- sort(unique(df256$fn))
+in_both <- intersect(names64, names256)
+base_palette <- brewer.pal(max(length(names64), length(names256), 3), "Set1")
 
-df256 <- df %>% filter(group == '256bit')
-df256highway <- df256 %>% filter(highwayhash == TRUE)
-df256other <- df256 %>% filter(highwayhash == FALSE)
-
-# We create a custom palette as we want hashes that produce both 64bit and
-# 256bit results to have consistent colors between multiple graphs. Hashes
-# that don't produce both are fine to have inconsistent colors so that we can
-# use a smaller color palette (and a smaller color palette makes it easier to
-# read the graph)
-df64UniqueNames <- df64 %>% select(fn) %>% distinct() %>% pull() %>% sort()
-df256UniqueNames <- df256 %>% select(fn) %>% distinct() %>% pull() %>% sort()
-namesInBoth <- intersect(df64UniqueNames, df256UniqueNames)
-neededColors <- max(length(df64UniqueNames), length(df256UniqueNames))
-pal64 <- brewer.pal(neededColors, "Set1")[1:length(df64UniqueNames)]
-pal256 <- brewer.pal(neededColors, "Set1")[1:length(df256UniqueNames)]
-names(pal64) <- c(namesInBoth, setdiff(df64UniqueNames, namesInBoth))
-names(pal256) <- c(namesInBoth, setdiff(df256UniqueNames, namesInBoth))
-
-byte_rate <- function(l) {
-  paste(scales::number_bytes(l, symbol = "GB", units = "si"), "/s")
+make_palette <- function(fns) {
+  ordered <- c(in_both, setdiff(fns, in_both))
+  set_names(base_palette[seq_along(ordered)], ordered)
 }
 
-ggplot(mapping=aes(value, throughput)) +
-  stat_summary(data=df64, mapping=aes(value, throughput, color = fn), fun = mean, geom="point", size = 1.5) +
-  scale_color_manual("Points", values=pal64, guide=FALSE) +
-  ggnewscale::new_scale_color() +
-  stat_summary(data=df64highway, mapping=aes(linetype = line, color = fn), fun = mean, geom="line", size = 1.2) +
-  scale_color_manual("HighwayHash", values=pal64, guide=guide_legend(order = 1)) +
-  scale_linetype(guide = FALSE) +
-  ggnewscale::new_scale_color() +
-  stat_summary(data=df64other, mapping=aes(linetype = line, color = fn), fun = mean, geom="line", size = 1.2) +
-  scale_color_manual("Other Hashes", values=pal64, guide=guide_legend(order = 2)) +
-  scale_y_continuous(labels = byte_rate, limits = c(0, NA), breaks = pretty_breaks(10)) +
-  scale_x_continuous(trans='log2', limit = c(1, NA), breaks = c(1, 4, 16, 64, 256, 1024, 4096, 16384, 65536)) +
-  labs(title = "Comparison of throughput for 64bit hash functions at varying payload lengths",
-       caption = "solid lines are HighwayHash functions",
-       col = "Hash function",
-       y = "Throughput", 
-       x = "Payload length in bytes")
-ggsave('64bit-highwayhash.png', width = 8, height = 5, dpi = 100)
+pal64 <- make_palette(names64)
+pal256 <- make_palette(names256)
 
-ggplot(mapping=aes(value, throughput)) +
-  stat_summary(data=df256, mapping=aes(value, throughput, color = fn), fun = mean, geom="point", size = 1.5) +
-  scale_color_manual("Points", values=pal256, guide=FALSE) +
-  ggnewscale::new_scale_color() +
-  stat_summary(data=df256highway, mapping=aes(linetype = line, color = fn), fun = mean, geom="line", size = 1.2) +
-  scale_color_manual("HighwayHash", values=pal256, guide=guide_legend(order = 1)) +
-  scale_linetype(guide = FALSE) +
-  ggnewscale::new_scale_color() +
-  stat_summary(data=df256other, mapping=aes(linetype = line, color = fn), fun = mean, geom="line", size = 1.2) +
-  scale_color_manual("Other Hashes", values=pal256, guide=guide_legend(order = 2)) +
-  scale_y_continuous(labels = byte_rate, limits = c(0, NA), breaks = pretty_breaks(10)) +
-  scale_x_continuous(trans='log2', limit = c(1, NA), breaks = c(1, 4, 16, 64, 256, 1024, 4096, 16384, 65536)) +
-  labs(title = "Comparison of throughput for 256bit hash functions at varying payload lengths",
-       caption = "solid lines are HighwayHash functions",
-       col = "Hash function",
-       y = "Throughput",
-       x = "Payload length in bytes")
+byte_rate <- function(x) paste0(label_bytes(units = "GB")(x), "/s")
 
-ggsave('256bit-highwayhash.png', width = 8, height = 5, dpi = 100)
+payload_breaks <- c(1, 4, 16, 64, 256, 1024, 4096, 16384, 65536)
 
-ggplot(mapping=aes(value, hashes_per_ms)) +
-  stat_summary(data=df256, mapping=aes(value, hashes_per_ms, color = fn), fun = mean, geom="point", size = 1.5) +
-  scale_color_manual("Points", values=pal256, guide=FALSE) +
-  ggnewscale::new_scale_color() +
-  stat_summary(data=df256highway, mapping=aes(linetype = line, color = fn), fun = mean, geom="line", size = 1.2) +
-  scale_color_manual("HighwayHash", values=pal256, guide=guide_legend(order = 1)) +
-  scale_linetype(guide = FALSE) +
-  ggnewscale::new_scale_color() +
-  stat_summary(data=df256other, mapping=aes(linetype = line, color = fn), fun = mean, geom="line", size = 1.2) +
-  scale_color_manual("Other Hashes", values=pal256, guide=guide_legend(order = 2)) +
-  scale_y_continuous(limits = c(0, NA), breaks = pretty_breaks(10)) +
-  scale_x_continuous(trans='log2', limit = c(1, NA), breaks = c(1, 4, 16, 64, 256, 1024, 4096, 16384, 65536)) +
-  labs(title = "Comparison of hash rate for 256bit hash functions at varying payload lengths",
-       caption = "solid lines are HighwayHash functions",
-       col = "Hash function",
-       y = "Hashes per ms",
-       x = "Payload length in bytes")
-ggsave('256bit-highwayhash-rate.png', width = 8, height = 5, dpi = 100)
+# A cleaner, modern base theme shared across every plot.
+theme_set(theme_minimal(base_size = 12))
+theme_update(
+  plot.title.position = "plot",
+  plot.caption = element_text(hjust = 0, color = "grey40"),
+  panel.grid.minor = element_blank(),
+  legend.position = "right"
+)
 
-ggplot(df %>% filter(highwayhash == TRUE), aes(value, throughput, color = fn, line_type = group)) + 
-  stat_summary(fun = mean, geom="point", size = 1.5) +
-  stat_summary(aes(linetype = as.factor(group)), fun = mean, geom="line", size = 1.2) +
-  scale_y_continuous(labels = byte_rate, limits = c(0, NA), breaks = pretty_breaks(10)) +
-  scale_x_continuous(trans='log2', limit = c(1, NA), breaks = c(1, 4, 16, 64, 256, 1024, 4096, 16384, 65536)) +
-  labs(title = "Comparison of throughput for 64bit vs 256bit HighwayHash",
-       col = "HighwayHash",
-       linetype = "Output",
-       y = "Throughput",
-       x = "Payload length in bytes") +
-  scale_colour_manual(values = pal256)
-ggsave('64bit-vs-256bit-highwayhash.png', width = 8, height = 5, dpi = 100)
+# HighwayHash implementations are drawn as solid lines and everything else as
+# dashed lines. The plots otherwise share the same structure, so a single helper
+# builds each one: points for every sample mean, then the mean line split into a
+# "HighwayHash" and an "Other Hashes" legend via ggnewscale.
+throughput_plot <- function(data, palette, y, y_label, y_format, title) {
+  y <- enquo(y)
+  highway <- filter(data, highwayhash)
+  other <- filter(data, !highwayhash)
 
-reldf <- df %>%
-  mutate(throughput = throughput / 10^9) %>%
-  group_by(group, fn, highwayhash, value) %>%
-  summarize(throughput = mean(throughput)) %>%
-  ungroup() %>%
-  group_by(value, group) %>%
-  mutate(relative = throughput / max(throughput)) %>%
-  ungroup() %>%
-  complete(group, fn, value, fill = list(highwayhash = FALSE))
+  ggplot(mapping = aes(value, !!y)) +
+    stat_summary(
+      data = data, aes(color = fn),
+      fun = mean, geom = "point", size = 1.5, alpha = 0.8
+    ) +
+    scale_color_manual(values = palette, guide = "none") +
+    new_scale_color() +
+    stat_summary(
+      data = highway, aes(color = fn, linetype = line),
+      fun = mean, geom = "line", linewidth = 1.2
+    ) +
+    scale_color_manual("HighwayHash", values = palette,
+                       guide = guide_legend(order = 1)) +
+    scale_linetype_manual(values = c(highwayhash = "solid", other = "22"),
+                          guide = "none") +
+    new_scale_color() +
+    stat_summary(
+      data = other, aes(color = fn, linetype = line),
+      fun = mean, geom = "line", linewidth = 1.2
+    ) +
+    scale_color_manual("Other Hashes", values = palette,
+                       guide = guide_legend(order = 2)) +
+    scale_y_continuous(labels = y_format, limits = c(0, NA),
+                       breaks = pretty_breaks(10)) +
+    scale_x_continuous(transform = "log2", limits = c(1, NA),
+                       breaks = payload_breaks) +
+    labs(
+      title = title,
+      subtitle = "Mean of criterion samples; higher is better",
+      caption = "Solid lines are HighwayHash implementations",
+      y = y_label,
+      x = "Payload length in bytes (log2 scale)"
+    )
+}
 
-ordered <- reldf %>% distinct(fn, highwayhash) %>% arrange(!highwayhash, fn) %>% pull(fn)
+throughput_plot(
+  df64, pal64, throughput, "Throughput", byte_rate,
+  "Throughput of 64bit hash functions at varying payload lengths"
+)
+ggsave("64bit-highwayhash.png", width = 8, height = 5, dpi = 100)
 
-# Group all highway hash functions next to each other in the graph
-reldf$fn <- factor(reldf$fn, levels = ordered)
+throughput_plot(
+  df256, pal256, throughput, "Throughput", byte_rate,
+  "Throughput of 256bit hash functions at varying payload lengths"
+)
+ggsave("256bit-highwayhash.png", width = 8, height = 5, dpi = 100)
+
+throughput_plot(
+  df256, pal256, hashes_per_ms, "Hashes per ms", label_comma(),
+  "Hash rate of 256bit hash functions at varying payload lengths"
+)
+ggsave("256bit-highwayhash-rate.png", width = 8, height = 5, dpi = 100)
+
+# How much does the wider 256bit output cost HighwayHash relative to its 64bit
+# output? Overlaying the two makes the (small) gap easy to read.
+df |>
+  filter(highwayhash) |>
+  ggplot(aes(value, throughput, color = fn)) +
+  stat_summary(aes(linetype = group), fun = mean, geom = "line", linewidth = 1.2) +
+  scale_y_continuous(labels = byte_rate, limits = c(0, NA),
+                     breaks = pretty_breaks(10)) +
+  scale_x_continuous(transform = "log2", limits = c(1, NA),
+                     breaks = payload_breaks) +
+  scale_color_manual(values = pal256) +
+  labs(
+    title = "Throughput of 64bit vs 256bit HighwayHash",
+    col = "HighwayHash",
+    linetype = "Output",
+    y = "Throughput",
+    x = "Payload length in bytes (log2 scale)"
+  )
+ggsave("64bit-vs-256bit-highwayhash.png", width = 8, height = 5, dpi = 100)
+
+# A heatmap of mean throughput. Shading is relative within each (payload, output
+# size) cell so the fastest hash for every workload stands out, while the printed
+# GB/s number keeps the absolute value readable.
+#
+# Hash libraries go on the x axis and payload size on the y axis. Family is the
+# column facet so the HighwayHash strip sits above a column spanning both output
+# size rows, making it clear that avx / portable / sse produce a 64bit *and* a
+# 256bit hash while the third party hashes only ever do one or the other.
+# Within a family the hashes are ordered by the output size they support, so the
+# 256bit-only and 64bit-only libraries form contiguous blocks rather than being
+# scattered among the cells they have no result for.
+reldf <- df |>
+  mutate(throughput = throughput / 1e9) |>
+  group_by(group, family, fn, value) |>
+  summarize(throughput = mean(throughput), .groups = "drop") |>
+  group_by(group, value) |>
+  mutate(relative = throughput / max(throughput)) |>
+  ungroup()
+
+fn_order <- reldf |>
+  group_by(family, fn) |>
+  summarize(supports = paste(sort(unique(group)), collapse = "+"), .groups = "drop") |>
+  arrange(family, supports, fn) |>
+  pull(fn)
+reldf$fn <- factor(reldf$fn, levels = fn_order)
 
 ggplot(reldf, aes(fn, as.factor(value))) +
   geom_tile(aes(fill = relative), color = "white") +
-  facet_grid(group ~ .) +
+  geom_text(
+    aes(label = format(round(throughput, 2), nsmall = 2), color = relative > 0.55),
+    size = 3.25
+  ) +
+  facet_grid(
+    rows = vars(group), cols = vars(family),
+    scales = "free_x", space = "free_x"
+  ) +
   scale_x_discrete(position = "top") +
-  scale_fill_gradient(name = "", low = "white", high = "steelblue", na.value = "#D8D8D8", labels = c("lowest", "highest (GB/s)"), breaks = c(0,1)) +
-  xlab("Hash Library") +
-  ylab("Payload Size (bytes)") +
-  geom_text(size = 3.25, aes(label = ifelse(is.na(relative), "NA", format(round(throughput, 2), digits = 3)))) +
-  theme(axis.text.x.top=element_text(angle=45, hjust=0, vjust=0)) +
-  theme(legend.position="bottom") +
-  theme(plot.caption = element_text(hjust=0)) +
-  ggtitle("Comparison of Mean Throughput (GB/s) across Hash Functions") +
-  labs(caption = "Shaded relative by payload and return size\n(eg: fnv has the highest throughput for a 64bit value with a 1 byte payload, so it is a deep blue)")
-ggsave('highwayhash-table.png', width = 8, height = 6, dpi = 100)
+  scale_fill_viridis_c(
+    name = NULL,
+    labels = c("lowest", "highest (GB/s)"), breaks = c(0, 1)
+  ) +
+  scale_color_manual(values = c(`TRUE` = "grey10", `FALSE` = "white"),
+                     guide = "none") +
+  labs(
+    title = "Mean throughput (GB/s) across hash functions",
+    caption = paste(
+      "Shaded relative to the fastest hash for each payload and output size",
+      "(e.g. fx has the highest throughput for a 64bit value at a 1 byte",
+      "payload, so it is brightest)",
+      sep = "\n"
+    ),
+    x = "Hash Library",
+    y = "Payload Size (bytes)"
+  ) +
+  theme(
+    axis.text.x.top = element_text(angle = 45, hjust = 0, vjust = 0),
+    legend.position = "bottom",
+    panel.grid = element_blank(),
+    panel.spacing.x = unit(8, "pt"),
+    strip.background = element_rect(fill = "grey90", color = NA),
+    strip.text = element_text(face = "bold", margin = margin(4, 4, 4, 4))
+  )
+ggsave("highwayhash-table.png", width = 8, height = 6, dpi = 100)
