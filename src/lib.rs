@@ -141,12 +141,19 @@ let hash256 = hasher.finalize256(); // HighwayHash API
 When deploying HighwayHash to a Wasm environment, one can opt into using the Wasm SIMD instructions by adding a Rust flag:
 
 ```bash
-RUSTFLAGS="-C target-feature=+simd128" wasm-pack build
+RUSTFLAGS="-C target-feature=+simd128" cargo build --target wasm32-unknown-unknown
 ```
 
 Then `HighwayHasher` will automatically defer to the Wasm SIMD implementation via `WasmHash`.
 
 Once opted in, the execution environment must support Wasm SIMD instructions, which Chrome, Firefox, and Node LTS have stabilized since mid-2021. The opt in is required as there is not a way for Wasm to detect SIMD capabilities at runtime. The mere presence of Wasm SIMD instructions will cause incompatible environments to fail to compile, so it is recommended to provide two Wasm payloads to downstream users: one with SIMD enabled and one without.
+
+Wasm64 support requires nightly:
+
+```bash
+RUSTFLAGS="-C target-feature=+simd128" \
+  cargo +nightly build -Z build-std=std,panic_abort --target wasm64-unknown-unknown
+```
 
 ### `no_std` crates
 
@@ -160,6 +167,10 @@ RUSTFLAGS="-C target-feature=+avx2" cargo test
 */
 #![allow(non_snake_case)]
 #![cfg_attr(all(not(feature = "std"), not(test)), no_std)]
+#![cfg_attr(
+    all(target_arch = "wasm64", target_feature = "simd128"),
+    feature(simd_wasm64)
+)]
 #![warn(missing_docs)]
 #![deny(unsafe_code)]
 
