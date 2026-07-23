@@ -110,7 +110,8 @@ jobs:
 
     - name: Compile benchmarks
       if: matrix.build == 'stable'
-      run: cargo bench --verbose --no-run $TARGET
+      working-directory: compare
+      run: cargo bench --verbose --no-run
 
     - name: Run miri
       if: matrix.build == 'nightly'

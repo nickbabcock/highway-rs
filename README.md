@@ -175,7 +175,8 @@ Benchmarks are ran with the following command:
 
 ```bash
 (cd compare && cargo clean && RUSTFLAGS="-C target-cpu=native" cargo bench)
-find ./compare/target -wholename "*/new/raw.csv" -print0 | xargs -0 xsv cat rows > assets/highway.csv
+find ./compare/target/criterion/64bit ./compare/target/criterion/256bit \
+  -wholename "*/new/raw.csv" -print0 | xargs -0 xsv cat rows > assets/highway.csv
 ```
 
 And can be analyzed with the [R script](assets/analysis.R) found in the assets directory
@@ -228,18 +229,18 @@ Have fun running the builder benchmarks to see how performance differs with flag
 *Default compilation*
 
 ```bash
-cargo bench -- highway-builder
+(cd compare && cargo bench -- builder)
 ```
 
 *Explicitly disable avx2*
 
 ```bash
-RUSTFLAGS="-C target-feature=-avx2" cargo bench -- highway-builder
+(cd compare && RUSTFLAGS="-C target-feature=-avx2" cargo bench -- builder)
 ```
 
 *Explicitly disable avx2 when targeting native cpu*
 
 ```bash
-RUSTFLAGS="-C target-cpu=native -C target-feature=+sse4.1,-avx2" \
-  cargo bench -- highway-builder
+(cd compare && RUSTFLAGS="-C target-cpu=native -C target-feature=+sse4.1,-avx2" \
+  cargo bench -- builder)
 ```

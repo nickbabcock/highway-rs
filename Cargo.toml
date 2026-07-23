@@ -8,7 +8,7 @@ repository = "https://github.com/nickbabcock/highway-rs"
 categories = ["algorithms", "cryptography", "no-std"]
 description = "Native Rust port of Google's HighwayHash, which makes use of SIMD instructions for a fast and strong hash function"
 keywords = ["HighwayHash", "hasher", "hash", "simd", "avx"]
-include = ["src/**/*.rs", "benches"]
+include = ["src/**/*.rs"]
 edition = "2021"
 
 [features]
@@ -21,16 +21,8 @@ quickcheck_macros = "~1.1"
 no-panic = "0.1"
 
 [target.'cfg(target_family = "wasm")'.dev-dependencies]
-criterion = { version = "< 0.4.0", default-features = false }
 wasm-bindgen-test = "0.3"
 getrandom = { version = "0.2", features = ["js"] }
-
-[target.'cfg(not(target_family = "wasm"))'.dev-dependencies]
-criterion = { version = "< 0.4.0" }
-
-[[bench]]
-name = "bench_hashes"
-harness = false
 
 # Required for the no_panic to work
 [profile.release]
