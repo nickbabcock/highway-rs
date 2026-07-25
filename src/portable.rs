@@ -214,50 +214,50 @@ impl PortableHash {
     }
 
     fn update(&mut self, lanes: [u64; 4]) {
-        for (i, lane) in lanes.iter().enumerate() {
-            self.v1[i] = self.v1[i].wrapping_add(*lane);
-        }
-
-        for i in 0..4 {
-            self.v1[i] = self.v1[i].wrapping_add(self.mul0[i]);
-        }
-
-        for i in 0..4 {
-            self.mul0[i] ^= (self.v1[i] & 0xffff_ffff).wrapping_mul(self.v0[i] >> 32);
-        }
-
-        for i in 0..4 {
-            self.v0[i] = self.v0[i].wrapping_add(self.mul1[i]);
-        }
-
-        for i in 0..4 {
-            self.mul1[i] ^= (self.v0[i] & 0xffff_ffff).wrapping_mul(self.v1[i] >> 32);
-        }
-
-        PortableHash::zipper_merge_and_add(self.v1[1], self.v1[0], &mut self.v0, 1, 0);
-        PortableHash::zipper_merge_and_add(self.v1[3], self.v1[2], &mut self.v0, 3, 2);
-        PortableHash::zipper_merge_and_add(self.v0[1], self.v0[0], &mut self.v1, 1, 0);
-        PortableHash::zipper_merge_and_add(self.v0[3], self.v0[2], &mut self.v1, 3, 2);
+        self.update_packet(lanes);
     }
 
-    fn zipper_merge_and_add(v1: u64, v0: u64, lane: &mut [u64; 4], add1: usize, add0: usize) {
-        lane[add0] = lane[add0].wrapping_add(
-            (((v0 & 0xff00_0000) | (v1 & 0x00ff_0000_0000)) >> 24)
-                | (((v0 & 0xff00_0000_0000) | (v1 & 0x00ff_0000_0000_0000)) >> 16)
-                | (v0 & 0x00ff_0000)
-                | ((v0 & 0xff00) << 32)
-                | ((v1 & 0xff00_0000_0000_0000) >> 8)
-                | (v0 << 56),
-        );
-        lane[add1] = lane[add1].wrapping_add(
-            (((v1 & 0xff00_0000) | (v0 & 0x00ff_0000_0000)) >> 24)
-                | (v1 & 0x00ff_0000)
-                | ((v1 & 0xff00_0000_0000) >> 16)
-                | ((v1 & 0xff00) << 24)
-                | ((v0 & 0x00ff_0000_0000_0000) >> 8)
-                | ((v1 & 0xff) << 48)
-                | (v0 & 0xff00_0000_0000_0000),
-        );
+    // The packet loop is the hot path. Inlining avoids materializing `lanes` on
+    // the stack and calling this function for every 32 bytes of input.
+    #[inline(always)]
+    fn update_packet(&mut self, lanes: [u64; 4]) {
+        // Replacing each complete lane array at once lets the optimizer keep
+        // intermediate state in registers between these dependent stages.
+        self.v1 =
+            core::array::from_fn(|i| self.v1[i].wrapping_add(lanes[i]).wrapping_add(self.mul0[i]));
+        self.mul0 = core::array::from_fn(|i| {
+            self.mul0[i]
+                ^ u64::from(self.v1[i] as u32).wrapping_mul(u64::from((self.v0[i] >> 32) as u32))
+        });
+        self.v0 = core::array::from_fn(|i| self.v0[i].wrapping_add(self.mul1[i]));
+        self.mul1 = core::array::from_fn(|i| {
+            self.mul1[i]
+                ^ u64::from(self.v0[i] as u32).wrapping_mul(u64::from((self.v1[i] >> 32) as u32))
+        });
+
+        let zipper = PortableHash::zipper_merge([self.v1[0], self.v1[1]]);
+        self.v0[0] = self.v0[0].wrapping_add(zipper[0]);
+        self.v0[1] = self.v0[1].wrapping_add(zipper[1]);
+        let zipper = PortableHash::zipper_merge([self.v1[2], self.v1[3]]);
+        self.v0[2] = self.v0[2].wrapping_add(zipper[0]);
+        self.v0[3] = self.v0[3].wrapping_add(zipper[1]);
+        let zipper = PortableHash::zipper_merge([self.v0[0], self.v0[1]]);
+        self.v1[0] = self.v1[0].wrapping_add(zipper[0]);
+        self.v1[1] = self.v1[1].wrapping_add(zipper[1]);
+        let zipper = PortableHash::zipper_merge([self.v0[2], self.v0[3]]);
+        self.v1[2] = self.v1[2].wrapping_add(zipper[0]);
+        self.v1[3] = self.v1[3].wrapping_add(zipper[1]);
+    }
+
+    fn zipper_merge(v: [u64; 2]) -> [u64; 2] {
+        // Express the zipper as its underlying byte permutation instead of a
+        // long chain of overlapping integer masks and shifts.
+        let v0 = v[0].to_le_bytes();
+        let v1 = v[1].to_le_bytes();
+        [
+            u64::from_le_bytes([v0[3], v1[4], v0[2], v0[5], v1[6], v0[1], v1[7], v0[0]]),
+            u64::from_le_bytes([v1[3], v0[4], v1[2], v1[5], v1[1], v0[6], v1[0], v0[7]]),
+        ]
     }
 
     fn data_to_lanes(d: &[u8]) -> [u64; 4] {
@@ -272,8 +272,8 @@ impl PortableHash {
         for lane in lanes.iter_mut() {
             let half0: u32 = *lane as u32;
             let half1: u32 = (*lane >> 32) as u32;
-            *lane = u64::from((half0 << count) | (half0 >> (32 - count)));
-            *lane |= u64::from((half1 << count) | (half1 >> (32 - count))) << 32;
+            *lane = u64::from(half0.rotate_left(count as u32));
+            *lane |= u64::from(half1.rotate_left(count as u32)) << 32;
         }
     }
 
@@ -326,14 +326,14 @@ impl PortableHash {
         if self.buffer.is_empty() {
             let mut chunks = data.chunks_exact(PACKET_SIZE);
             for chunk in chunks.by_ref() {
-                self.update(Self::data_to_lanes(chunk));
+                self.update_packet(Self::data_to_lanes(chunk));
             }
             self.buffer.set_to(chunks.remainder());
         } else if let Some(tail) = self.buffer.fill(data) {
-            self.update(Self::data_to_lanes(self.buffer.inner()));
+            self.update_packet(Self::data_to_lanes(self.buffer.inner()));
             let mut chunks = tail.chunks_exact(PACKET_SIZE);
             for chunk in chunks.by_ref() {
-                self.update(Self::data_to_lanes(chunk));
+                self.update_packet(Self::data_to_lanes(chunk));
             }
 
             self.buffer.set_to(chunks.remainder());
