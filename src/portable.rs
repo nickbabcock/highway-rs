@@ -22,22 +22,22 @@ pub struct PortableHash {
 impl HighwayHash for PortableHash {
     #[inline]
     fn append(&mut self, data: &[u8]) {
-        self.append(data);
+        self.append_impl(data);
     }
 
     #[inline]
     fn finalize64(mut self) -> u64 {
-        Self::finalize64(&mut self)
+        self.finalize64_impl()
     }
 
     #[inline]
     fn finalize128(mut self) -> [u64; 2] {
-        Self::finalize128(&mut self)
+        self.finalize128_impl()
     }
 
     #[inline]
     fn finalize256(mut self) -> [u64; 4] {
-        Self::finalize256(&mut self)
+        self.finalize256_impl()
     }
 
     #[inline]
@@ -62,6 +62,26 @@ impl HighwayHash for PortableHash {
 }
 
 impl PortableHash {
+    /// Adds data to be hashed
+    pub fn append(&mut self, data: &[u8]) {
+        HighwayHash::append(self, data);
+    }
+
+    /// Consumes the hasher to return the 64bit hash
+    pub fn finalize64(self) -> u64 {
+        HighwayHash::finalize64(self)
+    }
+
+    /// Consumes the hasher to return the 128bit hash
+    pub fn finalize128(self) -> [u64; 2] {
+        HighwayHash::finalize128(self)
+    }
+
+    /// Consumes the hasher to return the 256bit hash
+    pub fn finalize256(self) -> [u64; 4] {
+        HighwayHash::finalize256(self)
+    }
+
     /// Create a new `PortableHash` from a `Key`
     #[must_use]
     pub fn new(key: Key) -> Self {
@@ -130,7 +150,7 @@ impl PortableHash {
         }
     }
 
-    pub(crate) fn finalize64(&mut self) -> u64 {
+    pub(crate) fn finalize64_impl(&mut self) -> u64 {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
@@ -145,7 +165,7 @@ impl PortableHash {
             .wrapping_add(self.mul1[0])
     }
 
-    pub(crate) fn finalize128(&mut self) -> [u64; 2] {
+    pub(crate) fn finalize128_impl(&mut self) -> [u64; 2] {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
@@ -167,7 +187,7 @@ impl PortableHash {
         [low, high]
     }
 
-    pub(crate) fn finalize256(&mut self) -> [u64; 4] {
+    pub(crate) fn finalize256_impl(&mut self) -> [u64; 4] {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
@@ -322,7 +342,7 @@ impl PortableHash {
         self.update(PortableHash::data_to_lanes(&packet));
     }
 
-    fn append(&mut self, data: &[u8]) {
+    pub(crate) fn append_impl(&mut self, data: &[u8]) {
         if self.buffer.is_empty() {
             let mut chunks = data.chunks_exact(PACKET_SIZE);
             for chunk in chunks.by_ref() {

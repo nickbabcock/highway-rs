@@ -117,22 +117,22 @@ impl Clone for HighwayHasher {
 impl HighwayHash for HighwayHasher {
     #[inline]
     fn append(&mut self, data: &[u8]) {
-        self.append(data);
+        self.append_impl(data);
     }
 
     #[inline]
     fn finalize64(mut self) -> u64 {
-        Self::finalize64(&mut self)
+        self.finalize64_impl()
     }
 
     #[inline]
     fn finalize128(mut self) -> [u64; 2] {
-        Self::finalize128(&mut self)
+        self.finalize128_impl()
     }
 
     #[inline]
     fn finalize256(mut self) -> [u64; 4] {
-        Self::finalize256(&mut self)
+        self.finalize256_impl()
     }
 
     #[inline]
@@ -142,6 +142,26 @@ impl HighwayHash for HighwayHasher {
 }
 
 impl HighwayHasher {
+    /// Adds data to be hashed
+    pub fn append(&mut self, data: &[u8]) {
+        HighwayHash::append(self, data);
+    }
+
+    /// Consumes the hasher to return the 64bit hash
+    pub fn finalize64(self) -> u64 {
+        HighwayHash::finalize64(self)
+    }
+
+    /// Consumes the hasher to return the 128bit hash
+    pub fn finalize128(self) -> [u64; 2] {
+        HighwayHash::finalize128(self)
+    }
+
+    /// Consumes the hasher to return the 256bit hash
+    pub fn finalize256(self) -> [u64; 4] {
+        HighwayHash::finalize256(self)
+    }
+
     /// Creates a new hasher based on compilation and runtime capabilities
     #[must_use]
     pub fn new(key: Key) -> Self {
@@ -294,78 +314,78 @@ impl HighwayHasher {
         }
     }
 
-    fn append(&mut self, data: &[u8]) {
+    fn append_impl(&mut self, data: &[u8]) {
         match self.tag {
             #[cfg(not(any(
                 all(target_family = "wasm", target_feature = "simd128"),
                 target_arch = "aarch64"
             )))]
-            0 => unsafe { &mut self.inner.portable }.append(data),
+            0 => unsafe { &mut self.inner.portable }.append_impl(data),
             #[cfg(target_arch = "x86_64")]
-            1 => unsafe { &mut self.inner.avx }.append(data),
+            1 => unsafe { (*self.inner.avx).append_impl(data) },
             #[cfg(target_arch = "x86_64")]
-            2 => unsafe { &mut self.inner.sse }.append(data),
+            2 => unsafe { (*self.inner.sse).append_impl(data) },
             #[cfg(target_arch = "aarch64")]
-            3 => unsafe { &mut self.inner.neon }.append(data),
+            3 => unsafe { (*self.inner.neon).append_impl(data) },
             #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
-            4 => unsafe { &mut self.inner.wasm }.append(data),
+            4 => unsafe { &mut self.inner.wasm }.append_impl(data),
             _ => unsafe { core::hint::unreachable_unchecked() },
         }
     }
 
-    fn finalize64(&mut self) -> u64 {
+    fn finalize64_impl(&mut self) -> u64 {
         match self.tag {
             #[cfg(not(any(
                 all(target_family = "wasm", target_feature = "simd128"),
                 target_arch = "aarch64"
             )))]
-            0 => unsafe { PortableHash::finalize64(&mut self.inner.portable) },
+            0 => unsafe { PortableHash::finalize64_impl(&mut self.inner.portable) },
             #[cfg(target_arch = "x86_64")]
-            1 => unsafe { AvxHash::finalize64(&mut self.inner.avx) },
+            1 => unsafe { AvxHash::finalize64_impl(&mut self.inner.avx) },
             #[cfg(target_arch = "x86_64")]
-            2 => unsafe { SseHash::finalize64(&mut self.inner.sse) },
+            2 => unsafe { SseHash::finalize64_impl(&mut self.inner.sse) },
             #[cfg(target_arch = "aarch64")]
-            3 => unsafe { NeonHash::finalize64(&mut self.inner.neon) },
+            3 => unsafe { NeonHash::finalize64_impl(&mut self.inner.neon) },
             #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
-            4 => unsafe { WasmHash::finalize64(&mut self.inner.wasm) },
+            4 => unsafe { WasmHash::finalize64_impl(&mut self.inner.wasm) },
             _ => unsafe { core::hint::unreachable_unchecked() },
         }
     }
 
-    fn finalize128(&mut self) -> [u64; 2] {
+    fn finalize128_impl(&mut self) -> [u64; 2] {
         match self.tag {
             #[cfg(not(any(
                 all(target_family = "wasm", target_feature = "simd128"),
                 target_arch = "aarch64"
             )))]
-            0 => unsafe { PortableHash::finalize128(&mut self.inner.portable) },
+            0 => unsafe { PortableHash::finalize128_impl(&mut self.inner.portable) },
             #[cfg(target_arch = "x86_64")]
-            1 => unsafe { AvxHash::finalize128(&mut self.inner.avx) },
+            1 => unsafe { AvxHash::finalize128_impl(&mut self.inner.avx) },
             #[cfg(target_arch = "x86_64")]
-            2 => unsafe { SseHash::finalize128(&mut self.inner.sse) },
+            2 => unsafe { SseHash::finalize128_impl(&mut self.inner.sse) },
             #[cfg(target_arch = "aarch64")]
-            3 => unsafe { NeonHash::finalize128(&mut self.inner.neon) },
+            3 => unsafe { NeonHash::finalize128_impl(&mut self.inner.neon) },
             #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
-            4 => unsafe { WasmHash::finalize128(&mut self.inner.wasm) },
+            4 => unsafe { WasmHash::finalize128_impl(&mut self.inner.wasm) },
             _ => unsafe { core::hint::unreachable_unchecked() },
         }
     }
 
-    fn finalize256(&mut self) -> [u64; 4] {
+    fn finalize256_impl(&mut self) -> [u64; 4] {
         match self.tag {
             #[cfg(not(any(
                 all(target_family = "wasm", target_feature = "simd128"),
                 target_arch = "aarch64"
             )))]
-            0 => unsafe { PortableHash::finalize256(&mut self.inner.portable) },
+            0 => unsafe { PortableHash::finalize256_impl(&mut self.inner.portable) },
             #[cfg(target_arch = "x86_64")]
-            1 => unsafe { AvxHash::finalize256(&mut self.inner.avx) },
+            1 => unsafe { AvxHash::finalize256_impl(&mut self.inner.avx) },
             #[cfg(target_arch = "x86_64")]
-            2 => unsafe { SseHash::finalize256(&mut self.inner.sse) },
+            2 => unsafe { SseHash::finalize256_impl(&mut self.inner.sse) },
             #[cfg(target_arch = "aarch64")]
-            3 => unsafe { NeonHash::finalize256(&mut self.inner.neon) },
+            3 => unsafe { NeonHash::finalize256_impl(&mut self.inner.neon) },
             #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
-            4 => unsafe { WasmHash::finalize256(&mut self.inner.wasm) },
+            4 => unsafe { WasmHash::finalize256_impl(&mut self.inner.wasm) },
             _ => unsafe { core::hint::unreachable_unchecked() },
         }
     }

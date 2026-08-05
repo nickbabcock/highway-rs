@@ -24,23 +24,23 @@ impl HighwayHash for NeonHash {
     #[inline]
     fn append(&mut self, data: &[u8]) {
         unsafe {
-            self.append(data);
+            self.append_impl(data);
         }
     }
 
     #[inline]
     fn finalize64(mut self) -> u64 {
-        unsafe { Self::finalize64(&mut self) }
+        unsafe { self.finalize64_impl() }
     }
 
     #[inline]
     fn finalize128(mut self) -> [u64; 2] {
-        unsafe { Self::finalize128(&mut self) }
+        unsafe { self.finalize128_impl() }
     }
 
     #[inline]
     fn finalize256(mut self) -> [u64; 4] {
-        unsafe { Self::finalize256(&mut self) }
+        unsafe { self.finalize256_impl() }
     }
 
     #[inline]
@@ -73,6 +73,26 @@ impl HighwayHash for NeonHash {
 }
 
 impl NeonHash {
+    /// Adds data to be hashed
+    pub fn append(&mut self, data: &[u8]) {
+        HighwayHash::append(self, data);
+    }
+
+    /// Consumes the hasher to return the 64bit hash
+    pub fn finalize64(self) -> u64 {
+        HighwayHash::finalize64(self)
+    }
+
+    /// Consumes the hasher to return the 128bit hash
+    pub fn finalize128(self) -> [u64; 2] {
+        HighwayHash::finalize128(self)
+    }
+
+    /// Consumes the hasher to return the 256bit hash
+    pub fn finalize256(self) -> [u64; 4] {
+        HighwayHash::finalize256(self)
+    }
+
     /// Creates a new `NeonHash` while circumventing any runtime checks.
     ///
     /// # Safety
@@ -165,7 +185,7 @@ impl NeonHash {
         self.update((low, high));
     }
 
-    pub(crate) unsafe fn finalize64(&mut self) -> u64 {
+    pub(crate) unsafe fn finalize64_impl(&mut self) -> u64 {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
@@ -180,7 +200,7 @@ impl NeonHash {
         hash.as_arr()[0]
     }
 
-    pub(crate) unsafe fn finalize128(&mut self) -> [u64; 2] {
+    pub(crate) unsafe fn finalize128_impl(&mut self) -> [u64; 2] {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
@@ -195,7 +215,7 @@ impl NeonHash {
         hash.as_arr()
     }
 
-    pub(crate) unsafe fn finalize256(&mut self) -> [u64; 4] {
+    pub(crate) unsafe fn finalize256_impl(&mut self) -> [u64; 4] {
         if !self.buffer.is_empty() {
             self.update_remainder();
         }
@@ -302,7 +322,7 @@ impl NeonHash {
         (packetH, packetL)
     }
 
-    unsafe fn append(&mut self, data: &[u8]) {
+    pub(crate) unsafe fn append_impl(&mut self, data: &[u8]) {
         if self.buffer.is_empty() {
             let mut chunks = data.chunks_exact(PACKET_SIZE);
             for chunk in chunks.by_ref() {
